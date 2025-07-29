@@ -12,7 +12,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ## Technical Stack
 - **Backend**: Rust + Rocket + PostgreSQL + Diesel ORM
 - **Database**: Diesel with async adaptations (diesel-async + tokio::task::spawn_blocking)
-- **Frontend**: Expo Go + React Native + TypeScript + TailwindCSS
+- **Frontend**: Expo Go + React Native + TypeScript + TailwindCSS + Vite (build tool)
 - **Infrastructure**: Google Cloud Platform + Terraform
 - **Style**: 90's retro colorful interface (Trapper Keepers/neon aesthetic)
 
