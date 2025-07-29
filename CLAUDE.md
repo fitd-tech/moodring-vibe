@@ -58,7 +58,9 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 
 ## Persistent Rules
 - Git commit after every single task completion when file changes exist
+- Push commits to working branch (develop/feature) immediately after committing
 - Always work on `develop` branch or feature branches (never commit directly to `main`)
+- Always ask permission before pushing to `main` branch
 - Never modify test files without explicit permission
 - Follow existing code conventions and patterns
 - Prioritize security best practices
