@@ -50,8 +50,15 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Coverage threshold**: Maintain minimum 80% test coverage
 - **Pre-commit testing**: All tests must pass before commits are allowed
 
+## Git Workflow
+- **Primary development branch**: `develop` (all local work pushes here)
+- **Production branch**: `main` (reserved for CI/CD to production infrastructure)
+- **Feature branches**: Create from `develop`, merge back to `develop` via PRs
+- **Branch protection**: `main` branch only accepts merges from `develop` via CI/CD
+
 ## Persistent Rules
 - Git commit after every single task completion when file changes exist
+- Always work on `develop` branch or feature branches (never commit directly to `main`)
 - Never modify test files without explicit permission
 - Follow existing code conventions and patterns
 - Prioritize security best practices
