@@ -1,7 +1,7 @@
 #[macro_use] extern crate rocket;
 
 use rocket::serde::{Deserialize, Serialize, json::Json};
-use rocket::{State, tokio};
+use rocket::tokio;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
