@@ -42,8 +42,18 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Connection Pool**: Rocket's built-in database connection pooling
 - **Migrations**: Schema evolution through Diesel migration files
 
+## Testing Requirements
+- **All code must have test coverage**: Every function, component, and API endpoint requires corresponding tests
+- **Test types**: Unit tests, integration tests, and end-to-end tests where applicable
+- **Backend testing**: Use Rust testing framework with `cargo test`
+- **Frontend testing**: Use Jest/React Native Testing Library
+- **Coverage threshold**: Maintain minimum 80% test coverage
+- **Pre-commit testing**: All tests must pass before commits are allowed
+
 ## Persistent Rules
 - Git commit after any completed task
 - Never modify test files without explicit permission
 - Follow existing code conventions and patterns
 - Prioritize security best practices
+- Write tests for all new code before committing
+- Run test suite on every commit via git hooks
