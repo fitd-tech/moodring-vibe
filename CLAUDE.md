@@ -77,6 +77,13 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - Run test suite on every commit via git hooks
 - Include comprehensive commit messages describing all changes made
 
+## Temporary Code Management
+- **Mark temporary/test code explicitly**: Use `// TODO: TEMP -` comments for temporary code
+- **Track temporary code in todos**: Add cleanup tasks to TodoWrite when creating temporary code
+- **Clean up before moving to new features**: Remove all temporary code before starting new major features
+- **Examples of temporary code**: Test endpoints, mock data, debug UI, placeholder components
+- **Commit temporary code separately**: Use commit messages starting with "TEMP:" for easy identification
+
 ## Git Commit Template
 ```
 Brief description of changes (imperative mood)
