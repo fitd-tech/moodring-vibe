@@ -1,6 +1,7 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-use rocket::serde::{Deserialize, Serialize, json::Json};
+use rocket::serde::{json::Json, Deserialize, Serialize};
 use rocket::tokio;
 
 #[derive(Serialize, Deserialize)]
@@ -26,7 +27,7 @@ fn index() -> &'static str {
 #[tokio::main]
 async fn main() -> Result<(), rocket::Error> {
     dotenvy::dotenv().ok();
-    
+
     let _rocket = rocket::build()
         .mount("/", routes![index, health])
         .launch()

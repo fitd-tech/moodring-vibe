@@ -59,11 +59,15 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ## Persistent Rules - MANDATORY WORKFLOW
 - **IMMEDIATELY after completing ANY task that creates, modifies, or deletes files**: 
   1. Run `git status` and `git diff` to review changes
-  2. Add files with `git add`
-  3. Commit with comprehensive message including 🤖 footer
-  4. Push to working branch (develop/feature) with `git push origin <branch>`
+  2. **Run pre-commit checks**:
+     - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
+     - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/, if scripts exist)
+  3. Add files with `git add`
+  4. Commit with comprehensive message including 🤖 footer
+  5. Push to working branch (develop/feature) with `git push origin <branch>`
 - **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
 - **Never wait for user reminder**: Commit/push workflow is automatic after any file modification
+- **If lint/test commands don't exist**: Ask user for correct commands and suggest adding them to package.json/Cargo.toml
 - Always work on `develop` branch or feature branches (never commit directly to `main`)
 - Always ask permission before pushing to `main` branch
 - Never modify test files without explicit permission
