@@ -173,6 +173,41 @@ async fn update_song(
     }
 }
 
+#[delete("/songs/<song_id>")]
+async fn delete_song(
+    pool: &State<DbPool>,
+    song_id: i32,
+) -> Result<rocket::response::status::NoContent, rocket::response::status::BadRequest<String>> {
+    use schema::temp_songs::dsl::*;
+
+    let pool = pool.inner().clone();
+
+    match tokio::task::spawn_blocking(move || {
+        let mut conn = pool
+            .get()
+            .map_err(|e| format!("Failed to get connection: {e}"))?;
+        diesel::delete(temp_songs.filter(id.eq(song_id)))
+            .execute(&mut conn)
+            .map_err(|e| format!("Failed to delete song: {e}"))
+    })
+    .await
+    {
+        Ok(Ok(rows_affected)) => {
+            if rows_affected > 0 {
+                Ok(rocket::response::status::NoContent)
+            } else {
+                Err(rocket::response::status::BadRequest(
+                    "Song not found".to_string(),
+                ))
+            }
+        }
+        Ok(Err(e)) => Err(rocket::response::status::BadRequest(e)),
+        Err(e) => Err(rocket::response::status::BadRequest(format!(
+            "Task join error: {e}"
+        ))),
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
     dotenvy::dotenv().ok();
@@ -195,7 +230,8 @@ async fn main() -> Result<(), Box<rocket::Error>> {
                 test_data,
                 get_songs,
                 create_song,
-                update_song
+                update_song,
+                delete_song
             ],
         )
         .launch()

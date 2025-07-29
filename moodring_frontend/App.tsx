@@ -103,6 +103,38 @@ export default function App() {
     }
   };
 
+  const deleteSong = async (songId: number) => {
+    Alert.alert(
+      'Delete Song',
+      'Are you sure you want to delete this song?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const response = await fetch(`http://localhost:8000/songs/${songId}`, {
+                method: 'DELETE',
+              });
+              
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              
+              await fetchSongs(); // Refresh the list
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'An error occurred');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   useEffect(() => {
     fetchSongs();
   }, []);
@@ -200,12 +232,20 @@ export default function App() {
                 <Text style={styles.songTimestamp}>
                   Updated: {new Date(song.updated_at).toLocaleString()}
                 </Text>
-                <TouchableOpacity 
-                  style={styles.editButton}
-                  onPress={() => setEditingSong(song)}
-                >
-                  <Text style={styles.editButtonText}>✏️ Edit</Text>
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity 
+                    style={styles.editButton}
+                    onPress={() => setEditingSong(song)}
+                  >
+                    <Text style={styles.editButtonText}>✏️ Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => deleteSong(song.id)}
+                  >
+                    <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -324,15 +364,30 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginBottom: 10,
   },
-  editButton: {
+  actionButtons: {
     position: 'absolute',
     top: 0,
     right: 0,
+    flexDirection: 'row',
+    gap: 5,
+  },
+  editButton: {
     padding: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
   },
   editButtonText: {
     color: '#6366f1',
-    fontSize: 14,
+    fontSize: 12,
+  },
+  deleteButton: {
+    padding: 5,
+    backgroundColor: '#fee2e2',
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: '#dc2626',
+    fontSize: 12,
   },
   editContainer: {
     gap: 10,
