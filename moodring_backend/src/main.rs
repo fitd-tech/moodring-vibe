@@ -49,13 +49,14 @@ fn test_data() -> Json<TestDataResponse> {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), rocket::Error> {
+async fn main() -> Result<(), Box<rocket::Error>> {
     dotenvy::dotenv().ok();
 
     let _rocket = rocket::build()
         .mount("/", routes![index, health, test_data])
         .launch()
-        .await?;
+        .await
+        .map_err(Box::new)?;
 
     Ok(())
 }

@@ -62,6 +62,8 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
   2. **Run pre-commit checks**:
      - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
      - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/, if scripts exist)
+     - **FAIL COMMITS ON ANY WARNINGS**: Address all clippy warnings, lint warnings, and formatting issues before committing
+     - **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
   3. Add files with `git add`
   4. Commit with comprehensive message including 🤖 footer
   5. Push to working branch (develop/feature) with `git push origin <branch>`
