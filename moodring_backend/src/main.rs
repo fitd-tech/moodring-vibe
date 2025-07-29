@@ -11,6 +11,7 @@ struct HealthResponse {
     message: String,
 }
 
+// TODO: TEMP - Remove this struct when removing test endpoint
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 struct TestDataResponse {
@@ -32,6 +33,7 @@ fn index() -> &'static str {
     "Welcome to Moodring API"
 }
 
+// TODO: TEMP - Remove this test endpoint when moving to real features
 #[get("/test-data")]
 fn test_data() -> Json<TestDataResponse> {
     use chrono::Utc;
