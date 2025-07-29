@@ -51,9 +51,10 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Pre-commit testing**: All tests must pass before commits are allowed
 
 ## Persistent Rules
-- Git commit after any completed task
+- Git commit after every single task completion when file changes exist
 - Never modify test files without explicit permission
 - Follow existing code conventions and patterns
 - Prioritize security best practices
 - Write tests for all new code before committing
 - Run test suite on every commit via git hooks
+- Include comprehensive commit messages describing all changes made
