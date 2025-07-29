@@ -56,9 +56,14 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Feature branches**: Create from `develop`, merge back to `develop` via PRs
 - **Branch protection**: `main` branch only accepts merges from `develop` via CI/CD
 
-## Persistent Rules
-- Git commit after every single task completion when file changes exist
-- Push commits to working branch (develop/feature) immediately after committing
+## Persistent Rules - MANDATORY WORKFLOW
+- **IMMEDIATELY after completing ANY task that creates, modifies, or deletes files**: 
+  1. Run `git status` and `git diff` to review changes
+  2. Add files with `git add`
+  3. Commit with comprehensive message including 🤖 footer
+  4. Push to working branch (develop/feature) with `git push origin <branch>`
+- **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
+- **Never wait for user reminder**: Commit/push workflow is automatic after any file modification
 - Always work on `develop` branch or feature branches (never commit directly to `main`)
 - Always ask permission before pushing to `main` branch
 - Never modify test files without explicit permission
@@ -67,3 +72,17 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - Write tests for all new code before committing
 - Run test suite on every commit via git hooks
 - Include comprehensive commit messages describing all changes made
+
+## Git Commit Template
+```
+Brief description of changes (imperative mood)
+
+Detailed explanation of what was changed and why:
+- Specific change 1
+- Specific change 2
+- Any breaking changes or important notes
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
