@@ -79,6 +79,17 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - Run test suite on every commit via git hooks
 - Include comprehensive commit messages describing all changes made
 
+## CLAUDE.md Change Evaluation
+- **Before making ANY changes to CLAUDE.md**: Evaluate the proposed change for:
+  - **Conflicts**: Does this contradict existing rules or create ambiguous situations?
+  - **Potential issues**: Could this rule cause problems, be too restrictive, or create workflow bottlenecks?
+  - **Best practices**: Is this aligned with software development best practices and team collaboration?
+  - **Clarity**: Is the rule specific, actionable, and unambiguous?
+  - **Enforceability**: Can this rule be consistently followed and verified?
+- **Recommend improvements**: Suggest modifications to resolve conflicts or improve clarity
+- **Flag concerns**: Explicitly mention any potential negative consequences or edge cases
+- **Ensure consistency**: Verify new rules align with existing workflow and don't create contradictions
+
 ## Temporary Code Management
 - **Mark temporary/test code explicitly**: Use `// TODO: TEMP -` comments for temporary code
 - **Track temporary code in todos**: Add cleanup tasks to TodoWrite when creating temporary code
