@@ -1,147 +1,119 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
+import * as Linking from 'expo-linking';
 
-// TODO: TEMP - Remove these interfaces when moving to real features
-interface TempSong {
-  id: number;
-  title: string;
-  artist: string;
-  genre?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface NewTempSong {
-  title: string;
-  artist: string;
-  genre?: string;
+interface SpotifyShareData {
+  url: string;
+  type: 'track' | 'album' | 'playlist' | 'artist' | 'unknown';
+  id?: string;
+  title?: string;
+  artist?: string;
+  timestamp: string;
 }
 
 export default function App() {
-  const [songs, setSongs] = useState<TempSong[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [sharedData, setSharedData] = useState<SpotifyShareData[]>([]);
+  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [newSong, setNewSong] = useState<NewTempSong>({ title: '', artist: '', genre: '' });
-  const [editingSong, setEditingSong] = useState<TempSong | null>(null);
 
-  // TODO: TEMP - Remove these functions when moving to real features
-  const fetchSongs = async () => {
-    setLoading(true);
-    setError(null);
+  const parseSpotifyUrl = (url: string): SpotifyShareData => {
+    const timestamp = new Date().toISOString();
     
     try {
-      const response = await fetch('http://localhost:8000/songs');
+      // Parse Spotify URLs like: https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
+      const spotifyRegex = /spotify\.com\/(track|album|playlist|artist)\/([a-zA-Z0-9]+)/;
+      const match = url.match(spotifyRegex);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (match) {
+        const [, type, id] = match;
+        return {
+          url,
+          type: type as SpotifyShareData['type'],
+          id,
+          timestamp,
+        };
       }
       
-      const data: TempSong[] = await response.json();
-      setSongs(data);
+      // Also handle spotify: protocol URLs like: spotify:track:4iV5W9uYEdYUVa79Axb7Rh
+      const protocolRegex = /spotify:(track|album|playlist|artist):([a-zA-Z0-9]+)/;
+      const protocolMatch = url.match(protocolRegex);
+      
+      if (protocolMatch) {
+        const [, type, id] = protocolMatch;
+        return {
+          url,
+          type: type as SpotifyShareData['type'],
+          id,
+          timestamp,
+        };
+      }
+      
+      return {
+        url,
+        type: 'unknown',
+        timestamp,
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+      return {
+        url,
+        type: 'unknown',
+        timestamp,
+      };
     }
   };
 
-  const createSong = async () => {
-    if (!newSong.title || !newSong.artist) {
-      Alert.alert('Error', 'Please fill in title and artist');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8000/songs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newSong),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      setNewSong({ title: '', artist: '', genre: '' });
-      await fetchSongs(); // Refresh the list
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+  const handleIncomingUrl = (url: string) => {
+    setCurrentUrl(url);
+    setError(null);
+    
+    // Check if it's a Spotify URL
+    if (url.includes('spotify')) {
+      const parsedData = parseSpotifyUrl(url);
+      setSharedData(prev => [parsedData, ...prev]);
+    } else {
+      // Handle other URLs or show as received
+      const genericData: SpotifyShareData = {
+        url,
+        type: 'unknown',
+        timestamp: new Date().toISOString(),
+      };
+      setSharedData(prev => [genericData, ...prev]);
     }
   };
 
-  const updateSong = async (song: TempSong) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`http://localhost:8000/songs/${song.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: song.title,
-          artist: song.artist,
-          genre: song.genre,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      setEditingSong(null);
-      await fetchSongs(); // Refresh the list
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteSong = async (songId: number) => {
-    Alert.alert(
-      'Delete Song',
-      'Are you sure you want to delete this song?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const response = await fetch(`http://localhost:8000/songs/${songId}`, {
-                method: 'DELETE',
-              });
-              
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              
-              await fetchSongs(); // Refresh the list
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'An error occurred');
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+  const clearHistory = () => {
+    setSharedData([]);
+    setCurrentUrl(null);
+    setError(null);
   };
 
   useEffect(() => {
-    fetchSongs();
+    // Check for initial URL when app launches
+    const checkInitialURL = async () => {
+      try {
+        const initialURL = await Linking.getInitialURL();
+        if (initialURL) {
+          handleIncomingUrl(initialURL);
+        }
+      } catch (err) {
+        setError('Failed to get initial URL');
+      }
+    };
+
+    checkInitialURL();
+
+    // Listen for URL changes while app is running
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleIncomingUrl(event.url);
+    });
+
+    return () => subscription?.remove();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎵 Database Test App</Text>
+      <Text style={styles.title}>🎵 Moodring - Spotify Share Test</Text>
       
       {error && (
         <View style={styles.errorContainer}>
@@ -149,110 +121,78 @@ export default function App() {
         </View>
       )}
 
-      {/* Add New Song Form */}
-      <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>Add New Song</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Song Title"
-          value={newSong.title}
-          onChangeText={(text) => setNewSong({...newSong, title: text})}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Artist"
-          value={newSong.artist}
-          onChangeText={(text) => setNewSong({...newSong, artist: text})}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Genre (optional)"
-          value={newSong.genre}
-          onChangeText={(text) => setNewSong({...newSong, genre: text})}
-        />
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={createSong}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Adding...' : 'Add Song'}
-          </Text>
-        </TouchableOpacity>
+      {/* Instructions */}
+      <View style={styles.instructionsContainer}>
+        <Text style={styles.instructionsTitle}>📱 Test Spotify Sharing</Text>
+        <Text style={styles.instructionsText}>
+          1. Open Spotify app{'\n'}
+          2. Find a song, album, or playlist{'\n'}
+          3. Tap Share → Copy Link or Share to Moodring{'\n'}
+          4. Return to this app to see the shared data
+        </Text>
       </View>
 
-      {/* Songs List */}
-      <ScrollView style={styles.songsContainer}>
-        <View style={styles.songsHeader}>
-          <Text style={styles.songsTitle}>Songs from Database ({songs.length})</Text>
-          <TouchableOpacity onPress={fetchSongs} disabled={loading}>
-            <Text style={styles.refreshText}>🔄 Refresh</Text>
-          </TouchableOpacity>
+      {/* Current URL Display */}
+      {currentUrl && (
+        <View style={styles.currentUrlContainer}>
+          <Text style={styles.currentUrlTitle}>🔗 Last Received URL:</Text>
+          <Text style={styles.currentUrlText} numberOfLines={2}>
+            {currentUrl}
+          </Text>
+        </View>
+      )}
+
+      {/* Shared Data History */}
+      <ScrollView style={styles.historyContainer}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>📝 Received Shares ({sharedData.length})</Text>
+          {sharedData.length > 0 && (
+            <TouchableOpacity onPress={clearHistory}>
+              <Text style={styles.clearText}>🗑️ Clear</Text>
+            </TouchableOpacity>
+          )}
         </View>
         
-        {songs.map((song) => (
-          <View key={song.id} style={styles.songItem}>
-            {editingSong?.id === song.id ? (
-              <View style={styles.editContainer}>
-                <TextInput
-                  style={styles.editInput}
-                  value={editingSong.title}
-                  onChangeText={(text) => setEditingSong({...editingSong, title: text})}
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editingSong.artist}
-                  onChangeText={(text) => setEditingSong({...editingSong, artist: text})}
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editingSong.genre || ''}
-                  onChangeText={(text) => setEditingSong({...editingSong, genre: text})}
-                />
-                <View style={styles.editButtons}>
-                  <TouchableOpacity 
-                    style={styles.saveButton}
-                    onPress={() => updateSong(editingSong)}
-                  >
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.cancelButton}
-                    onPress={() => setEditingSong(null)}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.songContent}>
-                <Text style={styles.songTitle}>{song.title}</Text>
-                <Text style={styles.songArtist}>by {song.artist}</Text>
-                {song.genre && <Text style={styles.songGenre}>Genre: {song.genre}</Text>}
-                <Text style={styles.songTimestamp}>
-                  Updated: {new Date(song.updated_at).toLocaleString()}
-                </Text>
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity 
-                    style={styles.editButton}
-                    onPress={() => setEditingSong(song)}
-                  >
-                    <Text style={styles.editButtonText}>✏️ Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.deleteButton}
-                    onPress={() => deleteSong(song.id)}
-                  >
-                    <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+        {sharedData.map((item, index) => (
+          <View key={`${item.timestamp}-${index}`} style={styles.shareItem}>
+            <View style={styles.shareHeader}>
+              <Text style={styles.shareType}>
+                {item.type === 'track' && '🎵 Track'}
+                {item.type === 'album' && '💿 Album'}
+                {item.type === 'playlist' && '📚 Playlist'}
+                {item.type === 'artist' && '🎤 Artist'}
+                {item.type === 'unknown' && '❓ Unknown'}
+              </Text>
+              <Text style={styles.shareTime}>
+                {new Date(item.timestamp).toLocaleTimeString()}
+              </Text>
+            </View>
+            
+            {item.id && (
+              <Text style={styles.shareId}>ID: {item.id}</Text>
+            )}
+            
+            <Text style={styles.shareUrl} numberOfLines={3}>
+              {item.url}
+            </Text>
+            
+            {item.title && (
+              <Text style={styles.shareTitle}>Title: {item.title}</Text>
+            )}
+            
+            {item.artist && (
+              <Text style={styles.shareArtist}>Artist: {item.artist}</Text>
             )}
           </View>
         ))}
         
-        {songs.length === 0 && !loading && (
-          <Text style={styles.emptyText}>No songs in database. Add some!</Text>
+        {sharedData.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              No shared content received yet.{'\n'}
+              Try sharing a Spotify link to this app!
+            </Text>
+          </View>
         )}
       </ScrollView>
 
@@ -264,7 +204,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#0a0a0a',
     padding: 20,
     paddingTop: 60,
   },
@@ -273,7 +213,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
-    color: '#333',
+    color: '#1db954',
   },
   errorContainer: {
     backgroundColor: '#fee2e2',
@@ -285,150 +225,120 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     textAlign: 'center',
   },
-  formContainer: {
-    backgroundColor: 'white',
+  instructionsContainer: {
+    backgroundColor: '#1a1a1a',
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#1db954',
   },
-  formTitle: {
+  instructionsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 12,
-    borderRadius: 8,
     marginBottom: 10,
-    fontSize: 16,
+    color: '#1db954',
   },
-  button: {
-    backgroundColor: '#6366f1',
+  instructionsText: {
+    fontSize: 14,
+    color: '#ffffff',
+    lineHeight: 20,
+  },
+  currentUrlContainer: {
+    backgroundColor: '#1a1a1a',
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#666',
   },
-  buttonText: {
-    color: 'white',
+  currentUrlTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#1db954',
   },
-  songsContainer: {
+  currentUrlText: {
+    fontSize: 12,
+    color: '#cccccc',
+    fontFamily: 'monospace',
+  },
+  historyContainer: {
     flex: 1,
   },
-  songsHeader: {
+  historyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  songsTitle: {
+  historyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#ffffff',
   },
-  refreshText: {
-    color: '#6366f1',
+  clearText: {
+    color: '#ff6b6b',
     fontSize: 16,
   },
-  songItem: {
-    backgroundColor: 'white',
+  shareItem: {
+    backgroundColor: '#1a1a1a',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  songContent: {
-    position: 'relative',
-  },
-  songTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  songArtist: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 3,
-  },
-  songGenre: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 3,
-  },
-  songTimestamp: {
-    fontSize: 11,
-    color: '#aaa',
+  shareHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  actionButtons: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    flexDirection: 'row',
-    gap: 5,
+  shareType: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1db954',
   },
-  editButton: {
-    padding: 5,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-  },
-  editButtonText: {
-    color: '#6366f1',
+  shareTime: {
     fontSize: 12,
+    color: '#888',
   },
-  deleteButton: {
-    padding: 5,
-    backgroundColor: '#fee2e2',
-    borderRadius: 5,
-  },
-  deleteButtonText: {
-    color: '#dc2626',
+  shareId: {
     fontSize: 12,
+    color: '#ffd700',
+    marginBottom: 5,
+    fontFamily: 'monospace',
   },
-  editContainer: {
-    gap: 10,
-  },
-  editInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
+  shareUrl: {
+    fontSize: 11,
+    color: '#cccccc',
+    backgroundColor: '#0a0a0a',
+    padding: 8,
     borderRadius: 5,
+    marginBottom: 8,
+    fontFamily: 'monospace',
+  },
+  shareTitle: {
     fontSize: 14,
-  },
-  editButtons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  saveButton: {
-    backgroundColor: '#10b981',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: 'white',
+    color: '#ffffff',
+    marginBottom: 3,
     fontWeight: 'bold',
   },
-  cancelButton: {
-    backgroundColor: '#ef4444',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: 'center',
+  shareArtist: {
+    fontSize: 13,
+    color: '#cccccc',
   },
-  cancelButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   emptyText: {
     textAlign: 'center',
     color: '#666',
     fontSize: 16,
-    marginTop: 20,
+    lineHeight: 24,
   },
 });
