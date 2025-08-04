@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
-import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
+import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
 
@@ -55,10 +55,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectUri = makeRedirectUri({
-    scheme: 'moodring',
-    path: 'auth',
-  });
+  // Use explicit redirect URI for consistent behavior
+  const redirectUri = 'moodring://auth';
+
+  // Debug: Log the redirect URI being used
+  console.log('Using redirect URI:', redirectUri);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -70,6 +71,13 @@ export default function App() {
     },
     discovery
   );
+
+  // Debug: Log the auth request details
+  console.log('Auth request config:', {
+    clientId: CLIENT_ID,
+    redirectUri,
+    scopes: SCOPES,
+  });
 
   const exchangeCodeForTokens = async (code: string, codeVerifier: string) => {
     try {
