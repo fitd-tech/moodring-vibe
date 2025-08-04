@@ -452,6 +452,328 @@ overall_approved = (
 )
 ```
 
+## 7. Environment Sync Validator Agent
+
+### Usage
+```python
+env_validation = await Task(
+    description="OAuth environment configuration validation",
+    prompt=f"""You are an environment configuration specialist who ensures OAuth consistency and prevents deployment failures across development, staging, and production environments.
+
+**Your Mission**: Validate OAuth configuration consistency between all environments and ensure deployment readiness.
+
+**Current Environment Files to Analyze**:
+- `/moodring_frontend/.env` (development)
+- `/moodring_frontend/.env.example` (template)
+- `/moodring_frontend/app.config.js` (app configuration)
+- `/.gitignore` (security validation)
+
+**Target Environment Files** (if available):
+- `/moodring_frontend/.env.staging`
+- `/moodring_frontend/.env.production` 
+- `/moodring_frontend/.env.local`
+
+**OAuth Configuration Context**:
+- **Spotify Integration**: PKCE OAuth flow
+- **Client ID Variable**: `EXPO_PUBLIC_SPOTIFY_CLIENT_ID`
+- **App Scheme**: 'moodring' (from app.config.js)
+- **Redirect URI Pattern**: 'moodring://auth'
+- **Expected Client ID Format**: 32-character hexadecimal string
+
+**Validation Requirements**:
+
+### 1. Environment File Validation
+- Check `.env` and `.env.example` consistency
+- Verify all environment-specific .env files exist and are properly configured
+- Validate environment variable naming conventions
+- Ensure required OAuth variables are present in all environments
+
+### 2. OAuth Configuration Validation  
+- Verify Spotify client ID format (32-char hex string)
+- Check that client IDs are different between environments (dev/staging/prod)
+- Validate redirect URI consistency between app.config.js and Spotify Dashboard expectations
+- Confirm app scheme configuration matches redirect URI pattern
+
+### 3. Security Best Practices
+- Ensure actual client IDs are not committed to git (only in gitignored .env files)
+- Verify .env.example contains placeholder values, not real secrets
+- Check gitignore includes all sensitive environment files
+- Validate that EXPO_PUBLIC_ prefix is used correctly for client-side values
+
+### 4. Cross-Environment Consistency
+- Compare environment configurations for structural consistency
+- Identify missing environment variables across different .env files
+- Validate that all environments have the same variable names (with different values)
+- Check app.config.js references to environment variables are correct
+
+### 5. Deployment Readiness
+- Confirm production environment files exist and are properly configured
+- Validate that all OAuth flows will work in target deployment environments
+- Check for environment-specific configuration issues that could cause runtime failures
+
+**Analysis Process**:
+1. **Read Configuration Files**: Load and parse all environment and config files
+2. **Parse OAuth Settings**: Extract client IDs, redirect URIs, and app schemes
+3. **Validate Formats**: Check client ID format, URI structure, scheme consistency
+4. **Cross-Reference**: Compare configurations between environments  
+5. **Security Scan**: Verify no secrets leaked in version control
+6. **Generate Report**: Provide specific issues found and fix commands
+
+**Output Format**:
+{{
+  "environment_status": "VALID|INVALID",
+  "issues_found": [
+    {{
+      "type": "client_id_mismatch|callback_url_invalid|security_leak|missing_config|format_error|consistency_issue",
+      "file": "path/to/file",
+      "line": "line number if applicable",
+      "description": "specific issue description",
+      "fix_command": "specific command to fix",
+      "severity": "error|warning|info"
+    }}
+  ],
+  "oauth_validation": {{
+    "client_id_format": "VALID|INVALID",
+    "client_id_uniqueness": "VALID|INVALID",
+    "redirect_uri_consistency": "VALID|INVALID",
+    "scheme_configuration": "VALID|INVALID",
+    "app_config_integration": "VALID|INVALID"
+  }},
+  "environment_consistency": {{
+    "env_example_sync": true/false,
+    "dev_staging_structure": true/false,
+    "staging_prod_structure": true/false,
+    "missing_variables": ["list of missing vars by environment"],
+    "variable_naming": "CONSISTENT|INCONSISTENT",
+    "all_environments_present": true/false
+  }},
+  "security_status": {{
+    "secrets_in_git": true/false,
+    "env_example_sanitized": true/false,
+    "gitignore_configured": true/false,
+    "public_prefix_correct": true/false,
+    "client_ids_different": true/false
+  }},
+  "deployment_readiness": {{
+    "production_config_exists": true/false,
+    "oauth_flow_viable": true/false,
+    "runtime_config_valid": true/false,
+    "deep_linking_configured": true/false
+  }},
+  "recommendations": [
+    "Update .env.example to match current .env variable names",
+    "Add missing EXPO_PUBLIC_SPOTIFY_CLIENT_ID to .env.production",
+    "Register moodring://auth redirect URI in Spotify Dashboard",
+    "Generate unique client ID for production environment"
+  ],
+  "fix_commands": [
+    "echo 'EXPO_PUBLIC_SPOTIFY_CLIENT_ID=your_prod_client_id_here' >> moodring_frontend/.env.production",
+    "git rm --cached moodring_frontend/.env",
+    "specific commands to resolve each issue"
+  ],
+  "approval": "APPROVE|BLOCK|REVIEW_REQUIRED",
+  "next_steps": [
+    "Configure Spotify Dashboard with redirect URIs for all environments",
+    "Generate environment-specific client IDs",
+    "Test OAuth flow in each environment"
+  ]
+}}
+
+**Critical Validation Rules**:
+1. **Block deployment if client IDs are the same across environments**
+2. **Block if .env files contain placeholder values in production**
+3. **Block if redirect URIs don't match app scheme configuration**
+4. **Block if OAuth variables are missing from any environment**
+5. **Block if security issues detected (secrets in git, improper gitignore)**
+
+**File Analysis Commands**:
+- Read all .env* files in moodring_frontend/
+- Parse app.config.js for scheme and intent filter configuration  
+- Check .gitignore for proper exclusion patterns
+- Validate client ID format with regex: `^[a-f0-9]{{32}}$`
+- Cross-reference environment variables between files
+
+**Environment-Specific Checks**:
+- **Development**: Client ID should be test/development Spotify app
+- **Staging**: Should have separate client ID from development
+- **Production**: Must have production-grade client ID, no placeholder values
+- **All Environments**: Redirect URIs must be registered in corresponding Spotify Dashboard apps
+
+**Spotify Dashboard Integration Notes**:
+- Each environment needs separate Spotify app registration
+- Redirect URIs must be added to Spotify Dashboard: `moodring://auth`
+- Client IDs must match between .env files and Spotify Dashboard
+- PKCE flow requires no client secret (client-side OAuth)
+
+Only approve if ALL validations pass and deployment is safe.""",
+    subagent_type="general-purpose"
+)
+```
+
+### Pre-Deployment Integration
+```python
+# Pre-deployment environment validation workflow
+async def pre_deployment_env_validation():
+    """Validate environment configuration before deployment"""
+    
+    # Run environment sync validation
+    env_check = await Task(
+        description="OAuth environment configuration validation",
+        prompt=ENV_SYNC_VALIDATOR_PROMPT,
+        subagent_type="general-purpose"
+    )
+    
+    # Parse structured response
+    result = json.loads(env_check)
+    
+    if result["approval"] == "BLOCK":
+        print("🚫 Deployment blocked by environment validation")
+        print(f"Environment status: {result['environment_status']}")
+        print(f"Critical issues found: {len([i for i in result['issues_found'] if i['severity'] == 'error'])}")
+        
+        print("\n🔧 Fix commands:")
+        for cmd in result["fix_commands"]:
+            print(f"  {cmd}")
+            
+        print(f"\n📋 Next steps:")
+        for step in result["next_steps"]:
+            print(f"  - {step}")
+            
+        return False
+    
+    elif result["approval"] == "REVIEW_REQUIRED":
+        print("⚠️  Manual review required before deployment")
+        warnings = [i for i in result["issues_found"] if i["severity"] == "warning"]
+        for warning in warnings:
+            print(f"  - {warning['description']}")
+        
+        # Prompt for manual approval
+        user_input = input("Continue with deployment? (y/N): ")
+        return user_input.lower() == 'y'
+    
+    else:  # APPROVE
+        print("✅ Environment validation passed")
+        print(f"OAuth configuration: {result['oauth_validation']}")
+        print(f"Security status: {result['security_status']['secrets_in_git'] == False}")
+        return True
+
+# Example: Combined with other pre-deployment checks
+async def comprehensive_pre_deployment():
+    """Run all pre-deployment validations"""
+    
+    # Run in parallel for efficiency
+    env_task = Task(description="Environment validation", prompt=ENV_SYNC_VALIDATOR_PROMPT)
+    quality_task = Task(description="Quality control", prompt=UNIFIED_QUALITY_CONTROL_PROMPT)
+    coverage_task = Task(description="Coverage analysis", prompt=COVERAGE_ANALYSIS_PROMPT)
+    
+    env_result, quality_result, coverage_result = await asyncio.gather(
+        env_task, quality_task, coverage_task
+    )
+    
+    # Check all validations passed
+    deployment_approved = (
+        env_result["approval"] == "APPROVE" and
+        quality_result["overall_status"] == "PASS" and  
+        coverage_result["meets_threshold"] == True
+    )
+    
+    if deployment_approved:
+        print("🚀 All pre-deployment checks passed - ready for deployment")
+        return True
+    else:
+        print("❌ Deployment blocked - fix issues and retry")
+        return False
+```
+
+### Environment File Management
+```python
+# Automated environment file management
+def create_missing_env_files(env_validation_result):
+    """Create missing environment files based on validation results"""
+    
+    missing_configs = env_validation_result["environment_consistency"]["missing_variables"]
+    
+    for env_name, missing_vars in missing_configs.items():
+        env_file = f"moodring_frontend/.env.{env_name}"
+        
+        if not os.path.exists(env_file):
+            # Create base environment file
+            with open(env_file, 'w') as f:
+                f.write(f"# {env_name.title()} Environment Configuration\n")
+                f.write(f"# Generated automatically - update with real values\n\n")
+                
+                for var in missing_vars:
+                    if "CLIENT_ID" in var:
+                        f.write(f"{var}=your_{env_name}_spotify_client_id_here\n")
+                    else:
+                        f.write(f"{var}=your_{var.lower()}_value_here\n")
+            
+            print(f"Created {env_file} - update with real values")
+
+# Environment synchronization helper
+def sync_env_structure():
+    """Ensure all environment files have consistent structure"""
+    
+    # Read .env.example as template
+    with open("moodring_frontend/.env.example", 'r') as f:
+        template_vars = [line.split('=')[0] for line in f if '=' in line and not line.startswith('#')]
+    
+    # Check each environment file
+    env_files = glob.glob("moodring_frontend/.env.*")
+    
+    for env_file in env_files:
+        if env_file.endswith('.example'):
+            continue
+            
+        # Read existing variables
+        with open(env_file, 'r') as f:
+            existing_vars = [line.split('=')[0] for line in f if '=' in line and not line.startswith('#')]
+        
+        # Add missing variables
+        missing_vars = set(template_vars) - set(existing_vars)
+        
+        if missing_vars:
+            with open(env_file, 'a') as f:
+                f.write(f"\n# Added missing variables\n")
+                for var in missing_vars:
+                    f.write(f"{var}=your_value_here\n")
+            
+            print(f"Added {len(missing_vars)} missing variables to {env_file}")
+```
+
+### Spotify Dashboard Integration
+```python
+# Helper for Spotify Dashboard validation
+def validate_spotify_dashboard_config(client_ids, redirect_uris):
+    """Validate that client IDs and redirect URIs are properly configured in Spotify Dashboard"""
+    
+    validation_checklist = {
+        "client_ids_unique": len(set(client_ids)) == len(client_ids),
+        "redirect_uris_registered": all(uri.startswith('moodring://') for uri in redirect_uris),
+        "pkce_compatible": True,  # No client secret needed for PKCE
+        "environment_separation": len([cid for cid in client_ids if cid != 'placeholder']) >= 2
+    }
+    
+    # Generate dashboard configuration instructions
+    instructions = []
+    
+    for i, client_id in enumerate(client_ids):
+        env_name = ['development', 'staging', 'production'][i] if i < 3 else f'environment_{i}'
+        instructions.append({
+            "environment": env_name,
+            "client_id": client_id,
+            "redirect_uris": redirect_uris,
+            "dashboard_url": "https://developer.spotify.com/dashboard",
+            "required_settings": {
+                "redirect_uri": "moodring://auth",
+                "app_type": "Mobile/Desktop App",
+                "oauth_flow": "Authorization Code with PKCE"
+            }
+        })
+    
+    return validation_checklist, instructions
+```
+
 ## Notes
 
 - These templates use the existing `Task` tool with specialized prompts
