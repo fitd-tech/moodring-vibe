@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1754289768624" clover="3.2.0">
+  <project timestamp="1754289768624" name="All files">
+    <metrics statements="83" coveredstatements="81" conditionals="39" coveredconditionals="34" methods="12" coveredmethods="12" elements="134" coveredelements="127" complexity="0" loc="83" ncloc="83" packages="1" files="2" classes="2"/>
+    <file name="App.tsx" path="/Users/anthonypelusocook/moodring-vibe/moodring_frontend/App.tsx">
+      <metrics statements="82" coveredstatements="81" conditionals="39" coveredconditionals="34" methods="12" coveredmethods="12"/>
+      <line num="8" count="2" type="stmt"/>
+      <line num="11" count="2" type="stmt"/>
+      <line num="17" count="2" type="stmt"/>
+      <line num="19" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="27" count="1" type="stmt"/>
+      <line num="53" count="32" type="stmt"/>
+      <line num="54" count="32" type="stmt"/>
+      <line num="55" count="32" type="stmt"/>
+      <line num="56" count="32" type="stmt"/>
+      <line num="58" count="32" type="stmt"/>
+      <line num="63" count="32" type="stmt"/>
+      <line num="74" count="32" type="stmt"/>
+      <line num="75" count="3" type="stmt"/>
+      <line num="76" count="3" type="stmt"/>
+      <line num="90" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="91" count="1" type="stmt"/>
+      <line num="94" count="2" type="stmt"/>
+      <line num="95" count="2" type="stmt"/>
+      <line num="97" count="1" type="stmt"/>
+      <line num="101" count="32" type="stmt"/>
+      <line num="102" count="6" type="stmt"/>
+      <line num="103" count="6" type="stmt"/>
+      <line num="109" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="110" count="1" type="stmt"/>
+      <line num="113" count="5" type="stmt"/>
+      <line num="114" count="5" type="stmt"/>
+      <line num="116" count="1" type="stmt"/>
+      <line num="120" count="32" type="stmt"/>
+      <line num="121" count="1" type="stmt"/>
+      <line num="122" count="1" type="stmt"/>
+      <line num="129" count="32" type="stmt"/>
+      <line num="130" count="14" type="stmt"/>
+      <line num="131" count="14" type="stmt"/>
+      <line num="132" count="13" type="cond" truecount="2" falsecount="0"/>
+      <line num="133" count="4" type="stmt"/>
+      <line num="139" count="9" type="stmt"/>
+      <line num="142" count="32" type="stmt"/>
+      <line num="143" count="1" type="stmt"/>
+      <line num="144" count="1" type="stmt"/>
+      <line num="151" count="32" type="stmt"/>
+      <line num="152" count="2" type="stmt"/>
+      <line num="153" count="2" type="stmt"/>
+      <line num="154" count="2" type="stmt"/>
+      <line num="156" count="1" type="stmt"/>
+      <line num="160" count="32" type="stmt"/>
+      <line num="161" count="1" type="stmt"/>
+      <line num="162" count="1" type="stmt"/>
+      <line num="163" count="1" type="stmt"/>
+      <line num="166" count="32" type="stmt"/>
+      <line num="168" count="14" type="stmt"/>
+      <line num="169" count="14" type="stmt"/>
+      <line num="170" count="14" type="stmt"/>
+      <line num="171" count="14" type="stmt"/>
+      <line num="172" count="13" type="cond" truecount="2" falsecount="0"/>
+      <line num="174" count="4" type="stmt"/>
+      <line num="175" count="4" type="stmt"/>
+      <line num="176" count="4" type="stmt"/>
+      <line num="181" count="0" type="stmt"/>
+      <line num="183" count="13" type="stmt"/>
+      <line num="187" count="14" type="stmt"/>
+      <line num="190" count="32" type="stmt"/>
+      <line num="192" count="14" type="stmt"/>
+      <line num="193" count="14" type="cond" truecount="5" falsecount="0"/>
+      <line num="194" count="3" type="stmt"/>
+      <line num="195" count="3" type="stmt"/>
+      <line num="196" count="3" type="stmt"/>
+      <line num="198" count="2" type="stmt"/>
+      <line num="200" count="1" type="stmt"/>
+      <line num="201" count="1" type="stmt"/>
+      <line num="202" count="1" type="stmt"/>
+      <line num="204" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="206" count="3" type="stmt"/>
+      <line num="208" count="11" type="cond" truecount="2" falsecount="0"/>
+      <line num="209" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="213" count="14" type="stmt"/>
+      <line num="216" count="32" type="cond" truecount="2" falsecount="0"/>
+      <line num="217" count="15" type="stmt"/>
+      <line num="225" count="17" type="cond" truecount="4" falsecount="0"/>
+      <line num="227" count="5" type="stmt"/>
+      <line num="274" count="12" type="stmt"/>
+      <line num="317" count="1" type="stmt"/>
+    </file>
+    <file name="index.ts" path="/Users/anthonypelusocook/moodring-vibe/moodring_frontend/index.ts">
+      <metrics statements="1" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <line num="8" count="0" type="stmt"/>
+    </file>
+  </project>
+</coverage>

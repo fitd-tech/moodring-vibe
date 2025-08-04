@@ -1,50 +1,50 @@
 export default ({ config }) => {
   return {
     ...config,
-    name: "moodring_frontend",
-    slug: "moodring_frontend",
-    version: "1.0.0",
-    orientation: "portrait",
-    icon: "./assets/icon.png",
-    userInterfaceStyle: "light",
+    name: 'moodring_frontend',
+    slug: 'moodring_frontend',
+    version: '1.0.0',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'light',
     newArchEnabled: true,
-    scheme: "moodring",
+    scheme: 'moodring',
     splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.moodring.app"
+      bundleIdentifier: 'com.moodring.app',
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      package: "com.moodring.app",
+      package: 'com.moodring.app',
       intentFilters: [
         {
-          action: "VIEW",
+          action: 'VIEW',
           autoVerify: true,
           data: [
             {
-              scheme: "moodring",
-              path: "/auth"
-            }
+              scheme: 'moodring',
+              path: '/auth',
+            },
           ],
-          category: ["BROWSABLE", "DEFAULT"]
-        }
-      ]
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: './assets/favicon.png',
     },
     extra: {
       // Environment variables accessible via expo-constants
-      spotifyClientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID
-    }
+      spotifyClientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID,
+    },
   };
 };

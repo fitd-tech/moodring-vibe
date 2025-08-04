@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -19,19 +19,19 @@ const CLIENT_ID = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
 if (!CLIENT_ID) {
   throw new Error(
     'Missing EXPO_PUBLIC_SPOTIFY_CLIENT_ID environment variable. ' +
-    'Please add it to your .env file or environment configuration.'
+      'Please add it to your .env file or environment configuration.'
   );
 }
 
 // Scopes for accessing user's music data
 const SCOPES = [
   'user-read-private',
-  'user-read-email', 
+  'user-read-email',
   'user-read-recently-played',
   'playlist-read-private',
   'playlist-read-collaborative',
   'user-library-read',
-  'user-top-read'
+  'user-top-read',
 ];
 
 interface SpotifyUser {
@@ -120,8 +120,9 @@ export default function App() {
   const saveTokensSecurely = async (tokens: AuthTokens) => {
     try {
       await SecureStore.setItemAsync('spotify_tokens', JSON.stringify(tokens));
-    } catch (err) {
-      console.error('Failed to save tokens:', err);
+    } catch {
+      // TODO: Replace with proper logging service
+      // Error saving tokens - will be handled when logging service is implemented
     }
   };
 
@@ -131,8 +132,9 @@ export default function App() {
       if (tokensString) {
         return JSON.parse(tokensString);
       }
-    } catch (err) {
-      console.error('Failed to load saved tokens:', err);
+    } catch {
+      // TODO: Replace with proper logging service
+      // Error loading saved tokens - will be handled when logging service is implemented
     }
     return null;
   };
@@ -140,8 +142,9 @@ export default function App() {
   const clearStoredTokens = async () => {
     try {
       await SecureStore.deleteItemAsync('spotify_tokens');
-    } catch (err) {
-      console.error('Failed to clear tokens:', err);
+    } catch {
+      // TODO: Replace with proper logging service
+      // Error clearing tokens - will be handled when logging service is implemented
     }
   };
 
@@ -149,7 +152,7 @@ export default function App() {
     try {
       setError(null);
       await promptAsync();
-    } catch (err) {
+    } catch {
       setError('Failed to start login process');
     }
   };
@@ -172,8 +175,9 @@ export default function App() {
           setTokens(savedTokens);
           setUser(userData);
         }
-      } catch (err) {
-        console.error('Failed to initialize auth:', err);
+      } catch {
+        // TODO: Replace with proper logging service
+        // Error initializing auth - will be handled when logging service is implemented
         await clearStoredTokens();
       } finally {
         setIsLoading(false);
@@ -189,13 +193,10 @@ export default function App() {
       if (response?.type === 'success' && response.params.code && request?.codeVerifier) {
         setIsLoading(true);
         try {
-          const tokenData = await exchangeCodeForTokens(
-            response.params.code,
-            request.codeVerifier
-          );
-          
+          const tokenData = await exchangeCodeForTokens(response.params.code, request.codeVerifier);
+
           const userData = await fetchUserProfile(tokenData.access_token);
-          
+
           await saveTokensSecurely(tokenData);
           setTokens(tokenData);
           setUser(userData);
@@ -226,7 +227,7 @@ export default function App() {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>🎵 Moodring</Text>
-        
+
         {/* User Profile */}
         <View style={styles.profileContainer}>
           {user.images?.length > 0 && (
@@ -250,7 +251,7 @@ export default function App() {
           <Text style={styles.welcomeText}>
             Welcome to Moodring! Ready to organize your music with tags?
           </Text>
-          
+
           <View style={styles.featureList}>
             <Text style={styles.featureItem}>🎵 Access your playlists and saved music</Text>
             <Text style={styles.featureItem}>🏷️ Create hierarchical tags for organization</Text>
@@ -275,7 +276,7 @@ export default function App() {
       <View style={styles.loginContainer}>
         <Text style={styles.appTitle}>🎵 Moodring</Text>
         <Text style={styles.tagline}>Organize your music with powerful tags</Text>
-        
+
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
@@ -291,18 +292,14 @@ export default function App() {
         </View>
 
         <View style={styles.authSection}>
-          <Text style={styles.authText}>
-            Connect your Spotify account to get started
-          </Text>
-          
-          <TouchableOpacity 
-            style={[styles.loginButton, !request && styles.loginButtonDisabled]} 
+          <Text style={styles.authText}>Connect your Spotify account to get started</Text>
+
+          <TouchableOpacity
+            style={[styles.loginButton, !request && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={!request}
           >
-            <Text style={styles.loginButtonText}>
-              🎧 Connect with Spotify
-            </Text>
+            <Text style={styles.loginButtonText}>🎧 Connect with Spotify</Text>
           </TouchableOpacity>
 
           <Text style={styles.disclaimerText}>
