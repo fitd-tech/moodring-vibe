@@ -66,7 +66,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
      - **FAIL COMMITS ON ANY WARNINGS**: Address all clippy warnings, lint warnings, and formatting issues before committing
      - **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
   3. Add files with `git add`
-  4. **Generate commit message**: Use `commit-message-specialist` subagent for complex changes or new features
+  4. **Generate commit message**: MANDATORY use of `commit-message-specialist` subagent for ALL commits
   5. Commit with comprehensive message including 🤖 footer
   6. Push to working branch (develop/feature) with `git push origin <branch>`
 - **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
@@ -81,12 +81,18 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - Run test suite on every commit via git hooks
 - Include comprehensive commit messages describing all changes made
 
-## Specialized Subagent Usage Policy
+## Specialized Subagent Usage Policy - CRITICAL ENFORCEMENT
+**VERY IMPORTANT**: Always use specialized subagents for their designated tasks - they exist to ensure quality and consistency. The main Claude agent should STRONGLY PREFER delegating to subagents rather than performing specialized tasks directly.
+
+**Exception Handling**: Only bypass subagents if they are unavailable, malfunctioning, or would create excessive overhead for trivial operations.
+
+### MANDATORY Subagent Usage:
 - **pre-commit-quality-guard**: MANDATORY for significant changes (>5 files or new features) to enforce zero-tolerance quality standards before commits
-- **commit-message-specialist**: Use for complex changes or new features to ensure comprehensive commit messages following template format  
-- **test-coverage-enforcer**: Use after writing/modifying code to verify 80% minimum threshold requirement before major commits
+- **commit-message-specialist**: MANDATORY for ALL commit messages to ensure consistent template format and comprehensive descriptions
+- **test-coverage-enforcer**: MANDATORY after writing/modifying code to verify 80% minimum threshold requirement  
 - **tech-debt-cleanup-planner**: MANDATORY when dealing with TODO: TEMP items to create systematic removal strategies
 - **claude-md-policy-analyst**: MANDATORY before making ANY changes to CLAUDE.md to evaluate for conflicts and best practices
+- **workflow-automation-analyst**: MANDATORY when evaluating repetitive manual tasks or workflow improvements
 
 ## CLAUDE.md Change Evaluation
 - **Before making ANY changes to CLAUDE.md**: Use `claude-md-policy-analyst` subagent to evaluate the proposed change for:
