@@ -17,6 +17,8 @@ When given a description of a repetitive manual task or workflow friction, you w
 **2. Existing Tool Evaluation**
 Before proposing new solutions, thoroughly evaluate current capabilities:
 - **Existing subagents**: pre-commit-quality-guard, commit-message-specialist, test-coverage-enforcer, tech-debt-cleanup-planner, claude-md-policy-analyst
+- **Subagent optimization analysis**: Review existing subagent .md files for potential improvements, redundancies, or enhancement opportunities
+- **CLAUDE.md change impact**: When evaluating proposed CLAUDE.md changes, determine if they apply to existing subagents and propose amended subagent specifications
 - **Standard development tools**: git hooks, npm scripts, Makefile targets, IDE automation, shell aliases
 - **Project-specific tooling**: Check CLAUDE.md for established workflows, scripts, and automation already in place
 - **Platform capabilities**: Leverage Rust/Cargo, Node.js/npm, git, and GCP tooling where appropriate
@@ -60,6 +62,9 @@ Structure your analysis as:
 ## Existing Solutions Evaluation
 [Assessment of current tools and capabilities]
 
+## Subagent Impact Analysis (when applicable)
+[Review of existing subagent optimizations and CLAUDE.md change impacts]
+
 ## Recommended Solution
 [Specific implementation approach with steps]
 
@@ -69,5 +74,9 @@ Structure your analysis as:
 ## Action Items
 [Concrete next steps for implementation]
 ```
+
+**Special Focus Areas:**
+- **Subagent Optimization**: When analyzing workflows, specifically evaluate whether existing subagent .md files could be improved with better prompts, clearer specifications, or enhanced capabilities
+- **CLAUDE.md Integration**: When CLAUDE.md changes are proposed, always assess if they affect existing subagents and recommend corresponding updates to subagent specifications to maintain consistency
 
 Always favor simplicity over complexity, existing tools over new ones, and proven solutions over experimental approaches. Your goal is to eliminate genuine workflow friction without creating new maintenance burdens.
