@@ -19,8 +19,6 @@ help:
 	@echo "  format-all    - Format all code"
 	@echo ""
 	@echo "Development:"
-	@echo "  dev-start     - Start both backend and frontend dev servers"
-	@echo "  dev-stop      - Stop all development processes"
 	@echo "  setup         - Initialize development environment"
 	@echo "  install       - Install all dependencies"
 	@echo ""
@@ -56,23 +54,6 @@ format-all:
 	@echo "✅ All code formatted"
 
 # Development Environment Commands
-dev-start:
-	@echo "🚀 Starting development environment..."
-	@echo "Starting backend server..."
-	@cd $(BACKEND_DIR) && cargo run &
-	@sleep 3
-	@echo "Starting frontend development server..."
-	@cd $(FRONTEND_DIR) && npm start &
-	@echo "✅ Development servers started"
-	@echo "Backend: http://localhost:8000"
-	@echo "Frontend: Expo Dev Tools will open automatically"
-
-dev-stop:
-	@echo "🛑 Stopping development servers..."
-	@pkill -f "cargo run" || true
-	@pkill -f "expo start" || true
-	@pkill -f "node.*expo" || true
-	@echo "✅ Development servers stopped"
 
 setup: install
 	@echo "🔧 Setting up development environment..."
