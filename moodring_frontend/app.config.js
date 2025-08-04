@@ -1,6 +1,6 @@
-export default ({ config }) => {
-  return {
-    ...config,
+export default ({ config }) => ({
+  expo: {
+    ...config?.expo,
     name: 'moodring_frontend',
     slug: 'moodring_frontend',
     version: '1.0.0',
@@ -46,5 +46,5 @@ export default ({ config }) => {
       // Environment variables accessible via expo-constants
       spotifyClientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID,
     },
-  };
-};
+  },
+});
