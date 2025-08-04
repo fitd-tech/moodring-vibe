@@ -13,8 +13,15 @@ const discovery = {
   tokenEndpoint: 'https://accounts.spotify.com/api/token',
 };
 
-// TODO: Replace with your actual Spotify app credentials
-const CLIENT_ID = 'your_spotify_client_id';
+// Spotify Client ID from environment variable
+const CLIENT_ID = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+
+if (!CLIENT_ID) {
+  throw new Error(
+    'Missing EXPO_PUBLIC_SPOTIFY_CLIENT_ID environment variable. ' +
+    'Please add it to your .env file or environment configuration.'
+  );
+}
 
 // Scopes for accessing user's music data
 const SCOPES = [
