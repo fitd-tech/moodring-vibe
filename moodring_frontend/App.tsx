@@ -58,9 +58,6 @@ export default function App() {
   // Use explicit redirect URI for consistent behavior
   const redirectUri = 'moodring://auth';
 
-  // Debug: Log the redirect URI being used
-  console.log('Using redirect URI:', redirectUri);
-
   const [request, response, promptAsync] = useAuthRequest(
     {
       responseType: ResponseType.Code,
@@ -71,13 +68,6 @@ export default function App() {
     },
     discovery
   );
-
-  // Debug: Log the auth request details
-  console.log('Auth request config:', {
-    clientId: CLIENT_ID,
-    redirectUri,
-    scopes: SCOPES,
-  });
 
   const exchangeCodeForTokens = async (code: string, codeVerifier: string) => {
     try {
