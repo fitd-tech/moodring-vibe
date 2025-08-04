@@ -30,14 +30,8 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "moodring"
-            },
-            {
-              "scheme": "https",
-              "host": "open.spotify.com"
-            },
-            {
-              "scheme": "spotify"
+              "scheme": "moodring",
+              "path": "/auth"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

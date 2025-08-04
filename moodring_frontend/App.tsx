@@ -1,202 +1,311 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
-import * as Linking from 'expo-linking';
+import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import * as SecureStore from 'expo-secure-store';
 
-interface SpotifyShareData {
-  url: string;
-  type: 'track' | 'album' | 'playlist' | 'artist' | 'unknown';
-  id?: string;
-  title?: string;
-  artist?: string;
-  timestamp: string;
+WebBrowser.maybeCompleteAuthSession();
+
+// Spotify OAuth configuration
+const discovery = {
+  authorizationEndpoint: 'https://accounts.spotify.com/authorize',
+  tokenEndpoint: 'https://accounts.spotify.com/api/token',
+};
+
+// TODO: Replace with your actual Spotify app credentials
+const CLIENT_ID = 'your_spotify_client_id';
+
+// Scopes for accessing user's music data
+const SCOPES = [
+  'user-read-private',
+  'user-read-email', 
+  'user-read-recently-played',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-library-read',
+  'user-top-read'
+];
+
+interface SpotifyUser {
+  id: string;
+  display_name: string;
+  email: string;
+  images: Array<{ url: string }>;
+  followers: { total: number };
+}
+
+interface AuthTokens {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  token_type: string;
 }
 
 export default function App() {
-  const [sharedData, setSharedData] = useState<SpotifyShareData[]>([]);
-  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
+  const [user, setUser] = useState<SpotifyUser | null>(null);
+  const [tokens, setTokens] = useState<AuthTokens | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const parseSpotifyUrl = (url: string): SpotifyShareData => {
-    const timestamp = new Date().toISOString();
-    
+  const redirectUri = makeRedirectUri({
+    scheme: 'moodring',
+    path: 'auth',
+  });
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      responseType: ResponseType.Code,
+      clientId: CLIENT_ID,
+      scopes: SCOPES,
+      usePKCE: true,
+      redirectUri,
+    },
+    discovery
+  );
+
+  const exchangeCodeForTokens = async (code: string, codeVerifier: string) => {
     try {
-      // Parse Spotify URLs like: https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
-      const spotifyRegex = /spotify\.com\/(track|album|playlist|artist)\/([a-zA-Z0-9]+)/;
-      const match = url.match(spotifyRegex);
-      
-      if (match) {
-        const [, type, id] = match;
-        return {
-          url,
-          type: type as SpotifyShareData['type'],
-          id,
-          timestamp,
-        };
+      const response = await fetch(discovery.tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+          client_id: CLIENT_ID,
+          code_verifier: codeVerifier,
+        }).toString(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Token exchange failed: ${response.status}`);
       }
-      
-      // Also handle spotify: protocol URLs like: spotify:track:4iV5W9uYEdYUVa79Axb7Rh
-      const protocolRegex = /spotify:(track|album|playlist|artist):([a-zA-Z0-9]+)/;
-      const protocolMatch = url.match(protocolRegex);
-      
-      if (protocolMatch) {
-        const [, type, id] = protocolMatch;
-        return {
-          url,
-          type: type as SpotifyShareData['type'],
-          id,
-          timestamp,
-        };
-      }
-      
-      return {
-        url,
-        type: 'unknown',
-        timestamp,
-      };
+
+      const tokenData: AuthTokens = await response.json();
+      return tokenData;
     } catch (err) {
-      return {
-        url,
-        type: 'unknown',
-        timestamp,
-      };
+      throw new Error(`Failed to exchange code for tokens: ${err}`);
     }
   };
 
-  const handleIncomingUrl = (url: string) => {
-    setCurrentUrl(url);
-    setError(null);
-    
-    // Check if it's a Spotify URL
-    if (url.includes('spotify')) {
-      const parsedData = parseSpotifyUrl(url);
-      setSharedData(prev => [parsedData, ...prev]);
-    } else {
-      // Handle other URLs or show as received
-      const genericData: SpotifyShareData = {
-        url,
-        type: 'unknown',
-        timestamp: new Date().toISOString(),
-      };
-      setSharedData(prev => [genericData, ...prev]);
+  const fetchUserProfile = async (accessToken: string) => {
+    try {
+      const response = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.status}`);
+      }
+
+      const userData: SpotifyUser = await response.json();
+      return userData;
+    } catch (err) {
+      throw new Error(`Failed to fetch user profile: ${err}`);
     }
   };
 
-  const clearHistory = () => {
-    setSharedData([]);
-    setCurrentUrl(null);
-    setError(null);
+  const saveTokensSecurely = async (tokens: AuthTokens) => {
+    try {
+      await SecureStore.setItemAsync('spotify_tokens', JSON.stringify(tokens));
+    } catch (err) {
+      console.error('Failed to save tokens:', err);
+    }
+  };
+
+  const loadSavedTokens = async (): Promise<AuthTokens | null> => {
+    try {
+      const tokensString = await SecureStore.getItemAsync('spotify_tokens');
+      if (tokensString) {
+        return JSON.parse(tokensString);
+      }
+    } catch (err) {
+      console.error('Failed to load saved tokens:', err);
+    }
+    return null;
+  };
+
+  const clearStoredTokens = async () => {
+    try {
+      await SecureStore.deleteItemAsync('spotify_tokens');
+    } catch (err) {
+      console.error('Failed to clear tokens:', err);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      setError(null);
+      await promptAsync();
+    } catch (err) {
+      setError('Failed to start login process');
+    }
+  };
+
+  const handleLogout = async () => {
+    await clearStoredTokens();
+    setUser(null);
+    setTokens(null);
   };
 
   useEffect(() => {
-    // Check for initial URL when app launches
-    const checkInitialURL = async () => {
+    // Load saved tokens on app start
+    const initializeAuth = async () => {
+      setIsLoading(true);
       try {
-        const initialURL = await Linking.getInitialURL();
-        if (initialURL) {
-          handleIncomingUrl(initialURL);
+        const savedTokens = await loadSavedTokens();
+        if (savedTokens) {
+          // TODO: Check if token is expired and refresh if needed
+          const userData = await fetchUserProfile(savedTokens.access_token);
+          setTokens(savedTokens);
+          setUser(userData);
         }
       } catch (err) {
-        setError('Failed to get initial URL');
+        console.error('Failed to initialize auth:', err);
+        await clearStoredTokens();
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    checkInitialURL();
-
-    // Listen for URL changes while app is running
-    const subscription = Linking.addEventListener('url', (event) => {
-      handleIncomingUrl(event.url);
-    });
-
-    return () => subscription?.remove();
+    initializeAuth();
   }, []);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🎵 Moodring - Spotify Share Test</Text>
-      
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {error}</Text>
-        </View>
-      )}
+  useEffect(() => {
+    // Handle OAuth response
+    const handleAuthResponse = async () => {
+      if (response?.type === 'success' && response.params.code && request?.codeVerifier) {
+        setIsLoading(true);
+        try {
+          const tokenData = await exchangeCodeForTokens(
+            response.params.code,
+            request.codeVerifier
+          );
+          
+          const userData = await fetchUserProfile(tokenData.access_token);
+          
+          await saveTokensSecurely(tokenData);
+          setTokens(tokenData);
+          setUser(userData);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Authentication failed');
+        } finally {
+          setIsLoading(false);
+        }
+      } else if (response?.type === 'error') {
+        setError(`Authentication error: ${response.params.error_description || response.error}`);
+      }
+    };
 
-      {/* Instructions */}
-      <View style={styles.instructionsContainer}>
-        <Text style={styles.instructionsTitle}>📱 Test Spotify Sharing</Text>
-        <Text style={styles.instructionsText}>
-          1. Open Spotify app{'\n'}
-          2. Find a song, album, or playlist{'\n'}
-          3. Tap Share → Copy Link or Share to Moodring{'\n'}
-          4. Return to this app to see the shared data
-        </Text>
+    handleAuthResponse();
+  }, [response, request]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#1db954" />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
+    );
+  }
 
-      {/* Current URL Display */}
-      {currentUrl && (
-        <View style={styles.currentUrlContainer}>
-          <Text style={styles.currentUrlTitle}>🔗 Last Received URL:</Text>
-          <Text style={styles.currentUrlText} numberOfLines={2}>
-            {currentUrl}
-          </Text>
-        </View>
-      )}
-
-      {/* Shared Data History */}
-      <ScrollView style={styles.historyContainer}>
-        <View style={styles.historyHeader}>
-          <Text style={styles.historyTitle}>📝 Received Shares ({sharedData.length})</Text>
-          {sharedData.length > 0 && (
-            <TouchableOpacity onPress={clearHistory}>
-              <Text style={styles.clearText}>🗑️ Clear</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+  if (user && tokens) {
+    // User is logged in - show main app
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>🎵 Moodring</Text>
         
-        {sharedData.map((item, index) => (
-          <View key={`${item.timestamp}-${index}`} style={styles.shareItem}>
-            <View style={styles.shareHeader}>
-              <Text style={styles.shareType}>
-                {item.type === 'track' && '🎵 Track'}
-                {item.type === 'album' && '💿 Album'}
-                {item.type === 'playlist' && '📚 Playlist'}
-                {item.type === 'artist' && '🎤 Artist'}
-                {item.type === 'unknown' && '❓ Unknown'}
-              </Text>
-              <Text style={styles.shareTime}>
-                {new Date(item.timestamp).toLocaleTimeString()}
+        {/* User Profile */}
+        <View style={styles.profileContainer}>
+          {user.images?.length > 0 && (
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarPlaceholder}>
+                {user.display_name?.charAt(0).toUpperCase() || user.id.charAt(0).toUpperCase()}
               </Text>
             </View>
-            
-            {item.id && (
-              <Text style={styles.shareId}>ID: {item.id}</Text>
-            )}
-            
-            <Text style={styles.shareUrl} numberOfLines={3}>
-              {item.url}
-            </Text>
-            
-            {item.title && (
-              <Text style={styles.shareTitle}>Title: {item.title}</Text>
-            )}
-            
-            {item.artist && (
-              <Text style={styles.shareArtist}>Artist: {item.artist}</Text>
+          )}
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user.display_name || user.id}</Text>
+            <Text style={styles.userEmail}>{user.email}</Text>
+            {user.followers && (
+              <Text style={styles.userFollowers}>{user.followers.total} followers</Text>
             )}
           </View>
-        ))}
+        </View>
+
+        {/* Main Content Area */}
+        <View style={styles.mainContent}>
+          <Text style={styles.welcomeText}>
+            Welcome to Moodring! Ready to organize your music with tags?
+          </Text>
+          
+          <View style={styles.featureList}>
+            <Text style={styles.featureItem}>🎵 Access your playlists and saved music</Text>
+            <Text style={styles.featureItem}>🏷️ Create hierarchical tags for organization</Text>
+            <Text style={styles.featureItem}>📚 Generate custom playlists from tags</Text>
+            <Text style={styles.featureItem}>🔄 Sync back to your Spotify account</Text>
+          </View>
+        </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        <StatusBar style="light" />
+      </View>
+    );
+  }
+
+  // User is not logged in - show login screen
+  return (
+    <View style={styles.container}>
+      <View style={styles.loginContainer}>
+        <Text style={styles.appTitle}>🎵 Moodring</Text>
+        <Text style={styles.tagline}>Organize your music with powerful tags</Text>
         
-        {sharedData.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No shared content received yet.{'\n'}
-              Try sharing a Spotify link to this app!
-            </Text>
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-      </ScrollView>
 
-      <StatusBar style="auto" />
+        <View style={styles.featuresContainer}>
+          <Text style={styles.featuresTitle}>What you can do:</Text>
+          <Text style={styles.featureItem}>• Tag your songs and playlists</Text>
+          <Text style={styles.featureItem}>• Create hierarchical organization</Text>
+          <Text style={styles.featureItem}>• Generate smart playlists</Text>
+          <Text style={styles.featureItem}>• Discover music patterns</Text>
+        </View>
+
+        <View style={styles.authSection}>
+          <Text style={styles.authText}>
+            Connect your Spotify account to get started
+          </Text>
+          
+          <TouchableOpacity 
+            style={[styles.loginButton, !request && styles.loginButtonDisabled]} 
+            onPress={handleLogin}
+            disabled={!request}
+          >
+            <Text style={styles.loginButtonText}>
+              🎧 Connect with Spotify
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.disclaimerText}>
+            We'll only access your music library and playlists.{'\n'}
+            Your data stays private and secure.
+          </Text>
+        </View>
+      </View>
+
+      <StatusBar style="light" />
     </View>
   );
 }
@@ -204,141 +313,177 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000000',
     padding: 20,
     paddingTop: 60,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#1db954',
-  },
-  errorContainer: {
-    backgroundColor: '#fee2e2',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  errorText: {
-    color: '#dc2626',
-    textAlign: 'center',
-  },
-  instructionsContainer: {
-    backgroundColor: '#1a1a1a',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#1db954',
-  },
-  instructionsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#1db954',
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: '#ffffff',
-    lineHeight: 20,
-  },
-  currentUrlContainer: {
-    backgroundColor: '#1a1a1a',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#666',
-  },
-  currentUrlTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#1db954',
-  },
-  currentUrlText: {
-    fontSize: 12,
-    color: '#cccccc',
-    fontFamily: 'monospace',
-  },
-  historyContainer: {
-    flex: 1,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  centerContent: {
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
   },
-  historyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  loadingText: {
     color: '#ffffff',
-  },
-  clearText: {
-    color: '#ff6b6b',
     fontSize: 16,
+    marginTop: 15,
   },
-  shareItem: {
-    backgroundColor: '#1a1a1a',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  shareHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  shareType: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1db954',
-  },
-  shareTime: {
-    fontSize: 12,
-    color: '#888',
-  },
-  shareId: {
-    fontSize: 12,
-    color: '#ffd700',
-    marginBottom: 5,
-    fontFamily: 'monospace',
-  },
-  shareUrl: {
-    fontSize: 11,
-    color: '#cccccc',
-    backgroundColor: '#0a0a0a',
-    padding: 8,
-    borderRadius: 5,
-    marginBottom: 8,
-    fontFamily: 'monospace',
-  },
-  shareTitle: {
-    fontSize: 14,
-    color: '#ffffff',
-    marginBottom: 3,
-    fontWeight: 'bold',
-  },
-  shareArtist: {
-    fontSize: 13,
-    color: '#cccccc',
-  },
-  emptyContainer: {
+  // Login Screen Styles
+  loginContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
   },
-  emptyText: {
+  appTitle: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#1db954',
+    marginBottom: 10,
     textAlign: 'center',
-    color: '#666',
+  },
+  tagline: {
+    fontSize: 18,
+    color: '#b3b3b3',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  featuresContainer: {
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 40,
+    width: '100%',
+  },
+  featuresTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 15,
+  },
+  featureItem: {
     fontSize: 16,
+    color: '#b3b3b3',
+    marginBottom: 8,
     lineHeight: 24,
+  },
+  authSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  authText: {
+    fontSize: 16,
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 25,
+  },
+  loginButton: {
+    backgroundColor: '#1db954',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#444444',
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  disclaimerText: {
+    fontSize: 14,
+    color: '#777777',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  errorContainer: {
+    backgroundColor: '#330000',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    width: '100%',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  // Logged In Screen Styles
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#1db954',
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 30,
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1db954',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  avatarPlaceholder: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 5,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#b3b3b3',
+    marginBottom: 3,
+  },
+  userFollowers: {
+    fontSize: 12,
+    color: '#777777',
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 26,
+  },
+  featureList: {
+    alignItems: 'flex-start',
+  },
+  logoutButton: {
+    backgroundColor: '#333333',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 20,
+    alignSelf: 'center',
+  },
+  logoutButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
