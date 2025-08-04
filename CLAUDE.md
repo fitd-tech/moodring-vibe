@@ -59,14 +59,16 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ## Persistent Rules - MANDATORY WORKFLOW
 - **IMMEDIATELY after completing ANY task that creates, modifies, or deletes files**: 
   1. Run `git status` and `git diff` to review changes
-  2. **Run pre-commit checks**:
+  2. **Run pre-commit quality checks**:
+     - **MANDATORY**: Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
      - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
      - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/, if scripts exist)
      - **FAIL COMMITS ON ANY WARNINGS**: Address all clippy warnings, lint warnings, and formatting issues before committing
      - **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
   3. Add files with `git add`
-  4. Commit with comprehensive message including 🤖 footer
-  5. Push to working branch (develop/feature) with `git push origin <branch>`
+  4. **Generate commit message**: Use `commit-message-specialist` subagent for complex changes or new features
+  5. Commit with comprehensive message including 🤖 footer
+  6. Push to working branch (develop/feature) with `git push origin <branch>`
 - **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
 - **Never wait for user reminder**: Commit/push workflow is automatic after any file modification
 - **If lint/test commands don't exist**: Ask user for correct commands and suggest adding them to package.json/Cargo.toml
@@ -79,8 +81,15 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - Run test suite on every commit via git hooks
 - Include comprehensive commit messages describing all changes made
 
+## Specialized Subagent Usage Policy
+- **pre-commit-quality-guard**: MANDATORY for significant changes (>5 files or new features) to enforce zero-tolerance quality standards before commits
+- **commit-message-specialist**: Use for complex changes or new features to ensure comprehensive commit messages following template format  
+- **test-coverage-enforcer**: Use after writing/modifying code to verify 80% minimum threshold requirement before major commits
+- **tech-debt-cleanup-planner**: MANDATORY when dealing with TODO: TEMP items to create systematic removal strategies
+- **claude-md-policy-analyst**: MANDATORY before making ANY changes to CLAUDE.md to evaluate for conflicts and best practices
+
 ## CLAUDE.md Change Evaluation
-- **Before making ANY changes to CLAUDE.md**: Evaluate the proposed change for:
+- **Before making ANY changes to CLAUDE.md**: Use `claude-md-policy-analyst` subagent to evaluate the proposed change for:
   - **Conflicts**: Does this contradict existing rules or create ambiguous situations?
   - **Potential issues**: Could this rule cause problems, be too restrictive, or create workflow bottlenecks?
   - **Best practices**: Is this aligned with software development best practices and team collaboration?
