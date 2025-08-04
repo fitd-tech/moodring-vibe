@@ -23,15 +23,10 @@ if (!CLIENT_ID) {
   );
 }
 
-// Scopes for accessing user's music data
+// Minimal scopes needed for basic user profile access
 const SCOPES = [
   'user-read-private',
   'user-read-email',
-  'user-read-recently-played',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-  'user-library-read',
-  'user-top-read',
 ];
 
 interface SpotifyUser {
@@ -105,6 +100,10 @@ export default function App() {
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          const errorText = await response.text();
+          throw new Error(`Spotify API access denied (403). This usually means the app lacks required scopes or permissions. Response: ${errorText}`);
+        }
         throw new Error(`Failed to fetch user profile: ${response.status}`);
       }
 
@@ -159,6 +158,8 @@ export default function App() {
     await clearStoredTokens();
     setUser(null);
     setTokens(null);
+    setError(null);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -168,15 +169,17 @@ export default function App() {
       try {
         const savedTokens = await loadSavedTokens();
         if (savedTokens) {
-          // TODO: Check if token is expired and refresh if needed
+          // Validate saved tokens by fetching user profile
           const userData = await fetchUserProfile(savedTokens.access_token);
+          // Only set auth state if token validation succeeds
           setTokens(savedTokens);
           setUser(userData);
         }
       } catch {
-        // TODO: Replace with proper logging service
-        // Error initializing auth - will be handled when logging service is implemented
+        // If saved token validation fails, clear everything
         await clearStoredTokens();
+        setTokens(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -190,21 +193,28 @@ export default function App() {
     const handleAuthResponse = async () => {
       if (response?.type === 'success' && response.params.code && request?.codeVerifier) {
         setIsLoading(true);
+        setError(null); // Clear any previous errors
         try {
           const tokenData = await exchangeCodeForTokens(response.params.code, request.codeVerifier);
 
           const userData = await fetchUserProfile(tokenData.access_token);
 
+          // Only set auth state if BOTH token exchange AND user profile fetch succeed
           await saveTokensSecurely(tokenData);
           setTokens(tokenData);
           setUser(userData);
         } catch (err) {
+          // If either token exchange or profile fetch fails, clear everything
+          await clearStoredTokens();
+          setTokens(null);
+          setUser(null);
           setError(err instanceof Error ? err.message : 'Authentication failed');
         } finally {
           setIsLoading(false);
         }
       } else if (response?.type === 'error') {
         setError(`Authentication error: ${response.params.error_description || response.error}`);
+        setIsLoading(false);
       }
     };
 
