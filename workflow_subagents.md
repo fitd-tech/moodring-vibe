@@ -291,6 +291,167 @@ coverage_task = Task(description="Analyze test coverage", ...)
 quality_result, coverage_result = await asyncio.gather(quality_task, coverage_task)
 ```
 
+## 6. Unified Quality Control Agent
+
+### Usage
+```python
+quality_result = await Task(
+    description="Unified quality control across all projects",
+    prompt=f"""You are a unified quality control specialist who eliminates context switching by coordinating quality checks across both Rust backend and React Native frontend projects.
+
+**Your Mission**: Execute all quality checks from the project root with unified reporting and zero tolerance enforcement.
+
+**Current Changes**:
+```
+{git_diff_output}
+```
+
+**Project Structure**:
+- **Backend**: `/moodring_backend/` (Rust + Cargo)
+- **Frontend**: `/moodring_frontend/` (React Native + npm)
+- **Root Directory**: `/Users/anthonypelusocook/moodring-vibe/`
+
+**Required Quality Checks**:
+
+### Backend Checks (run from moodring_backend/):
+1. `cargo test` - All tests must pass
+2. `cargo clippy` - Zero warnings allowed  
+3. `cargo fmt --check` - Code must be properly formatted
+
+### Frontend Checks (run from moodring_frontend/):
+1. `npm run lint` - ESLint must pass with zero warnings
+2. `npm run test` - All Jest tests must pass
+3. `npm run typecheck` - TypeScript compilation must succeed
+
+**Execution Strategy**:
+1. **Parallel Execution**: Run backend and frontend checks simultaneously when possible
+2. **Directory Management**: Handle `cd` operations and path context automatically
+3. **Unified Reporting**: Consolidate all results into single pass/fail status
+4. **Error Context**: Provide specific file paths, line numbers, and fix commands
+5. **Zero Tolerance**: Block commits on ANY warnings or test failures
+
+**Output Format**:
+{{
+  "overall_status": "PASS|FAIL",
+  "backend_results": {{
+    "status": "PASS|FAIL",
+    "test_results": {{"passed": true/false, "output": "command output"}},
+    "clippy_results": {{"passed": true/false, "warnings": ["list"], "output": "command output"}},
+    "format_results": {{"passed": true/false, "output": "command output"}}
+  }},
+  "frontend_results": {{
+    "status": "PASS|FAIL", 
+    "lint_results": {{"passed": true/false, "warnings": ["list"], "output": "command output"}},
+    "test_results": {{"passed": true/false, "coverage": "percentage", "output": "command output"}},
+    "typecheck_results": {{"passed": true/false, "errors": ["list"], "output": "command output"}}
+  }},
+  "summary": {{
+    "total_checks": 6,
+    "passed_checks": 0-6,
+    "failed_checks": ["list of failed check names"],
+    "total_warnings": 0,
+    "blocking_issues": ["critical issues preventing commit"]
+  }},
+  "fix_commands": [
+    "cd moodring_backend && cargo clippy --fix",
+    "cd moodring_frontend && npm run lint:fix",
+    "specific commands to resolve each issue"
+  ],
+  "recommendation": "APPROVE_COMMIT|BLOCK_COMMIT|REQUIRE_FIXES",
+  "next_steps": ["specific actions required before commit"]
+}}
+
+**Execution Requirements**:
+1. **Run all commands from project root** using `cd` for directory changes
+2. **Capture full command output** for debugging failed checks
+3. **Parse warning/error counts** from tool outputs
+4. **Provide specific fix commands** with correct directory context
+5. **Block commits immediately** on any failures or warnings
+6. **Report total execution time** for performance monitoring
+
+**Zero Tolerance Rules**:
+- ANY clippy warnings = BLOCK COMMIT
+- ANY eslint warnings = BLOCK COMMIT  
+- ANY test failures = BLOCK COMMIT
+- ANY TypeScript errors = BLOCK COMMIT
+- ANY formatting issues = BLOCK COMMIT
+- Coverage below 80% = BLOCK COMMIT (when coverage reporting available)
+
+**Performance Optimization**:
+- Run backend checks (`cargo test && cargo clippy && cargo fmt --check`) in parallel with frontend checks (`npm run lint && npm run test && npm run typecheck`)
+- Use `&&` operators to fail fast within each project
+- Report timing for each check category
+
+**Command Execution**:
+Execute all commands from project root `/Users/anthonypelusocook/moodring-vibe/` using these exact command patterns:
+- Backend: `cd moodring_backend && cargo test && cargo clippy && cargo fmt --check`
+- Frontend: `cd moodring_frontend && npm run lint && npm run test && npm run typecheck`
+
+Only approve commit if ALL checks pass with zero warnings.""",
+    subagent_type="general-purpose"
+)
+```
+
+### Integration with Commit Workflow
+```python
+# Pre-commit workflow with unified quality control
+async def unified_pre_commit_workflow():
+    # Get current changes
+    git_diff = run_command("git diff --staged")
+    
+    # Run unified quality control
+    quality_check = await Task(
+        description="Unified quality control across all projects",
+        prompt=UNIFIED_QUALITY_CONTROL_PROMPT.format(git_diff_output=git_diff),
+        subagent_type="general-purpose"
+    )
+    
+    # Parse structured response
+    result = json.loads(quality_check)
+    
+    if result["overall_status"] == "FAIL":
+        print(f"❌ Commit blocked by quality control")
+        print(f"Failed checks: {result['summary']['failed_checks']}")
+        print(f"Total warnings: {result['summary']['total_warnings']}")
+        print(f"\nFix commands:")
+        for cmd in result["fix_commands"]:
+            print(f"  {cmd}")
+        return False
+    
+    print(f"✅ All quality checks passed ({result['summary']['passed_checks']}/6)")
+    return True
+
+# Example: Automated fix application
+def apply_automated_fixes(quality_result):
+    """Apply automated fixes suggested by quality control"""
+    for fix_cmd in quality_result["fix_commands"]:
+        if "clippy --fix" in fix_cmd or "lint:fix" in fix_cmd:
+            run_command(fix_cmd)
+            print(f"Applied: {fix_cmd}")
+```
+
+### Parallel Execution Example
+```python
+# Run quality control and coverage analysis simultaneously
+quality_task = Task(
+    description="Unified quality control", 
+    prompt=UNIFIED_QUALITY_CONTROL_PROMPT.format(git_diff_output=git_diff)
+)
+
+coverage_task = Task(
+    description="Test coverage analysis",
+    prompt=COVERAGE_ANALYSIS_PROMPT.format(git_diff_output=git_diff)
+)
+
+quality_result, coverage_result = await asyncio.gather(quality_task, coverage_task)
+
+# Combine results for final approval
+overall_approved = (
+    quality_result["overall_status"] == "PASS" and 
+    coverage_result["meets_threshold"] == True
+)
+```
+
 ## Notes
 
 - These templates use the existing `Task` tool with specialized prompts
