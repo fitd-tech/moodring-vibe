@@ -1,5 +1,5 @@
 $ARGUMENTS
 
-Then perform this checklist if there have been file changes to CLAUDE.md:
-- Run claude-md-policy-analyst to determine whether the changes are recommended.
-- Run worklow-automation-analyst to determine whether our current subagents in ./.claude/agents are suitable to handle the policy changes.
+Use the following agents to complete this task ONLY IF there are file changes due to your actions:
+- claude-md-policy-analyst
+- workflow-automation-analyst
