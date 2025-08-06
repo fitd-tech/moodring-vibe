@@ -19,6 +19,13 @@ module.exports = [
         fetch: 'readonly',
         URLSearchParams: 'readonly',
         FormData: 'readonly',
+        // Timer functions
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        // NodeJS types
+        NodeJS: 'readonly',
         // Node.js globals
         process: 'readonly',
         global: 'readonly',
@@ -52,11 +59,12 @@ module.exports = [
     rules: {
       'react/react-in-jsx-scope': 'off',
       'react-native/no-inline-styles': 'warn',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      'no-console': 'warn',
+      'no-console': 'off', // Disabled because console statements are wrapped in __DEV__ checks
       'no-undef': 'error',
+      'no-unused-vars': ['error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
     },
     settings: {
       react: {
@@ -102,7 +110,7 @@ module.exports = [
     rules: {
       'react/react-in-jsx-scope': 'off',
       'react-native/no-inline-styles': 'warn',
-      'no-console': 'warn',
+      'no-console': 'off', // Disabled because console statements are wrapped in __DEV__ checks
       'no-undef': 'error',
     },
     settings: {

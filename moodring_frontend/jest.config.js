@@ -9,7 +9,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|unimodules|sentry-expo|native-base|@react-navigation|react-navigation|@react-native-community|@expo/vector-icons|expo-status-bar|expo-auth-session|expo-web-browser|expo-secure-store|expo-linking|expo-constants)/)',
+    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|unimodules|sentry-expo|native-base|@react-navigation|react-navigation|@react-native-community|@expo/vector-icons|expo-status-bar|expo-auth-session|expo-web-browser|expo-secure-store|expo-linking|expo-constants|expo-linear-gradient)/)',
   ],
   moduleNameMapper: {
     '\\.(png|jpg|jpeg|gif|svg)$': 'identity-obj-proxy',

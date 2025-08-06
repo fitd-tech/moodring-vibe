@@ -78,10 +78,7 @@ pub struct SpotifyImage {
     pub width: Option<u32>,
 }
 
-pub async fn refresh_spotify_token(
-    pool: &DbPool,
-    user_id: i32,
-) -> Result<AuthResponse, String> {
+pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthResponse, String> {
     use schema::users::dsl::*;
 
     let pool = pool.clone();
@@ -128,26 +125,31 @@ pub async fn refresh_spotify_token(
                         ),
                     )
                     .send()
-                    .await {
-                        Ok(resp) => resp,
-                        Err(e) => return Err(format!("Failed to send refresh request: {}", e))
-                    };
+                    .await
+                {
+                    Ok(resp) => resp,
+                    Err(e) => return Err(format!("Failed to send refresh request: {e}")),
+                };
 
                 let status_code = response.status();
                 if !status_code.is_success() {
                     let error_text = response.text().await.unwrap_or("Unknown error".to_string());
-                    return Err(format!("Spotify refresh API error {}: {}", status_code, error_text));
+                    return Err(format!(
+                        "Spotify refresh API error {status_code}: {error_text}"
+                    ));
                 }
 
                 let token_result = response.json::<SpotifyTokenResponse>().await;
                 match token_result {
                     Ok(tokens) => Ok(tokens),
-                    Err(json_err) => Err(format!("Failed to parse Spotify refresh response: {}", json_err))
+                    Err(json_err) => Err(format!(
+                        "Failed to parse Spotify refresh response: {json_err}"
+                    )),
                 }
             })
         }) {
             Ok(tokens) => tokens,
-            Err(e) => return Err(format!("Token refresh failed: {}", e))
+            Err(e) => return Err(format!("Token refresh failed: {e}")),
         };
 
         // Update user with new token
@@ -216,26 +218,29 @@ pub async fn authenticate_user_with_spotify(
                         ),
                     )
                     .send()
-                    .await {
-                        Ok(resp) => resp,
-                        Err(e) => return Err(format!("Failed to send token request: {}", e))
-                    };
+                    .await
+                {
+                    Ok(resp) => resp,
+                    Err(e) => return Err(format!("Failed to send token request: {e}")),
+                };
 
                 let status_code = response.status();
                 if !status_code.is_success() {
                     let error_text = response.text().await.unwrap_or("Unknown error".to_string());
-                    return Err(format!("Spotify API error {}: {}", status_code, error_text));
+                    return Err(format!("Spotify API error {status_code}: {error_text}"));
                 }
 
                 let token_result = response.json::<SpotifyTokenResponse>().await;
                 match token_result {
                     Ok(tokens) => Ok(tokens),
-                    Err(json_err) => Err(format!("Failed to parse Spotify token response: {}", json_err))
+                    Err(json_err) => Err(format!(
+                        "Failed to parse Spotify token response: {json_err}"
+                    )),
                 }
             })
         }) {
             Ok(tokens) => tokens,
-            Err(e) => return Err(format!("Token exchange failed: {}", e))
+            Err(e) => return Err(format!("Token exchange failed: {e}")),
         };
 
         // Step 2: Get user profile from Spotify
@@ -250,26 +255,31 @@ pub async fn authenticate_user_with_spotify(
                         format!("Bearer {}", token_response.access_token),
                     )
                     .send()
-                    .await {
-                        Ok(resp) => resp,
-                        Err(e) => return Err(format!("Failed to send profile request: {}", e))
-                    };
+                    .await
+                {
+                    Ok(resp) => resp,
+                    Err(e) => return Err(format!("Failed to send profile request: {e}")),
+                };
 
                 let status_code = response.status();
                 if !status_code.is_success() {
                     let error_text = response.text().await.unwrap_or("Unknown error".to_string());
-                    return Err(format!("Spotify profile API error {}: {}", status_code, error_text));
+                    return Err(format!(
+                        "Spotify profile API error {status_code}: {error_text}"
+                    ));
                 }
 
                 let profile_result = response.json::<SpotifyUserProfile>().await;
                 match profile_result {
                     Ok(profile) => Ok(profile),
-                    Err(json_err) => Err(format!("Failed to parse Spotify profile response: {}", json_err))
+                    Err(json_err) => Err(format!(
+                        "Failed to parse Spotify profile response: {json_err}"
+                    )),
                 }
             })
         }) {
             Ok(profile) => profile,
-            Err(e) => return Err(format!("Profile fetch failed: {}", e))
+            Err(e) => return Err(format!("Profile fetch failed: {e}")),
         };
 
         // Step 3: Create or update user in database

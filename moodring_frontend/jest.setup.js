@@ -39,6 +39,10 @@ jest.mock('expo-status-bar', () => ({
   StatusBar: 'StatusBar',
 }));
 
+jest.mock('expo-linear-gradient', () => ({
+  LinearGradient: 'LinearGradient',
+}));
+
 // Set test environment variables
 process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = 'test_client_id';
 
@@ -54,7 +58,29 @@ jest.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
   ScrollView: 'ScrollView',
   Image: 'Image',
+  RefreshControl: 'RefreshControl',
   useColorScheme: jest.fn(() => 'light'),
+  Animated: {
+    View: 'Animated.View',
+    Text: 'Animated.Text',
+    Value: jest.fn().mockImplementation(() => ({
+      setValue: jest.fn(),
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      interpolate: jest.fn(() => ({
+        interpolate: jest.fn(),
+      })),
+    })),
+    timing: jest.fn(() => ({
+      start: jest.fn(),
+    })),
+    spring: jest.fn(() => ({
+      start: jest.fn(),
+    })),
+    parallel: jest.fn(() => ({
+      start: jest.fn(),
+    })),
+  },
   NativeModules: {
     StatusBarManager: {
       HEIGHT: 20,

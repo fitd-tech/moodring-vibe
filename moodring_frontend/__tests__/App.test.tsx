@@ -30,7 +30,7 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(getByText('🎵 Moodring')).toBeTruthy();
+        expect(getByText('MOODRING')).toBeTruthy();
         expect(getByText('Organize your music with powerful tags')).toBeTruthy();
         expect(getByText('Connect with Spotify')).toBeTruthy();
       });
@@ -118,7 +118,9 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(getByText('RECENT TRACKS')).toBeTruthy();
+        // Check for recent tracks section (shows empty state when no tracks)
+        expect(getByText('No recent tracks found')).toBeTruthy();
+        // Check for quick actions section
         expect(getByText('QUICK ACTIONS')).toBeTruthy();
         expect(getByText('Create New Tag')).toBeTruthy();
         expect(getByText('Browse Playlists')).toBeTruthy();
