@@ -111,6 +111,7 @@ export default function App() {
   const [currentlyPlaying, setCurrentlyPlaying] = useState<CurrentlyPlaying | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
+  const [isNowPlayingExpanded, setIsNowPlayingExpanded] = useState(false);
   const intervalRef = useRef<any>(null);
   const animatedValues = useRef<{ [key: number]: { 
     height: Animated.Value; 
@@ -118,6 +119,12 @@ export default function App() {
     scale: Animated.Value;
     rotation: Animated.Value;
   } }>({});
+  const nowPlayingAnimatedValues = useRef({
+    height: new Animated.Value(0),
+    opacity: new Animated.Value(0),
+    scale: new Animated.Value(1),
+    rotation: new Animated.Value(0),
+  });
 
   // Use explicit redirect URI for consistent behavior
   const redirectUri = 'moodring://auth';
@@ -536,6 +543,12 @@ export default function App() {
   const toggleTrackExpansion = (index: number) => {
     const isExpanding = expandedTrack !== index;
     
+    // Close Now Playing if it's expanded
+    if (isNowPlayingExpanded) {
+      animateNowPlayingExpansion(false);
+      setIsNowPlayingExpanded(false);
+    }
+    
     if (expandedTrack !== null && expandedTrack !== index) {
       // Collapse previously expanded track
       animateExpansion(expandedTrack, false);
@@ -549,6 +562,87 @@ export default function App() {
       // Delay setting state to allow animation to complete
       // eslint-disable-next-line no-undef
       setTimeout(() => setExpandedTrack(null), 300);
+    }
+  };
+
+  const animateNowPlayingExpansion = (expand: boolean) => {
+    const values = nowPlayingAnimatedValues.current;
+    
+    const duration = 400;
+    const springConfig = {
+      tension: 100,
+      friction: 8,
+    };
+
+    if (expand) {
+      // Expanding animation
+      Animated.parallel([
+        Animated.timing(values.height, {
+          toValue: 1,
+          duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.opacity, {
+          toValue: 1,
+          duration: duration * 0.8,
+          useNativeDriver: false,
+        }),
+        Animated.spring(values.scale, {
+          toValue: 1.02,
+          ...springConfig,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.rotation, {
+          toValue: 1,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // Collapsing animation
+      Animated.parallel([
+        Animated.timing(values.height, {
+          toValue: 0,
+          duration: duration * 0.8,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.opacity, {
+          toValue: 0,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+        Animated.spring(values.scale, {
+          toValue: 1,
+          ...springConfig,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.rotation, {
+          toValue: 0,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  const toggleNowPlayingExpansion = () => {
+    // Close any expanded recent tracks
+    if (expandedTrack !== null) {
+      animateExpansion(expandedTrack, false);
+      // eslint-disable-next-line no-undef
+      setTimeout(() => setExpandedTrack(null), 300);
+    }
+
+    const isExpanding = !isNowPlayingExpanded;
+    
+    if (isExpanding) {
+      setIsNowPlayingExpanded(true);
+      animateNowPlayingExpansion(true);
+    } else {
+      animateNowPlayingExpansion(false);
+      // Delay setting state to allow animation to complete
+      // eslint-disable-next-line no-undef
+      setTimeout(() => setIsNowPlayingExpanded(false), 300);
     }
   };
 
@@ -700,18 +794,103 @@ export default function App() {
 
           {/* Currently Playing Section */}
           {currentlyPlaying && (
-            <LinearGradient
-              colors={['#2a0a2a', '#0d0d0d', '#0a2a2a']}
-              style={styles.nowPlayingCard}
+            <Animated.View
+              style={[
+                styles.nowPlayingCardContainer,
+                {
+                  transform: [{ scale: nowPlayingAnimatedValues.current.scale }],
+                },
+              ]}
             >
-              <Text style={styles.cardTitle}>NOW PLAYING</Text>
-              <View style={styles.trackInfo}>
-                <Text style={styles.trackName}>{currentlyPlaying.name}</Text>
-                <Text style={styles.trackArtist}>by {currentlyPlaying.artist}</Text>
-                <Text style={styles.trackAlbum}>{currentlyPlaying.album}</Text>
-              </View>
-              <View style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]} />
-            </LinearGradient>
+              <LinearGradient
+                colors={['#2a0a2a', '#0d0d0d', '#0a2a2a']}
+                style={styles.nowPlayingCard}
+              >
+                <Text style={styles.cardTitle}>NOW PLAYING</Text>
+                <TouchableOpacity 
+                  style={styles.nowPlayingHeader}
+                  onPress={toggleNowPlayingExpansion}
+                >
+                  <View style={styles.nowPlayingAlbumArt}>
+                    {currentlyPlaying.album_image_url ? (
+                      <Image 
+                        source={{ uri: currentlyPlaying.album_image_url }}
+                        style={styles.nowPlayingAlbumImage}
+                      />
+                    ) : (
+                      <View style={styles.nowPlayingAlbumPlaceholder} />
+                    )}
+                  </View>
+                  <View style={styles.nowPlayingTrackInfo}>
+                    <Text style={styles.trackName}>{currentlyPlaying.name}</Text>
+                    <Text style={styles.trackArtist}>by {currentlyPlaying.artist}</Text>
+                    <Text style={styles.trackAlbum}>{currentlyPlaying.album}</Text>
+                  </View>
+                  <View style={styles.nowPlayingActions}>
+                    <View style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]} />
+                    <TouchableOpacity style={styles.nowPlayingMenuButton}>
+                      <Animated.Text 
+                        style={[
+                          styles.nowPlayingMenuIcon,
+                          {
+                            transform: [{
+                              rotate: nowPlayingAnimatedValues.current.rotation.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: ['0deg', '180deg'],
+                              }),
+                            }],
+                          },
+                        ]}
+                      >
+                        ⌄
+                      </Animated.Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+                
+                {isNowPlayingExpanded && (
+                  <Animated.View 
+                    style={[
+                      styles.nowPlayingExpandedContent,
+                      {
+                        maxHeight: nowPlayingAnimatedValues.current.height.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, 500],
+                        }),
+                        opacity: nowPlayingAnimatedValues.current.opacity,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tagsLabel}>Tags</Text>
+                    <View style={styles.tagsContainer}>
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>synthwave</Text>
+                        <TouchableOpacity style={styles.tagRemove}>
+                          <Text style={styles.tagRemoveText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>currently-playing</Text>
+                        <TouchableOpacity style={styles.tagRemove}>
+                          <Text style={styles.tagRemoveText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.addTagContainer}>
+                      <View style={styles.addTagInput}>
+                        <Text style={styles.addTagPlaceholder}>Add tag...</Text>
+                      </View>
+                      <TouchableOpacity style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+ Add</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity style={styles.collapseButton}>
+                      <Text style={styles.collapseText}>Collapse</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </LinearGradient>
+            </Animated.View>
           )}
 
           {/* Recent Activity Section */}
@@ -1146,10 +1325,12 @@ const styles = StyleSheet.create({
   },
 
   // Now Playing Card
+  nowPlayingCardContainer: {
+    marginBottom: 20,
+  },
   nowPlayingCard: {
     padding: 24,
     borderRadius: 20,
-    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -1158,6 +1339,51 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  nowPlayingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  nowPlayingAlbumArt: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    marginRight: 16,
+    overflow: 'hidden',
+  },
+  nowPlayingAlbumImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  nowPlayingAlbumPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  nowPlayingTrackInfo: {
+    flex: 1,
+  },
+  nowPlayingActions: {
+    alignItems: 'flex-end',
+  },
+  nowPlayingMenuButton: {
+    padding: 4,
+    marginTop: 8,
+  },
+  nowPlayingMenuIcon: {
+    fontSize: 20,
+    color: '#ffffff',
+    opacity: 0.6,
+  },
+  nowPlayingExpandedContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 16,
   },
   cardTitle: {
     fontSize: 14,
