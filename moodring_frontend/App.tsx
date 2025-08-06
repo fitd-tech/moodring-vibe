@@ -196,12 +196,23 @@ export default function App() {
   };
 
   const isTokenExpired = (user: BackendUser): boolean => {
-    if (!user.token_expires_at) return false;
+    if (!user.token_expires_at) {
+      console.log('No token expiry time found, assuming expired');
+      return true; // If no expiry time, assume expired
+    }
     const expiryTime = new Date(user.token_expires_at);
     const now = new Date();
     // Consider token expired if it expires within 5 minutes
     const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
-    return (expiryTime.getTime() - now.getTime()) <= bufferTime;
+    const timeUntilExpiry = expiryTime.getTime() - now.getTime();
+    const isExpired = timeUntilExpiry <= bufferTime;
+    console.log('Token expiry check:', {
+      expiryTime: expiryTime.toISOString(),
+      now: now.toISOString(),
+      timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60), // minutes
+      isExpired
+    });
+    return isExpired;
   };
 
   const handleLogin = async () => {
@@ -213,22 +224,32 @@ export default function App() {
     }
   };
 
-  const loadRecentActivity = async (token: string) => {
+  const loadRecentActivity = async (token: string, userOverride?: BackendUser) => {
     try {
+      // Use userOverride if provided (for initialization), otherwise use state
+      const currentUserData = userOverride || user;
+      
       console.log('loadRecentActivity called with:', { 
         token: token ? 'Token provided' : 'No token provided',
-        userToken: user?.spotify_access_token ? 'User has spotify token' : 'User has no spotify token',
-        user: user ? 'User exists' : 'No user'
+        userToken: currentUserData?.spotify_access_token ? 'User has spotify token' : 'User has no spotify token',
+        user: currentUserData ? 'User exists' : 'No user',
+        usingOverride: !!userOverride
       });
 
       // Check if token is expired and refresh if needed
-      let currentUser = user;
-      let spotifyToken = user?.spotify_access_token || token;
+      let currentUser = currentUserData;
+      let spotifyToken = currentUserData?.spotify_access_token || token;
 
-      if (user && isTokenExpired(user)) {
+      console.log('Current user data:', {
+        hasUser: !!currentUser,
+        hasSpotifyToken: !!currentUser?.spotify_access_token,
+        tokenExpiresAt: currentUser?.token_expires_at
+      });
+
+      if (currentUser && isTokenExpired(currentUser)) {
         console.log('Token is expired, refreshing...');
         try {
-          const refreshedAuth = await refreshSpotifyToken(user.id);
+          const refreshedAuth = await refreshSpotifyToken(currentUser.id);
           currentUser = refreshedAuth.user;
           spotifyToken = refreshedAuth.user.spotify_access_token || token;
           
@@ -276,7 +297,50 @@ export default function App() {
         } else {
           const errorText = await currentlyPlayingResponse.text();
           console.log('Currently playing error:', currentlyPlayingResponse.status, errorText);
-          setCurrentlyPlaying(null);
+          
+          // If 401, try to refresh token and retry once
+          if (currentlyPlayingResponse.status === 401 && currentUser) {
+            console.log('Got 401, attempting token refresh...');
+            try {
+              const refreshedAuth = await refreshSpotifyToken(currentUser.id);
+              currentUser = refreshedAuth.user;
+              spotifyToken = refreshedAuth.user.spotify_access_token || token;
+              
+              // Update user state and save to storage
+              setUser(currentUser);
+              setAuthToken(refreshedAuth.access_token);
+              await saveAuthDataSecurely(refreshedAuth);
+              console.log('Token refreshed after 401, retrying API call...');
+              
+              // Retry the API call with new token
+              const retryResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+                headers: {
+                  'Authorization': `Bearer ${spotifyToken}`,
+                },
+              });
+              
+              if (retryResponse.status === 200) {
+                const currentData = await retryResponse.json() as SpotifyCurrentlyPlayingResponse;
+                if (currentData && currentData.item) {
+                  setCurrentlyPlaying({
+                    name: currentData.item.name,
+                    artist: currentData.item.artists[0]?.name || 'Unknown Artist',
+                    album: currentData.item.album.name,
+                    is_playing: currentData.is_playing
+                  });
+                } else {
+                  setCurrentlyPlaying(null);
+                }
+              } else if (retryResponse.status === 204) {
+                setCurrentlyPlaying(null);
+              }
+            } catch (refreshError) {
+              console.log('Token refresh failed after 401:', refreshError);
+              setCurrentlyPlaying(null);
+            }
+          } else {
+            setCurrentlyPlaying(null);
+          }
         }
       } catch (error) {
         console.log('Currently playing fetch error:', error);
@@ -309,7 +373,48 @@ export default function App() {
         } else {
           const errorText = await recentTracksResponse.text();
           console.log('Recent tracks error:', recentTracksResponse.status, errorText);
-          setRecentTracks([]);
+          
+          // If 401, try to refresh token and retry once
+          if (recentTracksResponse.status === 401 && currentUser) {
+            console.log('Recent tracks got 401, attempting token refresh...');
+            try {
+              const refreshedAuth = await refreshSpotifyToken(currentUser.id);
+              const newSpotifyToken = refreshedAuth.user.spotify_access_token;
+              
+              // Update user state and save to storage
+              setUser(refreshedAuth.user);
+              setAuthToken(refreshedAuth.access_token);
+              await saveAuthDataSecurely(refreshedAuth);
+              console.log('Token refreshed after recent tracks 401, retrying API call...');
+              
+              // Retry the API call with new token
+              const retryResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
+                headers: {
+                  'Authorization': `Bearer ${newSpotifyToken}`,
+                },
+              });
+              
+              if (retryResponse.ok) {
+                const recentData = await retryResponse.json() as SpotifyRecentTracksResponse;
+                const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
+                  name: item.track.name,
+                  artist: item.track.artists[0]?.name || 'Unknown Artist',
+                  album: item.track.album.name,
+                  played_at: item.played_at,
+                }));
+                setRecentTracks(formattedTracks);
+                console.log('Recent tracks retry successful:', formattedTracks.length, 'tracks');
+              } else {
+                console.log('Recent tracks retry still failed:', retryResponse.status);
+                setRecentTracks([]);
+              }
+            } catch (refreshError) {
+              console.log('Token refresh failed after recent tracks 401:', refreshError);
+              setRecentTracks([]);
+            }
+          } else {
+            setRecentTracks([]);
+          }
         }
       } catch (error) {
         console.log('Recent tracks fetch error:', error);
@@ -343,7 +448,7 @@ export default function App() {
           setUser(savedAuth.user);
           setAuthToken(savedAuth.access_token);
           // Load recent activity for logged in user
-          await loadRecentActivity(savedAuth.access_token);
+          await loadRecentActivity(savedAuth.access_token, savedAuth.user);
         }
       } catch {
         // If saved auth data is invalid, clear everything
@@ -372,7 +477,7 @@ export default function App() {
           setUser(authData.user);
           setAuthToken(authData.access_token);
           // Load recent activity for newly authenticated user
-          await loadRecentActivity(authData.access_token);
+          await loadRecentActivity(authData.access_token, authData.user);
         } catch (err) {
           // If backend authentication fails, clear everything
           await clearStoredAuthData();
