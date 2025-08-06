@@ -69,6 +69,12 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
   4. **Generate commit message**: MANDATORY use of `commit-message-specialist` subagent for ALL commits
   5. Commit with comprehensive message including 🤖 footer
   6. Push to working branch (develop/feature) with `git push origin <branch>` - NO EXCEPTIONS, every commit must be immediately pushed
+  7. **Clean up development servers**: Kill any development servers started during the task
+     - Backend servers (Rocket, cargo run, etc.) on ports 8000-8099
+     - Frontend development servers (Expo, Metro, npm start) on ports 3000-3099, 8080-8089
+     - **Exceptions**: Do NOT kill database servers, persistent services, or system processes
+     - **Verification**: Run `lsof -ti:8000,3000` or similar to confirm ports are free
+     - **Note**: This ensures the user can start their own development environment without port conflicts
 - **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
 - **Never wait for user reminder**: Commit/push workflow is automatic after any file modification
 - **If lint/test commands don't exist**: Ask user for correct commands and suggest adding them to package.json/Cargo.toml
