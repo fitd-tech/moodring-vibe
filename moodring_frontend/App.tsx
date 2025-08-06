@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image, ScrollView, RefreshControl, Animated } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -112,6 +112,12 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
   const intervalRef = useRef<any>(null);
+  const animatedValues = useRef<{ [key: number]: { 
+    height: Animated.Value; 
+    opacity: Animated.Value; 
+    scale: Animated.Value;
+    rotation: Animated.Value;
+  } }>({});
 
   // Use explicit redirect URI for consistent behavior
   const redirectUri = 'moodring://auth';
@@ -455,6 +461,97 @@ export default function App() {
     }
   };
 
+  const getAnimatedValues = (index: number) => {
+    if (!animatedValues.current[index]) {
+      animatedValues.current[index] = {
+        height: new Animated.Value(0),
+        opacity: new Animated.Value(0),
+        scale: new Animated.Value(1),
+        rotation: new Animated.Value(0),
+      };
+    }
+    return animatedValues.current[index];
+  };
+
+  const animateExpansion = (index: number, expand: boolean) => {
+    const values = getAnimatedValues(index);
+    
+    const duration = 400;
+    const springConfig = {
+      tension: 100,
+      friction: 8,
+    };
+
+    if (expand) {
+      // Expanding animation
+      Animated.parallel([
+        Animated.timing(values.height, {
+          toValue: 1,
+          duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.opacity, {
+          toValue: 1,
+          duration: duration * 0.8,
+          useNativeDriver: false,
+        }),
+        Animated.spring(values.scale, {
+          toValue: 1.02,
+          ...springConfig,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.rotation, {
+          toValue: 1,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // Collapsing animation
+      Animated.parallel([
+        Animated.timing(values.height, {
+          toValue: 0,
+          duration: duration * 0.8,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.opacity, {
+          toValue: 0,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+        Animated.spring(values.scale, {
+          toValue: 1,
+          ...springConfig,
+          useNativeDriver: false,
+        }),
+        Animated.timing(values.rotation, {
+          toValue: 0,
+          duration: duration * 0.6,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  const toggleTrackExpansion = (index: number) => {
+    const isExpanding = expandedTrack !== index;
+    
+    if (expandedTrack !== null && expandedTrack !== index) {
+      // Collapse previously expanded track
+      animateExpansion(expandedTrack, false);
+    }
+    
+    if (isExpanding) {
+      setExpandedTrack(index);
+      animateExpansion(index, true);
+    } else {
+      animateExpansion(index, false);
+      // Delay setting state to allow animation to complete
+      // eslint-disable-next-line no-undef
+      setTimeout(() => setExpandedTrack(null), 300);
+    }
+  };
+
   useEffect(() => {
     // Load saved auth data on app start
     const initializeAuth = async () => {
@@ -620,16 +717,27 @@ export default function App() {
           {/* Recent Activity Section */}
           <View style={styles.recentSection}>
             <Text style={styles.cardTitle}>RECENT TRACKS</Text>
-            {recentTracks.map((track, index) => (
-              <LinearGradient
-                key={index}
-                colors={['#4a1458', '#2d0a35', '#1a0a2a']}
-                style={styles.trackCard}
-              >
-                <TouchableOpacity 
-                  style={styles.trackHeader}
-                  onPress={() => setExpandedTrack(expandedTrack === index ? null : index)}
+            {recentTracks.map((track, index) => {
+              const animValues = getAnimatedValues(index);
+              
+              return (
+                <Animated.View
+                  key={index}
+                  style={[
+                    styles.trackCardContainer,
+                    {
+                      transform: [{ scale: animValues.scale }],
+                    },
+                  ]}
                 >
+                  <LinearGradient
+                    colors={['#4a1458', '#2d0a35', '#1a0a2a']}
+                    style={styles.trackCard}
+                  >
+                    <TouchableOpacity 
+                      style={styles.trackHeader}
+                      onPress={() => toggleTrackExpansion(index)}
+                    >
                   <View style={styles.albumArt}>
                     {track.album_image_url ? (
                       <Image 
@@ -645,51 +753,79 @@ export default function App() {
                     <Text style={styles.newTrackArtist}>{track.artist}</Text>
                     {track.album && <Text style={styles.newTrackAlbum}>Album: {track.album}</Text>}
                   </View>
-                  <View style={styles.trackActions}>
-                    <Text style={styles.trackDuration}>
-                      {new Date(track.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </Text>
-                    <TouchableOpacity style={styles.heartButton}>
-                      <Text style={styles.heartIcon}>♡</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton}>
-                      <Text style={styles.menuIcon}>⋮</Text>
-                    </TouchableOpacity>
-                  </View>
+                      <View style={styles.trackActions}>
+                        <Text style={styles.trackDuration}>
+                          {new Date(track.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </Text>
+                        <TouchableOpacity style={styles.heartButton}>
+                          <Text style={styles.heartIcon}>♡</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuButton}>
+                          <Animated.Text 
+                            style={[
+                              styles.menuIcon,
+                              {
+                                transform: [{
+                                  rotate: animValues.rotation.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0deg', '180deg'],
+                                  }),
+                                }],
+                              },
+                            ]}
+                          >
+                            ⌄
+                          </Animated.Text>
+                        </TouchableOpacity>
+                      </View>
                 </TouchableOpacity>
                 
-                {expandedTrack === index && (
-                  <View style={styles.expandedContent}>
-                    <Text style={styles.tagsLabel}>Tags</Text>
-                    <View style={styles.tagsContainer}>
-                      <View style={styles.tag}>
-                        <Text style={styles.tagText}>pop</Text>
-                        <TouchableOpacity style={styles.tagRemove}>
-                          <Text style={styles.tagRemoveText}>×</Text>
+                    
+                    {(expandedTrack === index) && (
+                      <Animated.View 
+                        style={[
+                          styles.expandedContent,
+                          {
+                            maxHeight: animValues.height.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 500],
+                            }),
+                            opacity: animValues.opacity,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.tagsLabel}>Tags</Text>
+                        <View style={styles.tagsContainer}>
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>pop</Text>
+                            <TouchableOpacity style={styles.tagRemove}>
+                              <Text style={styles.tagRemoveText}>×</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>recent</Text>
+                            <TouchableOpacity style={styles.tagRemove}>
+                              <Text style={styles.tagRemoveText}>×</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <View style={styles.addTagContainer}>
+                          <View style={styles.addTagInput}>
+                            <Text style={styles.addTagPlaceholder}>Add tag...</Text>
+                          </View>
+                          <TouchableOpacity style={styles.addButton}>
+                            <Text style={styles.addButtonText}>+ Add</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity style={styles.collapseButton}>
+                          <Text style={styles.collapseText}>Collapse</Text>
                         </TouchableOpacity>
-                      </View>
-                      <View style={styles.tag}>
-                        <Text style={styles.tagText}>recent</Text>
-                        <TouchableOpacity style={styles.tagRemove}>
-                          <Text style={styles.tagRemoveText}>×</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.addTagContainer}>
-                      <View style={styles.addTagInput}>
-                        <Text style={styles.addTagPlaceholder}>Add tag...</Text>
-                      </View>
-                      <TouchableOpacity style={styles.addButton}>
-                        <Text style={styles.addButtonText}>+ Add</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity style={styles.collapseButton}>
-                      <Text style={styles.collapseText}>Collapse</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </LinearGradient>
-            ))}
+                      </Animated.View>
+                    )}
+                  </LinearGradient>
+                </Animated.View>
+              );
+            })}
           </View>
 
           {/* Quick Actions */}
@@ -1166,9 +1302,11 @@ const styles = StyleSheet.create({
   recentSection: {
     marginBottom: 20,
   },
+  trackCardContainer: {
+    marginBottom: 12,
+  },
   trackCard: {
     borderRadius: 20,
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
