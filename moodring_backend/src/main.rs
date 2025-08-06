@@ -8,10 +8,7 @@ use rocket::serde::{json::Json, Deserialize, Serialize};
 use rocket::{tokio, State};
 use std::env;
 
-pub mod schema;
-
-// TODO: TEMP - Remove this when moving to real features
-type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<PgConnection>>;
+use moodring_backend::*;
 
 // TODO: TEMP - Remove this model when moving to real features
 #[derive(Queryable, Serialize, Deserialize)]
@@ -208,6 +205,19 @@ async fn delete_song(
     }
 }
 
+// Authentication endpoint
+#[post("/auth/spotify", data = "<auth_request>")]
+async fn spotify_auth(
+    pool: &State<DbPool>,
+    auth_request: Json<AuthRequest>,
+) -> Result<Json<AuthResponse>, rocket::response::status::BadRequest<String>> {
+    let auth_data = auth_request.into_inner();
+    match authenticate_user_with_spotify(pool.inner(), auth_data).await {
+        Ok(auth_response) => Ok(Json(auth_response)),
+        Err(e) => Err(rocket::response::status::BadRequest(e)),
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
     dotenvy::dotenv().ok();
@@ -228,6 +238,7 @@ async fn main() -> Result<(), Box<rocket::Error>> {
                 index,
                 health,
                 test_data,
+                spotify_auth,
                 get_songs,
                 create_song,
                 update_song,
