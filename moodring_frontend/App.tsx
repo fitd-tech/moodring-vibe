@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
-import { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image, ScrollView, RefreshControl } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
@@ -100,6 +100,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<CurrentlyPlaying | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const intervalRef = useRef<any>(null);
 
   // Use explicit redirect URI for consistent behavior
   const redirectUri = 'moodring://auth';
@@ -237,6 +239,7 @@ export default function App() {
           setAuthToken(refreshedAuth.access_token);
           await saveAuthDataSecurely(refreshedAuth);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.warn('Token refresh failed:', error);
           // If refresh fails, try to continue with existing token
           // If that fails too, user will need to re-authenticate
@@ -303,6 +306,7 @@ export default function App() {
                 setCurrentlyPlaying(null);
               }
             } catch (refreshError) {
+              // eslint-disable-next-line no-console
               console.warn('Token refresh failed after 401:', refreshError);
               setCurrentlyPlaying(null);
             }
@@ -311,6 +315,7 @@ export default function App() {
           }
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('Currently playing fetch error:', error);
         setCurrentlyPlaying(null);
       }
@@ -365,6 +370,7 @@ export default function App() {
                 setRecentTracks([]);
               }
             } catch (refreshError) {
+              // eslint-disable-next-line no-console
               console.warn('Token refresh failed after recent tracks 401:', refreshError);
               setRecentTracks([]);
             }
@@ -373,6 +379,7 @@ export default function App() {
           }
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('Recent tracks fetch error:', error);
         setRecentTracks([]);
       }
@@ -384,6 +391,13 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    // Clear periodic update interval
+    if (intervalRef.current) {
+      // eslint-disable-next-line no-undef
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
     await clearStoredAuthData();
     setUser(null);
     setAuthToken(null);
@@ -391,6 +405,20 @@ export default function App() {
     setCurrentlyPlaying(null);
     setError(null);
     setIsLoading(false);
+  };
+
+  const onRefresh = async () => {
+    if (!user || !authToken) return;
+    
+    setIsRefreshing(true);
+    try {
+      await loadRecentActivity(authToken, user);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -452,6 +480,37 @@ export default function App() {
     handleAuthResponse();
   }, [response, request]);
 
+  useEffect(() => {
+    // Set up periodic updates for listening activity when user is logged in
+    if (user && authToken) {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        // eslint-disable-next-line no-undef
+        clearInterval(intervalRef.current);
+      }
+      
+      // Start periodic updates every 30 seconds
+      // eslint-disable-next-line no-undef
+      intervalRef.current = setInterval(async () => {
+        try {
+          await loadRecentActivity(authToken, user);
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.warn('Periodic update failed:', error);
+        }
+      }, 30000); // 30 seconds
+      
+      // Cleanup on unmount or when user/token changes
+      return () => {
+        if (intervalRef.current) {
+          // eslint-disable-next-line no-undef
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    }
+  }, [user, authToken]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -464,7 +523,18 @@ export default function App() {
   if (user && authToken) {
     // User is logged in - show dashboard
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor="#1DB954"
+            colors={['#1DB954']}
+            progressBackgroundColor="#1a0a1a"
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.title}>MOODRING</Text>
         </View>
