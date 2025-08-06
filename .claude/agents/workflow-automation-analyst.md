@@ -20,7 +20,9 @@ Before proposing new solutions, thoroughly evaluate current capabilities:
 - **Subagent optimization analysis**: Review existing subagent .md files for potential improvements, redundancies, or enhancement opportunities
 - **CLAUDE.md change impact**: When evaluating proposed CLAUDE.md changes, determine if they apply to existing subagents and propose amended subagent specifications
 - **Standard development tools**: git hooks, npm scripts, Makefile targets, IDE automation, shell aliases
-- **Project-specific tooling**: Check CLAUDE.md for established workflows, scripts, and automation already in place
+- **Project-specific automation**: 
+  - **Makefile commands**: `make check-all`, `make test-all`, `make lint-all`, `make health-check`, `make temp-code-scan`, `make pre-commit-check`
+  - **CLAUDE.md workflows**: Check for established workflows, scripts, and automation already in place
 - **Platform capabilities**: Leverage Rust/Cargo, Node.js/npm, git, and GCP tooling where appropriate
 
 **3. Solution Recommendation Strategy**

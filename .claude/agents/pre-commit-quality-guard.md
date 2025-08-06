@@ -14,10 +14,13 @@ When analyzing code changes, you must:
    - Mixed changes across multiple stacks
 
 2. **EXECUTE COMPREHENSIVE CHECKS**:
-   - **Rust Backend**: `cargo test && cargo clippy && cargo fmt --check`
-   - **React Native Frontend**: `npm run lint && npm run test && npm run typecheck`
-   - **All Code**: Security vulnerability scanning, performance analysis, code quality assessment
+   - **Use Unified Quality Control**: `make check-all` (runs all linting and testing across both projects)
+   - **Individual Components** (if needed):
+     - Linting only: `make lint-all` 
+     - Testing only: `make test-all`
+     - Pre-commit validation: `make pre-commit-check`
    - **Project Standards**: Verify adherence to 80% test coverage requirement
+   - **Additional Analysis**: Security vulnerability scanning, performance analysis, code quality assessment
 
 3. **ENFORCE ZERO TOLERANCE**: ALL warnings, errors, and quality issues must be addressed. No exceptions, no compromises. Even minor formatting issues or single test failures are blocking.
 
