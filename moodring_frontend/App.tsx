@@ -54,6 +54,7 @@ interface RecentTrack {
   name: string;
   artist: string;
   album: string;
+  album_image_url?: string;
   played_at: string;
 }
 
@@ -61,13 +62,21 @@ interface CurrentlyPlaying {
   name: string;
   artist: string;
   album: string;
+  album_image_url?: string;
   is_playing: boolean;
 }
 
 interface SpotifyTrack {
   name: string;
   artists: Array<{ name: string }>;
-  album: { name: string };
+  album: { 
+    name: string;
+    images: Array<{
+      url: string;
+      height: number;
+      width: number;
+    }>;
+  };
 }
 
 interface SpotifyCurrentlyPlayingResponse {
@@ -259,10 +268,14 @@ export default function App() {
           const currentData = await currentlyPlayingResponse.json() as SpotifyCurrentlyPlayingResponse;
           if (currentData && currentData.item && currentData.is_playing) {
             // Only show currently playing if a track exists AND is actively playing
+            const albumImageUrl = currentData.item.album.images && currentData.item.album.images.length > 0
+              ? currentData.item.album.images[0].url
+              : undefined;
             setCurrentlyPlaying({
               name: currentData.item.name,
               artist: currentData.item.artists[0]?.name || 'Unknown Artist',
               album: currentData.item.album.name,
+              album_image_url: albumImageUrl,
               is_playing: currentData.is_playing
             });
           } else {
@@ -297,10 +310,14 @@ export default function App() {
                 const currentData = await retryResponse.json() as SpotifyCurrentlyPlayingResponse;
                 if (currentData && currentData.item && currentData.is_playing) {
                   // Only show currently playing if a track exists AND is actively playing
+                  const albumImageUrl = currentData.item.album.images && currentData.item.album.images.length > 0
+                    ? currentData.item.album.images[0].url
+                    : undefined;
                   setCurrentlyPlaying({
                     name: currentData.item.name,
                     artist: currentData.item.artists[0]?.name || 'Unknown Artist',
                     album: currentData.item.album.name,
+                    album_image_url: albumImageUrl,
                     is_playing: currentData.is_playing
                   });
                 } else {
@@ -335,12 +352,18 @@ export default function App() {
 
         if (recentTracksResponse.ok) {
           const recentData = await recentTracksResponse.json() as SpotifyRecentTracksResponse;
-          const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
-            name: item.track.name,
-            artist: item.track.artists[0]?.name || 'Unknown Artist',
-            album: item.track.album.name,
-            played_at: item.played_at,
-          }));
+          const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => {
+            const albumImageUrl = item.track.album.images && item.track.album.images.length > 0
+              ? item.track.album.images[0].url
+              : undefined;
+            return {
+              name: item.track.name,
+              artist: item.track.artists[0]?.name || 'Unknown Artist',
+              album: item.track.album.name,
+              album_image_url: albumImageUrl,
+              played_at: item.played_at,
+            };
+          });
           setRecentTracks(formattedTracks);
         } else {
           
@@ -364,12 +387,18 @@ export default function App() {
               
               if (retryResponse.ok) {
                 const recentData = await retryResponse.json() as SpotifyRecentTracksResponse;
-                const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
-                  name: item.track.name,
-                  artist: item.track.artists[0]?.name || 'Unknown Artist',
-                  album: item.track.album.name,
-                  played_at: item.played_at,
-                }));
+                const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => {
+                  const albumImageUrl = item.track.album.images && item.track.album.images.length > 0
+                    ? item.track.album.images[0].url
+                    : undefined;
+                  return {
+                    name: item.track.name,
+                    artist: item.track.artists[0]?.name || 'Unknown Artist',
+                    album: item.track.album.name,
+                    album_image_url: albumImageUrl,
+                    played_at: item.played_at,
+                  };
+                });
                 setRecentTracks(formattedTracks);
               } else {
                 setRecentTracks([]);
@@ -602,7 +631,14 @@ export default function App() {
                   onPress={() => setExpandedTrack(expandedTrack === index ? null : index)}
                 >
                   <View style={styles.albumArt}>
-                    <View style={styles.albumPlaceholder} />
+                    {track.album_image_url ? (
+                      <Image 
+                        source={{ uri: track.album_image_url }}
+                        style={styles.albumImage}
+                      />
+                    ) : (
+                      <View style={styles.albumPlaceholder} />
+                    )}
                   </View>
                   <View style={styles.trackMainInfo}>
                     <Text style={styles.trackTitle}>{track.name}</Text>
@@ -1153,6 +1189,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 16,
     overflow: 'hidden',
+  },
+  albumImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
   albumPlaceholder: {
     width: '100%',
