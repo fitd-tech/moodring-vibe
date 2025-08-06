@@ -173,6 +173,37 @@ export default function App() {
     }
   };
 
+  const refreshSpotifyToken = async (userId: number) => {
+    try {
+      const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/auth/refresh/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Token refresh failed: ${response.status} - ${errorText}`);
+      }
+
+      const authData = await response.json();
+      return authData;
+    } catch (err) {
+      throw new Error(`Failed to refresh token: ${err}`);
+    }
+  };
+
+  const isTokenExpired = (user: BackendUser): boolean => {
+    if (!user.token_expires_at) return false;
+    const expiryTime = new Date(user.token_expires_at);
+    const now = new Date();
+    // Consider token expired if it expires within 5 minutes
+    const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+    return (expiryTime.getTime() - now.getTime()) <= bufferTime;
+  };
+
   const handleLogin = async () => {
     try {
       setError(null);
@@ -184,16 +215,50 @@ export default function App() {
 
   const loadRecentActivity = async (token: string) => {
     try {
+      console.log('loadRecentActivity called with:', { 
+        token: token ? 'Token provided' : 'No token provided',
+        userToken: user?.spotify_access_token ? 'User has spotify token' : 'User has no spotify token',
+        user: user ? 'User exists' : 'No user'
+      });
+
+      // Check if token is expired and refresh if needed
+      let currentUser = user;
+      let spotifyToken = user?.spotify_access_token || token;
+
+      if (user && isTokenExpired(user)) {
+        console.log('Token is expired, refreshing...');
+        try {
+          const refreshedAuth = await refreshSpotifyToken(user.id);
+          currentUser = refreshedAuth.user;
+          spotifyToken = refreshedAuth.user.spotify_access_token || token;
+          
+          // Update user state and save to storage
+          setUser(currentUser);
+          setAuthToken(refreshedAuth.access_token);
+          await saveAuthDataSecurely(refreshedAuth);
+          console.log('Token refreshed successfully');
+        } catch (error) {
+          console.log('Token refresh failed:', error);
+          // If refresh fails, try to continue with existing token
+          // If that fails too, user will need to re-authenticate
+        }
+      }
+      
       // Get currently playing track
       try {
+        console.log('Fetching currently playing with token:', spotifyToken ? 'Token present' : 'No token');
+        
         const currentlyPlayingResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
           headers: {
-            'Authorization': `Bearer ${user?.spotify_access_token || token}`,
+            'Authorization': `Bearer ${spotifyToken}`,
           },
         });
 
+        console.log('Currently playing response status:', currentlyPlayingResponse.status);
+
         if (currentlyPlayingResponse.status === 200) {
           const currentData = await currentlyPlayingResponse.json() as SpotifyCurrentlyPlayingResponse;
+          console.log('Currently playing data:', currentData);
           if (currentData && currentData.item) {
             setCurrentlyPlaying({
               name: currentData.item.name,
@@ -206,23 +271,33 @@ export default function App() {
           }
         } else if (currentlyPlayingResponse.status === 204) {
           // No track currently playing
+          console.log('No track currently playing (204)');
+          setCurrentlyPlaying(null);
+        } else {
+          const errorText = await currentlyPlayingResponse.text();
+          console.log('Currently playing error:', currentlyPlayingResponse.status, errorText);
           setCurrentlyPlaying(null);
         }
-      } catch {
-        // Failed to fetch currently playing - silently continue
+      } catch (error) {
+        console.log('Currently playing fetch error:', error);
         setCurrentlyPlaying(null);
       }
 
       // Get recently played tracks
       try {
+        console.log('Fetching recent tracks with token:', spotifyToken ? 'Token present' : 'No token');
+        
         const recentTracksResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
           headers: {
-            'Authorization': `Bearer ${user?.spotify_access_token || token}`,
+            'Authorization': `Bearer ${spotifyToken}`,
           },
         });
 
+        console.log('Recent tracks response status:', recentTracksResponse.status);
+
         if (recentTracksResponse.ok) {
           const recentData = await recentTracksResponse.json() as SpotifyRecentTracksResponse;
+          console.log('Recent tracks data:', recentData);
           const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
             name: item.track.name,
             artist: item.track.artists[0]?.name || 'Unknown Artist',
@@ -230,12 +305,14 @@ export default function App() {
             played_at: item.played_at,
           }));
           setRecentTracks(formattedTracks);
+          console.log('Set recent tracks:', formattedTracks.length, 'tracks');
         } else {
-          // Failed to fetch recent tracks - set empty state
+          const errorText = await recentTracksResponse.text();
+          console.log('Recent tracks error:', recentTracksResponse.status, errorText);
           setRecentTracks([]);
         }
-      } catch {
-        // Failed to fetch recent tracks - set empty state
+      } catch (error) {
+        console.log('Recent tracks fetch error:', error);
         setRecentTracks([]);
       }
     } catch {
