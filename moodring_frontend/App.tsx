@@ -29,14 +29,22 @@ const SCOPES = [
   'user-read-email',
 ];
 
-interface SpotifyUser {
-  id: string;
-  display_name: string;
+interface BackendUser {
+  id: number;
+  spotify_id: string;
   email: string;
-  images: Array<{ url: string }>;
-  followers: { total: number };
+  display_name: string | null;
+  profile_image_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
+interface BackendAuthResponse {
+  user: BackendUser;
+  access_token: string;
+}
+
+// Keep for backward compatibility with stored tokens
 interface AuthTokens {
   access_token: string;
   refresh_token?: string;
@@ -45,8 +53,8 @@ interface AuthTokens {
 }
 
 export default function App() {
-  const [user, setUser] = useState<SpotifyUser | null>(null);
-  const [tokens, setTokens] = useState<AuthTokens | null>(null);
+  const [user, setUser] = useState<BackendUser | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,84 +72,61 @@ export default function App() {
     discovery
   );
 
-  const exchangeCodeForTokens = async (code: string, codeVerifier: string) => {
+  const authenticateWithBackend = async (code: string, codeVerifier: string) => {
     try {
-      const response = await fetch(discovery.tokenEndpoint, {
+      const response = await fetch('http://localhost:8000/auth/spotify', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
+        body: JSON.stringify({
           code,
-          redirect_uri: redirectUri,
-          client_id: CLIENT_ID,
           code_verifier: codeVerifier,
-        }).toString(),
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Token exchange failed: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Backend authentication failed: ${response.status} - ${errorText}`);
       }
 
-      const tokenData: AuthTokens = await response.json();
-      return tokenData;
+      const authData = await response.json();
+      return authData;
     } catch (err) {
-      throw new Error(`Failed to exchange code for tokens: ${err}`);
+      throw new Error(`Failed to authenticate with backend: ${err}`);
     }
   };
 
-  const fetchUserProfile = async (accessToken: string) => {
+  const saveAuthDataSecurely = async (authData: BackendAuthResponse) => {
     try {
-      const response = await fetch('https://api.spotify.com/v1/me', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          const errorText = await response.text();
-          throw new Error(`Spotify API access denied (403). This usually means the app lacks required scopes or permissions. Response: ${errorText}`);
-        }
-        throw new Error(`Failed to fetch user profile: ${response.status}`);
-      }
-
-      const userData: SpotifyUser = await response.json();
-      return userData;
-    } catch (err) {
-      throw new Error(`Failed to fetch user profile: ${err}`);
-    }
-  };
-
-  const saveTokensSecurely = async (tokens: AuthTokens) => {
-    try {
-      await SecureStore.setItemAsync('spotify_tokens', JSON.stringify(tokens));
+      await SecureStore.setItemAsync('moodring_auth', JSON.stringify(authData));
     } catch {
       // TODO: Replace with proper logging service
-      // Error saving tokens - will be handled when logging service is implemented
+      // Error saving auth data - will be handled when logging service is implemented
     }
   };
 
-  const loadSavedTokens = async (): Promise<AuthTokens | null> => {
+  const loadSavedAuthData = async (): Promise<BackendAuthResponse | null> => {
     try {
-      const tokensString = await SecureStore.getItemAsync('spotify_tokens');
-      if (tokensString) {
-        return JSON.parse(tokensString);
+      const authString = await SecureStore.getItemAsync('moodring_auth');
+      if (authString) {
+        return JSON.parse(authString);
       }
     } catch {
       // TODO: Replace with proper logging service
-      // Error loading saved tokens - will be handled when logging service is implemented
+      // Error loading saved auth data - will be handled when logging service is implemented
     }
     return null;
   };
 
-  const clearStoredTokens = async () => {
+  const clearStoredAuthData = async () => {
     try {
+      await SecureStore.deleteItemAsync('moodring_auth');
+      // Also clear legacy tokens for migration
       await SecureStore.deleteItemAsync('spotify_tokens');
     } catch {
       // TODO: Replace with proper logging service
-      // Error clearing tokens - will be handled when logging service is implemented
+      // Error clearing auth data - will be handled when logging service is implemented
     }
   };
 
@@ -155,31 +140,29 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await clearStoredTokens();
+    await clearStoredAuthData();
     setUser(null);
-    setTokens(null);
+    setAuthToken(null);
     setError(null);
     setIsLoading(false);
   };
 
   useEffect(() => {
-    // Load saved tokens on app start
+    // Load saved auth data on app start
     const initializeAuth = async () => {
       setIsLoading(true);
       try {
-        const savedTokens = await loadSavedTokens();
-        if (savedTokens) {
-          // Validate saved tokens by fetching user profile
-          const userData = await fetchUserProfile(savedTokens.access_token);
-          // Only set auth state if token validation succeeds
-          setTokens(savedTokens);
-          setUser(userData);
+        const savedAuth = await loadSavedAuthData();
+        if (savedAuth) {
+          // Set auth state from saved data
+          setUser(savedAuth.user);
+          setAuthToken(savedAuth.access_token);
         }
       } catch {
-        // If saved token validation fails, clear everything
-        await clearStoredTokens();
-        setTokens(null);
+        // If saved auth data is invalid, clear everything
+        await clearStoredAuthData();
         setUser(null);
+        setAuthToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -195,19 +178,17 @@ export default function App() {
         setIsLoading(true);
         setError(null); // Clear any previous errors
         try {
-          const tokenData = await exchangeCodeForTokens(response.params.code, request.codeVerifier);
+          const authData = await authenticateWithBackend(response.params.code, request.codeVerifier);
 
-          const userData = await fetchUserProfile(tokenData.access_token);
-
-          // Only set auth state if BOTH token exchange AND user profile fetch succeed
-          await saveTokensSecurely(tokenData);
-          setTokens(tokenData);
-          setUser(userData);
+          // Only set auth state if backend authentication succeeds
+          await saveAuthDataSecurely(authData);
+          setUser(authData.user);
+          setAuthToken(authData.access_token);
         } catch (err) {
-          // If either token exchange or profile fetch fails, clear everything
-          await clearStoredTokens();
-          setTokens(null);
+          // If backend authentication fails, clear everything
+          await clearStoredAuthData();
           setUser(null);
+          setAuthToken(null);
           setError(err instanceof Error ? err.message : 'Authentication failed');
         } finally {
           setIsLoading(false);
@@ -230,7 +211,7 @@ export default function App() {
     );
   }
 
-  if (user && tokens) {
+  if (user && authToken) {
     // User is logged in - show main app
     return (
       <View style={styles.container}>
@@ -238,19 +219,15 @@ export default function App() {
 
         {/* User Profile */}
         <View style={styles.profileContainer}>
-          {user.images?.length > 0 && (
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarPlaceholder}>
-                {user.display_name?.charAt(0).toUpperCase() || user.id.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarPlaceholder}>
+              {user.display_name?.charAt(0).toUpperCase() || user.spotify_id.charAt(0).toUpperCase()}
+            </Text>
+          </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user.display_name || user.id}</Text>
+            <Text style={styles.userName}>{user.display_name || user.spotify_id}</Text>
             <Text style={styles.userEmail}>{user.email}</Text>
-            {user.followers && (
-              <Text style={styles.userFollowers}>{user.followers.total} followers</Text>
-            )}
+            <Text style={styles.userId}>User ID: {user.id}</Text>
           </View>
         </View>
 
@@ -466,6 +443,10 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   userFollowers: {
+    fontSize: 12,
+    color: '#777777',
+  },
+  userId: {
     fontSize: 12,
     color: '#777777',
   },

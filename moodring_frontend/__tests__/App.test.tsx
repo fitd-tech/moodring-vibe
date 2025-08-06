@@ -86,30 +86,22 @@ describe('App', () => {
   });
 
   describe('Authenticated State', () => {
-    const mockTokens = {
-      access_token: 'test_access_token',
-      refresh_token: 'test_refresh_token',
-      expires_in: 3600,
-      token_type: 'Bearer',
-    };
-
-    const mockUser = {
-      id: 'test_user',
-      display_name: 'Test User',
-      email: 'test@example.com',
-      images: [{ url: 'https://example.com/avatar.jpg' }],
-      followers: { total: 100 },
+    const mockBackendAuthResponse = {
+      user: {
+        id: 1,
+        spotify_id: 'test_user',
+        email: 'test@example.com',
+        display_name: 'Test User',
+        profile_image_url: 'https://example.com/avatar.jpg',
+        created_at: '2025-08-06T01:00:00Z',
+        updated_at: '2025-08-06T01:00:00Z',
+      },
+      access_token: 'backend_jwt_token',
     };
 
     beforeEach(() => {
-      // Mock successful token retrieval
-      mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(mockTokens));
-
-      // Mock successful user profile fetch
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockUser),
-      });
+      // Mock successful backend auth data retrieval
+      mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(mockBackendAuthResponse));
     });
 
     it('renders authenticated screen when user is logged in', async () => {
@@ -119,7 +111,7 @@ describe('App', () => {
         expect(getByText('🎵 Moodring')).toBeTruthy();
         expect(getByText('Test User')).toBeTruthy();
         expect(getByText('test@example.com')).toBeTruthy();
-        expect(getByText('100 followers')).toBeTruthy();
+        expect(getByText('User ID: 1')).toBeTruthy();
       });
     });
 
@@ -151,7 +143,7 @@ describe('App', () => {
       await waitFor(() => {
         const signOutButton = getByText('Sign Out');
         fireEvent.press(signOutButton);
-        expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('spotify_tokens');
+        expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('moodring_auth');
       });
     });
   });
@@ -189,10 +181,11 @@ describe('App', () => {
       process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = originalClientId;
     });
 
-    it('handles token exchange failure', async () => {
+    it('handles backend authentication failure', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 400,
+        text: () => Promise.resolve('Backend authentication failed'),
       });
 
       mockUseAuthRequest.mockReturnValue([
@@ -204,27 +197,12 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(getByText(/Failed to exchange code for tokens/)).toBeTruthy();
+        expect(getByText(/Backend authentication failed/)).toBeTruthy();
       });
     });
 
-    it('handles user profile fetch failure', async () => {
-      global.fetch = jest
-        .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              access_token: 'valid_token',
-              refresh_token: 'refresh_token',
-              expires_in: 3600,
-              token_type: 'Bearer',
-            }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 401,
-        });
+    it('handles backend server error', async () => {
+      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
       mockUseAuthRequest.mockReturnValue([
         { codeVerifier: 'test-verifier' } as unknown,
@@ -235,7 +213,7 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(getByText(/Failed to fetch user profile/)).toBeTruthy();
+        expect(getByText(/Failed to authenticate with backend/)).toBeTruthy();
       });
     });
 
@@ -260,32 +238,25 @@ describe('App', () => {
     });
   });
 
-  describe('OAuth Flow', () => {
-    it('exchanges authorization code for tokens successfully', async () => {
-      const mockTokens = {
-        access_token: 'new_access_token',
-        refresh_token: 'new_refresh_token',
-        expires_in: 3600,
-        token_type: 'Bearer',
+  describe('Backend OAuth Flow', () => {
+    it('exchanges authorization code with backend successfully', async () => {
+      const mockBackendResponse = {
+        user: {
+          id: 1,
+          spotify_id: 'test_user',
+          email: 'test@example.com',
+          display_name: 'Test User',
+          profile_image_url: null,
+          created_at: '2025-08-06T01:00:00Z',
+          updated_at: '2025-08-06T01:00:00Z',
+        },
+        access_token: 'backend_jwt_token',
       };
 
-      global.fetch = jest
-        .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockTokens),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              id: 'test_user',
-              display_name: 'Test User',
-              email: 'test@example.com',
-              images: [],
-              followers: { total: 0 },
-            }),
-        });
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockBackendResponse),
+      });
 
       mockUseAuthRequest.mockReturnValue([
         { codeVerifier: 'test-verifier' } as unknown,
@@ -297,15 +268,19 @@ describe('App', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          'https://accounts.spotify.com/api/token',
+          'http://localhost:8000/auth/spotify',
           expect.objectContaining({
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: 'auth_code',
+              code_verifier: 'test-verifier',
+            }),
           })
         );
         expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
-          'spotify_tokens',
-          JSON.stringify(mockTokens)
+          'moodring_auth',
+          JSON.stringify(mockBackendResponse)
         );
       });
     });
