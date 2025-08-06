@@ -65,7 +65,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
      - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/, if scripts exist)
      - **FAIL COMMITS ON ANY WARNINGS**: Address all clippy warnings, lint warnings, and formatting issues before committing
      - **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
-  3. Stage task-related files with `git add` (review git status to ensure only intended changes are included)
+  3. **Stage ALL task-related files**: Use `git add <file>` for each modified file (avoid `git add .` to prevent staging unintended changes). **VERIFY STAGING**: Run `git status` to confirm all intended changes are staged and `git diff --cached` to review exactly what will be committed
   4. **Generate commit message**: MANDATORY use of `commit-message-specialist` subagent for ALL commits
   5. Commit with comprehensive message including 🤖 footer
   6. Push to working branch (develop/feature) with `git push origin <branch>` - NO EXCEPTIONS, every commit must be immediately pushed
