@@ -569,18 +569,24 @@ export default function App() {
         <Text style={styles.tagline}>Organize your music with powerful tags</Text>
 
         {error && (
-          <View style={styles.errorContainer}>
+          <LinearGradient
+            colors={['#2a0a0a', '#0d0d0d', '#1a0a0a']}
+            style={styles.errorContainer}
+          >
             <Text style={styles.errorText}>{error}</Text>
-          </View>
+          </LinearGradient>
         )}
 
-        <View style={styles.featuresContainer}>
+        <LinearGradient
+          colors={['#1a0a1a', '#0d0d0d', '#1a0a2e']}
+          style={styles.featuresContainer}
+        >
           <Text style={styles.featuresTitle}>What you can do:</Text>
           <Text style={styles.featureItem}>• Tag your songs and playlists</Text>
           <Text style={styles.featureItem}>• Create hierarchical organization</Text>
           <Text style={styles.featureItem}>• Generate smart playlists</Text>
           <Text style={styles.featureItem}>• Discover music patterns</Text>
-        </View>
+        </LinearGradient>
 
         <View style={styles.authSection}>
           <Text style={styles.authText}>Connect your Spotify account to get started</Text>
@@ -624,50 +630,57 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // Login Screen Styles - 90's Neon Aesthetic
+  // Login Screen Styles - Modern Design
   loginContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   appTitle: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#ff00ff', // Hot pink
-    marginBottom: 10,
+    fontSize: 42,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 8,
     textAlign: 'center',
-    textShadowColor: '#00ffff',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
+    letterSpacing: 1,
   },
   tagline: {
     fontSize: 18,
-    color: '#00ffff', // Cyan
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 40,
-    fontWeight: '600',
+    fontWeight: '400',
+    opacity: 0.8,
   },
   featuresContainer: {
-    backgroundColor: '#330066', // Dark purple
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: 40,
     width: '100%',
-    borderWidth: 2,
-    borderColor: '#ff00ff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   featuresTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffff00', // Bright yellow
-    marginBottom: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 16,
+    letterSpacing: 1,
+    opacity: 0.9,
   },
   featureItem: {
     fontSize: 16,
-    color: '#00ff00', // Bright green
+    color: '#ffffff',
     marginBottom: 8,
     lineHeight: 24,
-    fontWeight: '500',
+    fontWeight: '400',
+    opacity: 0.8,
   },
   authSection: {
     alignItems: 'center',
@@ -677,54 +690,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 25,
+    marginBottom: 30,
+    opacity: 0.9,
   },
   loginButton: {
-    backgroundColor: '#ff6600', // Bright orange
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginBottom: 20,
+    backgroundColor: '#1DB954', // Spotify green
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    marginBottom: 24,
     width: '100%',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#ffff00',
+    shadowColor: '#1DB954',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   loginButtonDisabled: {
-    backgroundColor: '#666666',
-    borderColor: '#888888',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowOpacity: 0,
   },
   loginButtonText: {
     color: '#ffffff',
     fontSize: 18,
-    fontWeight: 'bold',
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontWeight: '600',
   },
   disclaimerText: {
     fontSize: 14,
-    color: '#cccccc',
+    color: '#ffffff',
     textAlign: 'center',
     lineHeight: 20,
+    opacity: 0.6,
   },
   errorContainer: {
-    backgroundColor: '#990033',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 24,
     width: '100%',
-    borderWidth: 2,
-    borderColor: '#ff0066',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   errorText: {
-    color: '#ff66aa',
+    color: '#ffffff',
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    opacity: 0.9,
   },
 
-  // Dashboard Styles - 90's Retro Design
+  // Dashboard Styles - Modern Design
   header: {
     marginBottom: 20,
   },
