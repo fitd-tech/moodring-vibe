@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
+import { LinearGradient } from 'expo-linear-gradient';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -197,7 +198,6 @@ export default function App() {
 
   const isTokenExpired = (user: BackendUser): boolean => {
     if (!user.token_expires_at) {
-      console.log('No token expiry time found, assuming expired');
       return true; // If no expiry time, assume expired
     }
     const expiryTime = new Date(user.token_expires_at);
@@ -205,14 +205,7 @@ export default function App() {
     // Consider token expired if it expires within 5 minutes
     const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
     const timeUntilExpiry = expiryTime.getTime() - now.getTime();
-    const isExpired = timeUntilExpiry <= bufferTime;
-    console.log('Token expiry check:', {
-      expiryTime: expiryTime.toISOString(),
-      now: now.toISOString(),
-      timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60), // minutes
-      isExpired
-    });
-    return isExpired;
+    return timeUntilExpiry <= bufferTime;
   };
 
   const handleLogin = async () => {
@@ -229,25 +222,11 @@ export default function App() {
       // Use userOverride if provided (for initialization), otherwise use state
       const currentUserData = userOverride || user;
       
-      console.log('loadRecentActivity called with:', { 
-        token: token ? 'Token provided' : 'No token provided',
-        userToken: currentUserData?.spotify_access_token ? 'User has spotify token' : 'User has no spotify token',
-        user: currentUserData ? 'User exists' : 'No user',
-        usingOverride: !!userOverride
-      });
-
       // Check if token is expired and refresh if needed
       let currentUser = currentUserData;
       let spotifyToken = currentUserData?.spotify_access_token || token;
 
-      console.log('Current user data:', {
-        hasUser: !!currentUser,
-        hasSpotifyToken: !!currentUser?.spotify_access_token,
-        tokenExpiresAt: currentUser?.token_expires_at
-      });
-
       if (currentUser && isTokenExpired(currentUser)) {
-        console.log('Token is expired, refreshing...');
         try {
           const refreshedAuth = await refreshSpotifyToken(currentUser.id);
           currentUser = refreshedAuth.user;
@@ -257,9 +236,8 @@ export default function App() {
           setUser(currentUser);
           setAuthToken(refreshedAuth.access_token);
           await saveAuthDataSecurely(refreshedAuth);
-          console.log('Token refreshed successfully');
         } catch (error) {
-          console.log('Token refresh failed:', error);
+          console.warn('Token refresh failed:', error);
           // If refresh fails, try to continue with existing token
           // If that fails too, user will need to re-authenticate
         }
@@ -267,19 +245,14 @@ export default function App() {
       
       // Get currently playing track
       try {
-        console.log('Fetching currently playing with token:', spotifyToken ? 'Token present' : 'No token');
-        
         const currentlyPlayingResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
           headers: {
             'Authorization': `Bearer ${spotifyToken}`,
           },
         });
 
-        console.log('Currently playing response status:', currentlyPlayingResponse.status);
-
         if (currentlyPlayingResponse.status === 200) {
           const currentData = await currentlyPlayingResponse.json() as SpotifyCurrentlyPlayingResponse;
-          console.log('Currently playing data:', currentData);
           if (currentData && currentData.item) {
             setCurrentlyPlaying({
               name: currentData.item.name,
@@ -292,15 +265,11 @@ export default function App() {
           }
         } else if (currentlyPlayingResponse.status === 204) {
           // No track currently playing
-          console.log('No track currently playing (204)');
           setCurrentlyPlaying(null);
         } else {
-          const errorText = await currentlyPlayingResponse.text();
-          console.log('Currently playing error:', currentlyPlayingResponse.status, errorText);
           
           // If 401, try to refresh token and retry once
           if (currentlyPlayingResponse.status === 401 && currentUser) {
-            console.log('Got 401, attempting token refresh...');
             try {
               const refreshedAuth = await refreshSpotifyToken(currentUser.id);
               currentUser = refreshedAuth.user;
@@ -310,7 +279,6 @@ export default function App() {
               setUser(currentUser);
               setAuthToken(refreshedAuth.access_token);
               await saveAuthDataSecurely(refreshedAuth);
-              console.log('Token refreshed after 401, retrying API call...');
               
               // Retry the API call with new token
               const retryResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
@@ -335,7 +303,7 @@ export default function App() {
                 setCurrentlyPlaying(null);
               }
             } catch (refreshError) {
-              console.log('Token refresh failed after 401:', refreshError);
+              console.warn('Token refresh failed after 401:', refreshError);
               setCurrentlyPlaying(null);
             }
           } else {
@@ -343,25 +311,20 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.log('Currently playing fetch error:', error);
+        console.warn('Currently playing fetch error:', error);
         setCurrentlyPlaying(null);
       }
 
       // Get recently played tracks
       try {
-        console.log('Fetching recent tracks with token:', spotifyToken ? 'Token present' : 'No token');
-        
         const recentTracksResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
           headers: {
             'Authorization': `Bearer ${spotifyToken}`,
           },
         });
 
-        console.log('Recent tracks response status:', recentTracksResponse.status);
-
         if (recentTracksResponse.ok) {
           const recentData = await recentTracksResponse.json() as SpotifyRecentTracksResponse;
-          console.log('Recent tracks data:', recentData);
           const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
             name: item.track.name,
             artist: item.track.artists[0]?.name || 'Unknown Artist',
@@ -369,14 +332,10 @@ export default function App() {
             played_at: item.played_at,
           }));
           setRecentTracks(formattedTracks);
-          console.log('Set recent tracks:', formattedTracks.length, 'tracks');
         } else {
-          const errorText = await recentTracksResponse.text();
-          console.log('Recent tracks error:', recentTracksResponse.status, errorText);
           
           // If 401, try to refresh token and retry once
           if (recentTracksResponse.status === 401 && currentUser) {
-            console.log('Recent tracks got 401, attempting token refresh...');
             try {
               const refreshedAuth = await refreshSpotifyToken(currentUser.id);
               const newSpotifyToken = refreshedAuth.user.spotify_access_token;
@@ -385,7 +344,6 @@ export default function App() {
               setUser(refreshedAuth.user);
               setAuthToken(refreshedAuth.access_token);
               await saveAuthDataSecurely(refreshedAuth);
-              console.log('Token refreshed after recent tracks 401, retrying API call...');
               
               // Retry the API call with new token
               const retryResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
@@ -403,13 +361,11 @@ export default function App() {
                   played_at: item.played_at,
                 }));
                 setRecentTracks(formattedTracks);
-                console.log('Recent tracks retry successful:', formattedTracks.length, 'tracks');
               } else {
-                console.log('Recent tracks retry still failed:', retryResponse.status);
                 setRecentTracks([]);
               }
             } catch (refreshError) {
-              console.log('Token refresh failed after recent tracks 401:', refreshError);
+              console.warn('Token refresh failed after recent tracks 401:', refreshError);
               setRecentTracks([]);
             }
           } else {
@@ -417,7 +373,7 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.log('Recent tracks fetch error:', error);
+        console.warn('Recent tracks fetch error:', error);
         setRecentTracks([]);
       }
     } catch {
@@ -517,7 +473,10 @@ export default function App() {
         <View style={styles.dashboardContainer}>
           
           {/* User Profile Section */}
-          <View style={styles.profileCard}>
+          <LinearGradient
+            colors={['#1a0a1a', '#0d0d0d', '#1a0a2e']}
+            style={styles.profileCard}
+          >
             <View style={styles.profileHeader}>
               {user.profile_image_url ? (
                 <Image 
@@ -536,11 +495,14 @@ export default function App() {
                 <Text style={styles.userEmail}>{user.email}</Text>
               </View>
             </View>
-          </View>
+          </LinearGradient>
 
           {/* Currently Playing Section */}
           {currentlyPlaying && (
-            <View style={styles.nowPlayingCard}>
+            <LinearGradient
+              colors={['#2a0a2a', '#0d0d0d', '#0a2a2a']}
+              style={styles.nowPlayingCard}
+            >
               <Text style={styles.cardTitle}>NOW PLAYING</Text>
               <View style={styles.trackInfo}>
                 <Text style={styles.trackName}>{currentlyPlaying.name}</Text>
@@ -548,11 +510,14 @@ export default function App() {
                 <Text style={styles.trackAlbum}>{currentlyPlaying.album}</Text>
               </View>
               <View style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]} />
-            </View>
+            </LinearGradient>
           )}
 
           {/* Recent Activity Section */}
-          <View style={styles.recentCard}>
+          <LinearGradient
+            colors={['#2a0a1a', '#0d0d0d', '#1a0a2a']}
+            style={styles.recentCard}
+          >
             <Text style={styles.cardTitle}>RECENT TRACKS</Text>
             {recentTracks.map((track, index) => (
               <View key={index} style={styles.trackItem}>
@@ -565,10 +530,13 @@ export default function App() {
                 </Text>
               </View>
             ))}
-          </View>
+          </LinearGradient>
 
           {/* Quick Actions */}
-          <View style={styles.actionsCard}>
+          <LinearGradient
+            colors={['#1a0a0a', '#0d0d0d', '#2a0a1a']}
+            style={styles.actionsCard}
+          >
             <Text style={styles.cardTitle}>QUICK ACTIONS</Text>
             <TouchableOpacity style={styles.actionButton}>
               <Text style={styles.actionButtonText}>Create New Tag</Text>
@@ -579,7 +547,7 @@ export default function App() {
             <TouchableOpacity style={styles.actionButton}>
               <Text style={styles.actionButtonText}>Generate Playlist</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
         </View>
 
@@ -641,7 +609,7 @@ const styles = StyleSheet.create({
   // Base Container Styles
   container: {
     flex: 1,
-    backgroundColor: '#1a0033', // Deep purple background
+    backgroundColor: '#0a0a0f', // Nearly black with purple hint
     padding: 20,
     paddingTop: 60,
   },
@@ -761,14 +729,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '700',
     textAlign: 'center',
-    color: '#ff00ff',
-    textShadowColor: '#00ffff',
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 10,
-    letterSpacing: 3,
+    color: '#ffffff',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
   dashboardContainer: {
     flex: 1,
@@ -776,12 +742,17 @@ const styles = StyleSheet.create({
 
   // Profile Card
   profileCard: {
-    backgroundColor: '#4d0099', // Purple
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: 20,
-    borderWidth: 3,
-    borderColor: '#ff00ff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -818,76 +789,93 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffff00',
-    marginBottom: 5,
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: '#00ffff',
-    fontWeight: '600',
+    color: '#ffffff',
+    fontWeight: '400',
+    opacity: 0.7,
   },
 
   // Now Playing Card
   nowPlayingCard: {
-    backgroundColor: '#006633', // Dark green
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: 20,
-    borderWidth: 3,
-    borderColor: '#00ff00',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffff00',
-    marginBottom: 15,
-    letterSpacing: 2,
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 16,
+    letterSpacing: 1,
+    opacity: 0.8,
+    textTransform: 'uppercase',
   },
   trackInfo: {
     marginBottom: 10,
   },
   trackName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#ffffff',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   trackArtist: {
     fontSize: 16,
-    color: '#00ffff',
-    marginBottom: 3,
+    color: '#ffffff',
+    marginBottom: 2,
+    opacity: 0.8,
   },
   trackAlbum: {
     fontSize: 14,
-    color: '#cccccc',
+    color: '#ffffff',
+    opacity: 0.6,
   },
   playingIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#666666',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignSelf: 'flex-end',
   },
   playing: {
-    backgroundColor: '#00ff00',
+    backgroundColor: '#1DB954',
+    shadowColor: '#1DB954',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   // Recent Tracks Card
   recentCard: {
-    backgroundColor: '#990066', // Dark magenta
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: 20,
-    borderWidth: 3,
-    borderColor: '#ff00aa',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   trackItem: {
     flexDirection: 'row',
@@ -902,62 +890,67 @@ const styles = StyleSheet.create({
   },
   recentTrackName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#ffffff',
     marginBottom: 2,
   },
   recentTrackArtist: {
     fontSize: 14,
-    color: '#ffaacc',
+    color: '#ffffff',
+    opacity: 0.7,
   },
   playedTime: {
     fontSize: 12,
-    color: '#00ffff',
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontWeight: '500',
+    opacity: 0.6,
   },
 
   // Actions Card
   actionsCard: {
-    backgroundColor: '#cc3300', // Dark red-orange
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: 20,
-    borderWidth: 3,
-    borderColor: '#ff6600',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   actionButton: {
-    backgroundColor: '#ff6600',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#ffff00',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   actionButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     textAlign: 'center',
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
 
   // Logout Button
   logoutButton: {
-    backgroundColor: '#666666',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 12,
     paddingHorizontal: 30,
-    borderRadius: 20,
+    borderRadius: 16,
     alignSelf: 'center',
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#999999',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   logoutButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    opacity: 0.8,
   },
 });
