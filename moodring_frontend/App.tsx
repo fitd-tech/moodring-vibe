@@ -36,6 +36,9 @@ interface BackendUser {
   spotify_id: string;
   email: string;
   display_name: string | null;
+  spotify_access_token: string | null;
+  spotify_refresh_token: string | null;
+  token_expires_at: string | null;
   profile_image_url: string | null;
   created_at: string;
   updated_at: string;
@@ -58,6 +61,26 @@ interface CurrentlyPlaying {
   artist: string;
   album: string;
   is_playing: boolean;
+}
+
+interface SpotifyTrack {
+  name: string;
+  artists: Array<{ name: string }>;
+  album: { name: string };
+}
+
+interface SpotifyCurrentlyPlayingResponse {
+  item: SpotifyTrack;
+  is_playing: boolean;
+}
+
+interface SpotifyRecentTrackItem {
+  track: SpotifyTrack;
+  played_at: string;
+}
+
+interface SpotifyRecentTracksResponse {
+  items: SpotifyRecentTrackItem[];
 }
 
 // Keep for backward compatibility with stored tokens
@@ -159,25 +182,66 @@ export default function App() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const loadRecentActivity = async (_token: string) => {
+  const loadRecentActivity = async (token: string) => {
     try {
-      // TODO: TEMP - Placeholder for real Spotify API integration
-      // For now, set sample data to demonstrate UI
-      setRecentTracks([
-        { name: 'Sample Track 1', artist: 'Artist 1', album: 'Album 1', played_at: new Date().toISOString() },
-        { name: 'Sample Track 2', artist: 'Artist 2', album: 'Album 2', played_at: new Date(Date.now() - 300000).toISOString() },
-        { name: 'Sample Track 3', artist: 'Artist 3', album: 'Album 3', played_at: new Date(Date.now() - 600000).toISOString() },
-      ]);
-      setCurrentlyPlaying({
-        name: 'Current Song',
-        artist: 'Current Artist',
-        album: 'Current Album',
-        is_playing: true
-      });
+      // Get currently playing track
+      try {
+        const currentlyPlayingResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+          headers: {
+            'Authorization': `Bearer ${user?.spotify_access_token || token}`,
+          },
+        });
+
+        if (currentlyPlayingResponse.status === 200) {
+          const currentData = await currentlyPlayingResponse.json() as SpotifyCurrentlyPlayingResponse;
+          if (currentData && currentData.item) {
+            setCurrentlyPlaying({
+              name: currentData.item.name,
+              artist: currentData.item.artists[0]?.name || 'Unknown Artist',
+              album: currentData.item.album.name,
+              is_playing: currentData.is_playing
+            });
+          } else {
+            setCurrentlyPlaying(null);
+          }
+        } else if (currentlyPlayingResponse.status === 204) {
+          // No track currently playing
+          setCurrentlyPlaying(null);
+        }
+      } catch {
+        // Failed to fetch currently playing - silently continue
+        setCurrentlyPlaying(null);
+      }
+
+      // Get recently played tracks
+      try {
+        const recentTracksResponse = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
+          headers: {
+            'Authorization': `Bearer ${user?.spotify_access_token || token}`,
+          },
+        });
+
+        if (recentTracksResponse.ok) {
+          const recentData = await recentTracksResponse.json() as SpotifyRecentTracksResponse;
+          const formattedTracks = recentData.items.map((item: SpotifyRecentTrackItem) => ({
+            name: item.track.name,
+            artist: item.track.artists[0]?.name || 'Unknown Artist',
+            album: item.track.album.name,
+            played_at: item.played_at,
+          }));
+          setRecentTracks(formattedTracks);
+        } else {
+          // Failed to fetch recent tracks - set empty state
+          setRecentTracks([]);
+        }
+      } catch {
+        // Failed to fetch recent tracks - set empty state
+        setRecentTracks([]);
+      }
     } catch {
-      // TODO: Replace with proper logging service
-      // Error loading recent activity - will be handled when logging service is implemented
+      // Error loading Spotify activity - set empty states
+      setCurrentlyPlaying(null);
+      setRecentTracks([]);
     }
   };
 
