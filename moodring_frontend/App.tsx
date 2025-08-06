@@ -101,6 +101,7 @@ export default function App() {
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<CurrentlyPlaying | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
   const intervalRef = useRef<any>(null);
 
   // Use explicit redirect URI for consistent behavior
@@ -588,23 +589,72 @@ export default function App() {
           )}
 
           {/* Recent Activity Section */}
-          <LinearGradient
-            colors={['#2a0a1a', '#0d0d0d', '#1a0a2a']}
-            style={styles.recentCard}
-          >
+          <View style={styles.recentSection}>
             <Text style={styles.cardTitle}>RECENT TRACKS</Text>
             {recentTracks.map((track, index) => (
-              <View key={index} style={styles.trackItem}>
-                <View style={styles.trackDetails}>
-                  <Text style={styles.recentTrackName}>{track.name}</Text>
-                  <Text style={styles.recentTrackArtist}>{track.artist}</Text>
-                </View>
-                <Text style={styles.playedTime}>
-                  {new Date(track.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </Text>
-              </View>
+              <LinearGradient
+                key={index}
+                colors={['#4a1458', '#2d0a35', '#1a0a2a']}
+                style={styles.trackCard}
+              >
+                <TouchableOpacity 
+                  style={styles.trackHeader}
+                  onPress={() => setExpandedTrack(expandedTrack === index ? null : index)}
+                >
+                  <View style={styles.albumArt}>
+                    <View style={styles.albumPlaceholder} />
+                  </View>
+                  <View style={styles.trackMainInfo}>
+                    <Text style={styles.trackTitle}>{track.name}</Text>
+                    <Text style={styles.newTrackArtist}>{track.artist}</Text>
+                    {track.album && <Text style={styles.newTrackAlbum}>Album: {track.album}</Text>}
+                  </View>
+                  <View style={styles.trackActions}>
+                    <Text style={styles.trackDuration}>
+                      {new Date(track.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </Text>
+                    <TouchableOpacity style={styles.heartButton}>
+                      <Text style={styles.heartIcon}>♡</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.menuButton}>
+                      <Text style={styles.menuIcon}>⋮</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+                
+                {expandedTrack === index && (
+                  <View style={styles.expandedContent}>
+                    <Text style={styles.tagsLabel}>Tags</Text>
+                    <View style={styles.tagsContainer}>
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>pop</Text>
+                        <TouchableOpacity style={styles.tagRemove}>
+                          <Text style={styles.tagRemoveText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>recent</Text>
+                        <TouchableOpacity style={styles.tagRemove}>
+                          <Text style={styles.tagRemoveText}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.addTagContainer}>
+                      <View style={styles.addTagInput}>
+                        <Text style={styles.addTagPlaceholder}>Add tag...</Text>
+                      </View>
+                      <TouchableOpacity style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+ Add</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity style={styles.collapseButton}>
+                      <Text style={styles.collapseText}>Collapse</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </LinearGradient>
             ))}
-          </LinearGradient>
+          </View>
 
           {/* Quick Actions */}
           <LinearGradient
@@ -689,7 +739,7 @@ const styles = StyleSheet.create({
   // Base Container Styles
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f', // Nearly black with purple hint
+    backgroundColor: '#1a0a1a', // Deep purple background
     padding: 20,
     paddingTop: 60,
   },
@@ -1050,5 +1100,174 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     opacity: 0.8,
+  },
+
+  // New Accordion-Style Track Cards
+  recentSection: {
+    marginBottom: 20,
+  },
+  trackCard: {
+    borderRadius: 20,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  trackHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  albumArt: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    marginRight: 16,
+    overflow: 'hidden',
+  },
+  albumPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  trackMainInfo: {
+    flex: 1,
+  },
+  trackTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  newTrackArtist: {
+    fontSize: 16,
+    color: '#ffffff',
+    opacity: 0.8,
+    marginBottom: 2,
+  },
+  newTrackAlbum: {
+    fontSize: 14,
+    color: '#ffffff',
+    opacity: 0.6,
+  },
+  trackActions: {
+    alignItems: 'flex-end',
+  },
+  trackDuration: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '600',
+    opacity: 0.7,
+    marginBottom: 8,
+  },
+  heartButton: {
+    padding: 4,
+    marginBottom: 4,
+  },
+  heartIcon: {
+    fontSize: 20,
+    color: '#ff69b4',
+  },
+  menuButton: {
+    padding: 4,
+  },
+  menuIcon: {
+    fontSize: 20,
+    color: '#ffffff',
+    opacity: 0.6,
+  },
+
+  // Expanded Content Styles
+  expandedContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tagsLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 12,
+    marginTop: 16,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(138, 43, 226, 0.7)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  tagRemove: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tagRemoveText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  addTagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addTagInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginRight: 12,
+  },
+  addTagPlaceholder: {
+    color: '#ffffff',
+    fontSize: 16,
+    opacity: 0.6,
+  },
+  addButton: {
+    backgroundColor: '#8a2be2',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  addButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  collapseButton: {
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  collapseText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
+    opacity: 0.7,
   },
 });
