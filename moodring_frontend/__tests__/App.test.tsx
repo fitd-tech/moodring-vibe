@@ -32,7 +32,7 @@ describe('App', () => {
       await waitFor(() => {
         expect(getByText('🎵 Moodring')).toBeTruthy();
         expect(getByText('Organize your music with powerful tags')).toBeTruthy();
-        expect(getByText('🎧 Connect with Spotify')).toBeTruthy();
+        expect(getByText('Connect with Spotify')).toBeTruthy();
       });
     });
 
@@ -68,7 +68,7 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        const loginButton = getByText('🎧 Connect with Spotify');
+        const loginButton = getByText('Connect with Spotify');
         fireEvent.press(loginButton);
         expect(mockPromptAsync).toHaveBeenCalled();
       });
@@ -108,28 +108,41 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(getByText('🎵 Moodring')).toBeTruthy();
+        expect(getByText('MOODRING')).toBeTruthy();
         expect(getByText('Test User')).toBeTruthy();
         expect(getByText('test@example.com')).toBeTruthy();
-        expect(getByText('User ID: 1')).toBeTruthy();
       });
     });
 
-    it('displays welcome message and features for authenticated user', async () => {
+    it('displays dashboard sections for authenticated user', async () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        expect(
-          getByText('Welcome to Moodring! Ready to organize your music with tags?')
-        ).toBeTruthy();
-        expect(getByText('🎵 Access your playlists and saved music')).toBeTruthy();
-        expect(getByText('🏷️ Create hierarchical tags for organization')).toBeTruthy();
-        expect(getByText('📚 Generate custom playlists from tags')).toBeTruthy();
-        expect(getByText('🔄 Sync back to your Spotify account')).toBeTruthy();
+        expect(getByText('RECENT TRACKS')).toBeTruthy();
+        expect(getByText('QUICK ACTIONS')).toBeTruthy();
+        expect(getByText('Create New Tag')).toBeTruthy();
+        expect(getByText('Browse Playlists')).toBeTruthy();
+        expect(getByText('Generate Playlist')).toBeTruthy();
       });
     });
 
     it('shows user avatar placeholder with first letter of display name', async () => {
+      // Mock auth data without profile image to test placeholder
+      const mockAuthWithoutImage = {
+        user: {
+          id: 1,
+          spotify_id: 'test_user',
+          email: 'test@example.com',
+          display_name: 'Test User',
+          profile_image_url: null,
+          created_at: '2025-08-06T01:00:00Z',
+          updated_at: '2025-08-06T01:00:00Z',
+        },
+        access_token: 'backend_jwt_token',
+      };
+
+      mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(mockAuthWithoutImage));
+      
       const { getByText } = render(<App />);
 
       await waitFor(() => {
@@ -228,7 +241,7 @@ describe('App', () => {
       const { getByText } = render(<App />);
 
       await waitFor(() => {
-        const loginButton = getByText('🎧 Connect with Spotify');
+        const loginButton = getByText('Connect with Spotify');
         fireEvent.press(loginButton);
       });
 

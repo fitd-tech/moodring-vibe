@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -23,10 +23,12 @@ if (!CLIENT_ID) {
   );
 }
 
-// Minimal scopes needed for basic user profile access
+// Scopes for profile access and recent activity
 const SCOPES = [
   'user-read-private',
   'user-read-email',
+  'user-read-recently-played',
+  'user-read-currently-playing',
 ];
 
 interface BackendUser {
@@ -44,7 +46,22 @@ interface BackendAuthResponse {
   access_token: string;
 }
 
+interface RecentTrack {
+  name: string;
+  artist: string;
+  album: string;
+  played_at: string;
+}
+
+interface CurrentlyPlaying {
+  name: string;
+  artist: string;
+  album: string;
+  is_playing: boolean;
+}
+
 // Keep for backward compatibility with stored tokens
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
 interface AuthTokens {
   access_token: string;
   refresh_token?: string;
@@ -57,6 +74,8 @@ export default function App() {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<CurrentlyPlaying | null>(null);
 
   // Use explicit redirect URI for consistent behavior
   const redirectUri = 'moodring://auth';
@@ -74,7 +93,8 @@ export default function App() {
 
   const authenticateWithBackend = async (code: string, codeVerifier: string) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/spotify', {
+      const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/auth/spotify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,10 +159,34 @@ export default function App() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+  const loadRecentActivity = async (_token: string) => {
+    try {
+      // TODO: TEMP - Placeholder for real Spotify API integration
+      // For now, set sample data to demonstrate UI
+      setRecentTracks([
+        { name: 'Sample Track 1', artist: 'Artist 1', album: 'Album 1', played_at: new Date().toISOString() },
+        { name: 'Sample Track 2', artist: 'Artist 2', album: 'Album 2', played_at: new Date(Date.now() - 300000).toISOString() },
+        { name: 'Sample Track 3', artist: 'Artist 3', album: 'Album 3', played_at: new Date(Date.now() - 600000).toISOString() },
+      ]);
+      setCurrentlyPlaying({
+        name: 'Current Song',
+        artist: 'Current Artist',
+        album: 'Current Album',
+        is_playing: true
+      });
+    } catch {
+      // TODO: Replace with proper logging service
+      // Error loading recent activity - will be handled when logging service is implemented
+    }
+  };
+
   const handleLogout = async () => {
     await clearStoredAuthData();
     setUser(null);
     setAuthToken(null);
+    setRecentTracks([]);
+    setCurrentlyPlaying(null);
     setError(null);
     setIsLoading(false);
   };
@@ -157,6 +201,8 @@ export default function App() {
           // Set auth state from saved data
           setUser(savedAuth.user);
           setAuthToken(savedAuth.access_token);
+          // Load recent activity for logged in user
+          await loadRecentActivity(savedAuth.access_token);
         }
       } catch {
         // If saved auth data is invalid, clear everything
@@ -184,6 +230,8 @@ export default function App() {
           await saveAuthDataSecurely(authData);
           setUser(authData.user);
           setAuthToken(authData.access_token);
+          // Load recent activity for newly authenticated user
+          await loadRecentActivity(authData.access_token);
         } catch (err) {
           // If backend authentication fails, clear everything
           await clearStoredAuthData();
@@ -212,37 +260,81 @@ export default function App() {
   }
 
   if (user && authToken) {
-    // User is logged in - show main app
+    // User is logged in - show dashboard
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>🎵 Moodring</Text>
-
-        {/* User Profile */}
-        <View style={styles.profileContainer}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarPlaceholder}>
-              {user.display_name?.charAt(0).toUpperCase() || user.spotify_id.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user.display_name || user.spotify_id}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-            <Text style={styles.userId}>User ID: {user.id}</Text>
-          </View>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>MOODRING</Text>
         </View>
 
-        {/* Main Content Area */}
-        <View style={styles.mainContent}>
-          <Text style={styles.welcomeText}>
-            Welcome to Moodring! Ready to organize your music with tags?
-          </Text>
-
-          <View style={styles.featureList}>
-            <Text style={styles.featureItem}>🎵 Access your playlists and saved music</Text>
-            <Text style={styles.featureItem}>🏷️ Create hierarchical tags for organization</Text>
-            <Text style={styles.featureItem}>📚 Generate custom playlists from tags</Text>
-            <Text style={styles.featureItem}>🔄 Sync back to your Spotify account</Text>
+        {/* User Dashboard */}
+        <View style={styles.dashboardContainer}>
+          
+          {/* User Profile Section */}
+          <View style={styles.profileCard}>
+            <View style={styles.profileHeader}>
+              {user.profile_image_url ? (
+                <Image 
+                  source={{ uri: user.profile_image_url }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.avatarContainer}>
+                  <Text style={styles.avatarPlaceholder}>
+                    {user.display_name?.charAt(0).toUpperCase() || user.spotify_id.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{user.display_name || user.spotify_id}</Text>
+                <Text style={styles.userEmail}>{user.email}</Text>
+              </View>
+            </View>
           </View>
+
+          {/* Currently Playing Section */}
+          {currentlyPlaying && (
+            <View style={styles.nowPlayingCard}>
+              <Text style={styles.cardTitle}>NOW PLAYING</Text>
+              <View style={styles.trackInfo}>
+                <Text style={styles.trackName}>{currentlyPlaying.name}</Text>
+                <Text style={styles.trackArtist}>by {currentlyPlaying.artist}</Text>
+                <Text style={styles.trackAlbum}>{currentlyPlaying.album}</Text>
+              </View>
+              <View style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]} />
+            </View>
+          )}
+
+          {/* Recent Activity Section */}
+          <View style={styles.recentCard}>
+            <Text style={styles.cardTitle}>RECENT TRACKS</Text>
+            {recentTracks.map((track, index) => (
+              <View key={index} style={styles.trackItem}>
+                <View style={styles.trackDetails}>
+                  <Text style={styles.recentTrackName}>{track.name}</Text>
+                  <Text style={styles.recentTrackArtist}>{track.artist}</Text>
+                </View>
+                <Text style={styles.playedTime}>
+                  {new Date(track.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Quick Actions */}
+          <View style={styles.actionsCard}>
+            <Text style={styles.cardTitle}>QUICK ACTIONS</Text>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Create New Tag</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Browse Playlists</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Generate Playlist</Text>
+            </TouchableOpacity>
+          </View>
+
         </View>
 
         {/* Logout Button */}
@@ -251,7 +343,7 @@ export default function App() {
         </TouchableOpacity>
 
         <StatusBar style="light" />
-      </View>
+      </ScrollView>
     );
   }
 
@@ -284,7 +376,7 @@ export default function App() {
             onPress={handleLogin}
             disabled={!request}
           >
-            <Text style={styles.loginButtonText}>🎧 Connect with Spotify</Text>
+            <Text style={styles.loginButtonText}>Connect with Spotify</Text>
           </TouchableOpacity>
 
           <Text style={styles.disclaimerText}>
@@ -300,9 +392,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  // Base Container Styles
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#1a0033', // Deep purple background
     padding: 20,
     paddingTop: 60,
   },
@@ -314,8 +407,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     marginTop: 15,
+    fontWeight: 'bold',
   },
-  // Login Screen Styles
+
+  // Login Screen Styles - 90's Neon Aesthetic
   loginContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -324,34 +419,41 @@ const styles = StyleSheet.create({
   appTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#1db954',
+    color: '#ff00ff', // Hot pink
     marginBottom: 10,
     textAlign: 'center',
+    textShadowColor: '#00ffff',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   tagline: {
     fontSize: 18,
-    color: '#b3b3b3',
+    color: '#00ffff', // Cyan
     textAlign: 'center',
     marginBottom: 40,
+    fontWeight: '600',
   },
   featuresContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#330066', // Dark purple
     padding: 20,
     borderRadius: 15,
     marginBottom: 40,
     width: '100%',
+    borderWidth: 2,
+    borderColor: '#ff00ff',
   },
   featuresTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#ffff00', // Bright yellow
     marginBottom: 15,
   },
   featureItem: {
     fontSize: 16,
-    color: '#b3b3b3',
+    color: '#00ff00', // Bright green
     marginBottom: 8,
     lineHeight: 24,
+    fontWeight: '500',
   },
   authSection: {
     alignItems: 'center',
@@ -364,119 +466,252 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   loginButton: {
-    backgroundColor: '#1db954',
+    backgroundColor: '#ff6600', // Bright orange
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,
     marginBottom: 20,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#ffff00',
   },
   loginButtonDisabled: {
-    backgroundColor: '#444444',
+    backgroundColor: '#666666',
+    borderColor: '#888888',
   },
   loginButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   disclaimerText: {
     fontSize: 14,
-    color: '#777777',
+    color: '#cccccc',
     textAlign: 'center',
     lineHeight: 20,
   },
   errorContainer: {
-    backgroundColor: '#330000',
+    backgroundColor: '#990033',
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
     width: '100%',
+    borderWidth: 2,
+    borderColor: '#ff0066',
   },
   errorText: {
-    color: '#ff6b6b',
+    color: '#ff66aa',
     textAlign: 'center',
     fontSize: 14,
+    fontWeight: 'bold',
   },
-  // Logged In Screen Styles
+
+  // Dashboard Styles - 90's Retro Design
+  header: {
+    marginBottom: 20,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#1db954',
+    color: '#ff00ff',
+    textShadowColor: '#00ffff',
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 10,
+    letterSpacing: 3,
   },
-  profileContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+  dashboardContainer: {
+    flex: 1,
+  },
+
+  // Profile Card
+  profileCard: {
+    backgroundColor: '#4d0099', // Purple
     padding: 20,
     borderRadius: 15,
-    marginBottom: 30,
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#ff00ff',
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 20,
+    borderWidth: 3,
+    borderColor: '#00ffff',
   },
   avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#1db954',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ff6600',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 20,
+    borderWidth: 3,
+    borderColor: '#ffff00',
   },
   avatarPlaceholder: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#ffffff',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   userInfo: {
     flex: 1,
   },
   userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffff00',
+    marginBottom: 5,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  userEmail: {
+    fontSize: 16,
+    color: '#00ffff',
+    fontWeight: '600',
+  },
+
+  // Now Playing Card
+  nowPlayingCard: {
+    backgroundColor: '#006633', // Dark green
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#00ff00',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffff00',
+    marginBottom: 15,
+    letterSpacing: 2,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  trackInfo: {
+    marginBottom: 10,
+  },
+  trackName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 5,
   },
-  userEmail: {
-    fontSize: 14,
-    color: '#b3b3b3',
+  trackArtist: {
+    fontSize: 16,
+    color: '#00ffff',
     marginBottom: 3,
   },
-  userFollowers: {
-    fontSize: 12,
-    color: '#777777',
+  trackAlbum: {
+    fontSize: 14,
+    color: '#cccccc',
   },
-  userId: {
-    fontSize: 12,
-    color: '#777777',
+  playingIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#666666',
+    alignSelf: 'flex-end',
   },
-  mainContent: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
+  playing: {
+    backgroundColor: '#00ff00',
+  },
+
+  // Recent Tracks Card
+  recentCard: {
+    backgroundColor: '#990066', // Dark magenta
     padding: 20,
     borderRadius: 15,
     marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#ff00aa',
   },
-  welcomeText: {
-    fontSize: 18,
+  trackItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ff00aa',
+  },
+  trackDetails: {
+    flex: 1,
+  },
+  recentTrackName: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#ffffff',
+    marginBottom: 2,
+  },
+  recentTrackArtist: {
+    fontSize: 14,
+    color: '#ffaacc',
+  },
+  playedTime: {
+    fontSize: 12,
+    color: '#00ffff',
+    fontWeight: 'bold',
+  },
+
+  // Actions Card
+  actionsCard: {
+    backgroundColor: '#cc3300', // Dark red-orange
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#ff6600',
+  },
+  actionButton: {
+    backgroundColor: '#ff6600',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#ffff00',
+  },
+  actionButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 26,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  featureList: {
-    alignItems: 'flex-start',
-  },
+
+  // Logout Button
   logoutButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#666666',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 20,
     alignSelf: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#999999',
   },
   logoutButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
 });

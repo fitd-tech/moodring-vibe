@@ -53,6 +53,7 @@ jest.mock('react-native', () => ({
   TouchableOpacity: 'TouchableOpacity',
   ActivityIndicator: 'ActivityIndicator',
   ScrollView: 'ScrollView',
+  Image: 'Image',
   useColorScheme: jest.fn(() => 'light'),
   NativeModules: {
     StatusBarManager: {
