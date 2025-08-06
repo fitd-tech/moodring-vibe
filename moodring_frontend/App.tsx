@@ -256,7 +256,8 @@ export default function App() {
 
         if (currentlyPlayingResponse.status === 200) {
           const currentData = await currentlyPlayingResponse.json() as SpotifyCurrentlyPlayingResponse;
-          if (currentData && currentData.item) {
+          if (currentData && currentData.item && currentData.is_playing) {
+            // Only show currently playing if a track exists AND is actively playing
             setCurrentlyPlaying({
               name: currentData.item.name,
               artist: currentData.item.artists[0]?.name || 'Unknown Artist',
@@ -264,6 +265,7 @@ export default function App() {
               is_playing: currentData.is_playing
             });
           } else {
+            // Hide if no track or playback is paused/stopped
             setCurrentlyPlaying(null);
           }
         } else if (currentlyPlayingResponse.status === 204) {
@@ -292,7 +294,8 @@ export default function App() {
               
               if (retryResponse.status === 200) {
                 const currentData = await retryResponse.json() as SpotifyCurrentlyPlayingResponse;
-                if (currentData && currentData.item) {
+                if (currentData && currentData.item && currentData.is_playing) {
+                  // Only show currently playing if a track exists AND is actively playing
                   setCurrentlyPlaying({
                     name: currentData.item.name,
                     artist: currentData.item.artists[0]?.name || 'Unknown Artist',
@@ -300,6 +303,7 @@ export default function App() {
                     is_playing: currentData.is_playing
                   });
                 } else {
+                  // Hide if no track or playback is paused/stopped
                   setCurrentlyPlaying(null);
                 }
               } else if (retryResponse.status === 204) {
