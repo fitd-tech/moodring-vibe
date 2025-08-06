@@ -218,6 +218,18 @@ async fn spotify_auth(
     }
 }
 
+// Token refresh endpoint
+#[post("/auth/refresh/<user_id>")]
+async fn refresh_token(
+    pool: &State<DbPool>,
+    user_id: i32,
+) -> Result<Json<AuthResponse>, rocket::response::status::BadRequest<String>> {
+    match refresh_spotify_token(pool.inner(), user_id).await {
+        Ok(auth_response) => Ok(Json(auth_response)),
+        Err(e) => Err(rocket::response::status::BadRequest(e)),
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
     dotenvy::dotenv().ok();
@@ -239,6 +251,7 @@ async fn main() -> Result<(), Box<rocket::Error>> {
                 health,
                 test_data,
                 spotify_auth,
+                refresh_token,
                 get_songs,
                 create_song,
                 update_song,
