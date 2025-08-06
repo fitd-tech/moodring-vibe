@@ -519,7 +519,7 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#1db954" />
+        <ActivityIndicator size="large" color="#8a2be2" />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -534,8 +534,8 @@ export default function App() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor="#1DB954"
-            colors={['#1DB954']}
+            tintColor="#8a2be2"
+            colors={['#8a2be2']}
             progressBackgroundColor="#1a0a1a"
           />
         }
@@ -689,12 +689,14 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.loginContainer}>
-        <Text style={styles.appTitle}>🎵 Moodring</Text>
+        <View style={styles.appTitleContainer}>
+          <Text style={styles.appTitle}>MOODRING</Text>
+        </View>
         <Text style={styles.tagline}>Organize your music with powerful tags</Text>
 
         {error && (
           <LinearGradient
-            colors={['#2a0a0a', '#0d0d0d', '#1a0a0a']}
+            colors={['#4a1458', '#2d0a35', '#1a0a2a']}
             style={styles.errorContainer}
           >
             <Text style={styles.errorText}>{error}</Text>
@@ -702,7 +704,7 @@ export default function App() {
         )}
 
         <LinearGradient
-          colors={['#1a0a1a', '#0d0d0d', '#1a0a2e']}
+          colors={['#4a1458', '#2d0a35', '#1a0a2a']}
           style={styles.featuresContainer}
         >
           <Text style={styles.featuresTitle}>What you can do:</Text>
@@ -760,13 +762,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  appTitleContainer: {
+    marginBottom: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(138, 43, 226, 0.2)',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(138, 43, 226, 0.5)',
+    shadowColor: '#8a2be2',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 12,
+  },
   appTitle: {
-    fontSize: 42,
-    fontWeight: '700',
+    fontSize: 48,
+    fontWeight: '900',
     color: '#ffffff',
-    marginBottom: 8,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 4,
+    textShadowColor: '#8a2be2',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+    fontFamily: 'System',
   },
   tagline: {
     fontSize: 18,
@@ -818,21 +840,23 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   loginButton: {
-    backgroundColor: '#1DB954', // Spotify green
+    backgroundColor: '#8a2be2',
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 24,
     width: '100%',
     alignItems: 'center',
-    shadowColor: '#1DB954',
+    shadowColor: '#8a2be2',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(138, 43, 226, 0.3)',
   },
   loginButtonDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -1000,8 +1024,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   playing: {
-    backgroundColor: '#1DB954',
-    shadowColor: '#1DB954',
+    backgroundColor: '#8a2be2',
+    shadowColor: '#8a2be2',
     shadowOffset: {
       width: 0,
       height: 0,
