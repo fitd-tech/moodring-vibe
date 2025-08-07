@@ -120,9 +120,9 @@ const styles = StyleSheet.create({
   },
   refreshingOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 60, // Position below status bar/camera notch area
+    left: theme.spacing.md,
+    right: theme.spacing.md,
     zIndex: 1000,
     backgroundColor: theme.colors.background.primary,
     paddingVertical: theme.spacing.sm,
