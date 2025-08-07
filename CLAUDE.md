@@ -56,36 +56,82 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Feature branches**: Create from `develop`, merge back to `develop` via PRs
 - **Branch protection**: `main` branch only accepts merges from `develop` via CI/CD
 
-## Persistent Rules - MANDATORY WORKFLOW
-- **IMMEDIATELY after completing ANY task that creates, modifies, or deletes files**: 
-  1. Run `git status` and `git diff` to review changes
-  2. **Run pre-commit quality checks**:
-     - **MANDATORY**: Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
-     - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
-     - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/, if scripts exist)
-     - **FAIL COMMITS ON ANY WARNINGS**: Address all clippy warnings, lint warnings, and formatting issues before committing
-     - **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
-  3. **Stage ALL task-related files**: Use `git add <file>` for each modified file (avoid `git add .` to prevent staging unintended changes). **VERIFY STAGING**: Run `git status` to confirm all intended changes are staged and `git diff --cached` to review exactly what will be committed
-  4. **Generate commit message**: MANDATORY use of `commit-message-specialist` subagent for ALL commits
-  5. Commit with comprehensive message including 🤖 footer
-  6. Push to working branch (develop/feature) with `git push origin <branch>` - NO EXCEPTIONS, every commit must be immediately pushed
-  7. **Clean up development servers**: Kill any development servers started during the task
-     - Backend servers (Rocket, cargo run, etc.) on ports 8000-8099
-     - Frontend development servers (Expo, Metro, npm start) on ports 3000-3099, 8080-8089
-     - **Exceptions**: Do NOT kill database servers, persistent services, or system processes
-     - **Verification**: Run `lsof -ti:8000,3000` or similar to confirm ports are free
-     - **Note**: This ensures the user can start their own development environment without port conflicts
-- **NO EXCEPTIONS**: Every file change must be committed and pushed in the SAME response as the change
-- **Never wait for user reminder**: Commit/push workflow is automatic after any file modification
-- **If lint/test commands don't exist**: Ask user for correct commands and suggest adding them to package.json/Cargo.toml
-- Always work on `develop` branch or feature branches (never commit directly to `main`)
-- Always ask permission before pushing to `main` branch
-- Never modify test files without explicit permission
-- Follow existing code conventions and patterns
-- Prioritize security best practices
-- Write tests for all new code before committing
-- Run test suite on every commit via git hooks
-- Include comprehensive commit messages describing all changes made
+## Core Development Policies
+
+### Quality Enforcement
+- **Zero tolerance for warnings**: No commits allowed with outstanding warnings or linting issues
+- **Test coverage requirement**: Maintain minimum 80% test coverage for all code
+- **Pre-commit validation**: All tests, linting, and formatting checks must pass before commits
+- **Security first**: Prioritize security best practices in all development decisions
+- **Convention consistency**: Follow existing code conventions and patterns
+
+### Git Workflow Standards
+- **Primary development branch**: `develop` (all local work pushes here)
+- **Production branch**: `main` (reserved for CI/CD to production infrastructure)
+- **Feature branches**: Create from `develop`, merge back to `develop` via PRs
+- **Immediate push requirement**: Every commit must be immediately pushed to remote
+- **Comprehensive commit messages**: Use structured commit template with detailed descriptions
+- **Never commit directly to main**: Always ask permission before pushing to `main` branch
+
+### Development Environment
+- **Clean server state**: Kill development servers after task completion (ports 3000-3099, 8000-8099)
+- **Database preservation**: Never kill database servers or persistent services
+- **Test file protection**: Never modify test files without explicit permission
+
+### Task Execution Policy
+- **For development tasks requiring file changes**: Use `/mr-code` slash command for comprehensive quality-enforced workflows
+- **For policy/workflow changes**: Use `/mr-policy` slash command for proper analysis and validation
+- **For information-only tasks**: Direct implementation is appropriate
+- **Fallback enforcement**: When slash commands are unavailable, manually execute equivalent quality checks using the fallback checklist below
+- **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement
+
+### Manual Quality Checklist (Fallback Only)
+*Use only when specialized slash commands are unavailable:*
+
+1. **Pre-commit Quality Checks**:
+   - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
+   - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/)
+   - Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
+
+2. **Commit Process**:
+   - Stage specific files with `git add <file>` (avoid `git add .`)
+   - Verify staging with `git status` and `git diff --cached`
+   - Use `commit-message-specialist` subagent for commit message generation
+   - Push immediately with `git push origin <branch>`
+
+3. **Coverage and Organization**:
+   - Use `test-coverage-enforcer` subagent after code changes
+   - Use `codebase-organization-specialist` subagent for architectural changes
+   - Use `tech-debt-cleanup-planner` subagent for TODO: TEMP items
+
+4. **Server Cleanup**:
+   - Kill development servers on ports 8000-8099, 3000-3099, 8080-8089  
+   - Verify with `lsof -ti:8000,3000` that ports are free
+   - Preserve database servers and persistent services
+
+### Emergency Procedures
+- **If quality checks fail**: Do not commit until all issues are resolved
+- **If subagents are unavailable**: Document the limitation and proceed with manual validation
+- **If git operations fail**: Investigate authentication, network, or repository issues before retrying
+- **If development servers won't stop**: Use `kill -9 <pid>` or `sudo lsof -ti:<port> | xargs kill -9` as last resort
+
+## Workflow Validation and Slash Command Policy - CRITICAL ENFORCEMENT
+
+**BEFORE starting ANY task, the general-purpose agent MUST evaluate if it should use a specialized workflow:**
+
+### Workflow Decision Process:
+1. **Check the decision matrix** (see `.claude/workflow-decision-matrix.md`)
+2. **If a slash command is indicated** (`/mr-code` or `/mr-policy`):
+   - **STOP execution immediately**
+   - **Inform the user** which slash command should be used
+   - **Explain why** that approach is recommended  
+   - **Wait for user** to execute the appropriate command
+   - **DO NOT attempt to execute slash commands yourself**
+
+3. **If direct implementation is appropriate**, proceed with subagent delegation
+
+### CRITICAL: Slash Command Restriction
+**The general-purpose agent must NEVER attempt to execute custom slash commands (`/mr-code`, `/mr-policy`).** These commands have specialized TodoWrite orchestration that only works when invoked by the user directly.
 
 ## Specialized Subagent Usage Policy - CRITICAL ENFORCEMENT
 **VERY IMPORTANT**: Always use specialized subagents for their designated tasks - they exist to ensure quality and consistency. The main Claude agent should STRONGLY PREFER delegating to subagents rather than performing specialized tasks directly.
@@ -93,12 +139,14 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 **Exception Handling**: Only bypass subagents if they are unavailable, malfunctioning, or would create excessive overhead for trivial operations.
 
 ### MANDATORY Subagent Usage:
-- **pre-commit-quality-guard**: MANDATORY for significant changes (>5 files or new features) to enforce zero-tolerance quality standards before commits
-- **commit-message-specialist**: MANDATORY for ALL commit messages to ensure consistent template format and comprehensive descriptions
-- **test-coverage-enforcer**: MANDATORY after writing/modifying code to verify 80% minimum threshold requirement  
-- **tech-debt-cleanup-planner**: MANDATORY when dealing with TODO: TEMP items to create systematic removal strategies
-- **claude-md-policy-analyst**: MANDATORY before making ANY changes to CLAUDE.md to evaluate for conflicts and best practices
-- **workflow-automation-analyst**: MANDATORY when evaluating repetitive manual tasks or workflow improvements
+- **pre-commit-quality-guard**: For significant changes (>5 files or new features) - enforces zero-tolerance quality standards
+- **commit-message-specialist**: For ALL commit messages - ensures consistent template format and comprehensive descriptions
+- **test-coverage-enforcer**: After writing/modifying code - verifies 80% minimum threshold requirement  
+- **tech-debt-cleanup-planner**: For TODO: TEMP items - creates systematic removal strategies
+- **claude-md-policy-analyst**: Before ANY CLAUDE.md changes - evaluates for conflicts and best practices
+- **workflow-automation-analyst**: For repetitive manual tasks - evaluates workflow improvements
+
+**Note**: Subagent usage is automatically handled by `/mr-code` and `/mr-policy` slash commands. Manual subagent calls are only needed for direct implementation tasks.
 
 ## CLAUDE.md Change Evaluation
 - **Before making ANY changes to CLAUDE.md**: Use `claude-md-policy-analyst` subagent to evaluate the proposed change for:
