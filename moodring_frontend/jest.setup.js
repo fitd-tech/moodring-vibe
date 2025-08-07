@@ -43,6 +43,11 @@ jest.mock('expo-linear-gradient', () => ({
   LinearGradient: 'LinearGradient',
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
+
 // Set test environment variables
 process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = 'test_client_id';
 

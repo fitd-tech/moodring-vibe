@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackendUser, CurrentlyPlaying, RecentTrack } from '../../types';
 import { UserProfile } from './UserProfile';
 import { QuickActions } from './QuickActions';
@@ -40,9 +41,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNowPlayingTagRemove,
   onNowPlayingTagAdd,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView 
-      style={styles.container}
+      style={[styles.container, { paddingTop: insets.top + theme.spacing.md }]}
       testID="dashboard-scroll-view"
       refreshControl={
         <RefreshControl
@@ -51,7 +53,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           tintColor={theme.colors.accent.purple}
           colors={[theme.colors.accent.purple, theme.colors.accent.pink, theme.colors.accent.cyan]}
           progressBackgroundColor={theme.colors.background.card}
-          progressViewOffset={20}
+          progressViewOffset={insets.top}
         />
       }
     >
@@ -61,7 +63,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <View style={styles.dashboardContainer}>
         {isRefreshing && (
-          <View style={styles.refreshingOverlay}>
+          <View style={[styles.refreshingOverlay, { top: insets.top + theme.spacing.md }]}>
             <LoadingSpinner text="Refreshing..." size="small" compact />
           </View>
         )}
@@ -101,7 +103,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
     padding: theme.spacing.xl,
-    paddingTop: 60,
   },
   header: {
     marginBottom: theme.spacing.xl,
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
   },
   refreshingOverlay: {
     position: 'absolute',
-    top: 60, // Position below status bar/camera notch area
     left: theme.spacing.md,
     right: theme.spacing.md,
     zIndex: 1000,
