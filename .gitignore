@@ -31,6 +31,12 @@ yarn-error.log*
 dist/
 web-build/
 
+# Test Coverage Reports
+moodring_frontend/coverage/
+moodring_backend/tarpaulin-report.json
+coverage/
+*.lcov
+
 # Database
 *.db
 *.sqlite
