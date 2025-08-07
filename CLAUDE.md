@@ -84,6 +84,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **For information-only tasks**: Direct implementation is appropriate
 - **Fallback enforcement**: When slash commands are unavailable, manually execute equivalent quality checks using the fallback checklist below
 - **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement
+- **TodoWrite subagent coordination**: When subagents are planned in TodoWrite workflows, do NOT perform overlapping tasks manually to avoid redundancy and ensure proper workflow orchestration
 
 ### Manual Quality Checklist (Fallback Only)
 *Use only when specialized slash commands are unavailable:*
@@ -108,6 +109,25 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
    - Kill development servers on ports 8000-8099, 3000-3099, 8080-8089  
    - Verify with `lsof -ti:8000,3000` that ports are free
    - Preserve database servers and persistent services
+
+### TodoWrite Workflow Coordination
+**CRITICAL**: When using TodoWrite checklists with planned subagent tasks, avoid manual task overlap:
+
+**✅ Correct Approach:**
+- Plan subagents in TodoWrite (e.g., "Run pre-commit-quality-guard")  
+- Let subagents handle their specialized tasks completely
+- Avoid running individual commands manually when subagents will run them
+
+**❌ Incorrect Approach:**
+- Running `npm run typecheck` manually during implementation
+- Then later running `pre-commit-quality-guard` (which also runs typecheck)
+- Creates redundancy and bypasses comprehensive subagent quality checks
+
+**Implementation Examples:**
+- ✅ Plan "Run pre-commit-quality-guard" → Let it handle all quality checks
+- ❌ Run `npm test` manually → Then run `test-coverage-enforcer` later
+- ✅ Plan "Run commit-message-specialist" → Let it generate the message
+- ❌ Draft commit message manually → Then run `commit-message-specialist`
 
 ### Emergency Procedures
 - **If quality checks fail**: Do not commit until all issues are resolved
