@@ -1,7 +1,7 @@
 # Moodring Development Workflow Automation
 # Multi-project quality control and development commands
 
-.PHONY: check-all dev-start dev-stop clean install setup test-all lint-all format-all
+.PHONY: check-all dev-start dev-stop clean install setup test-all lint-all format-all git-status stage-modified pre-commit-workflow
 
 # Project paths
 BACKEND_DIR = moodring_backend
@@ -17,6 +17,12 @@ help:
 	@echo "  test-all      - Run all test suites"
 	@echo "  lint-all      - Run all linters"
 	@echo "  format-all    - Format all code"
+	@echo ""
+	@echo "Git Workflow (Policy Compliant):"
+	@echo "  git-status        - Show comprehensive git status and staging info"
+	@echo "  stage-modified    - Stage only modified files (safe staging)"
+	@echo "  pre-commit-workflow - Run quality checks + staging verification"
+	@echo "                       Note: Still requires manual commit-message-specialist subagent usage"
 	@echo ""
 	@echo "Development:"
 	@echo "  setup         - Initialize development environment"
@@ -119,3 +125,41 @@ temp-code-scan:
 	@echo ""
 	@echo "TEMP: commit messages in git log:"
 	@git log --oneline --grep="TEMP:" -n 10 || echo "  No temporary commits found ✅"
+
+# Git workflow helpers (policy compliant)
+git-status:
+	@echo "📊 Comprehensive git status:"
+	@git status --short
+	@echo ""
+	@echo "📋 Staged files:"
+	@git diff --cached --name-status || echo "  No files staged"
+	@echo ""
+	@echo "🔍 Staged changes summary:"
+	@git diff --cached --stat || echo "  No staged changes"
+	@echo ""
+	@echo "🌿 Current branch:"
+	@git branch --show-current
+
+stage-modified:
+	@echo "📦 Staging only modified files (not new files)..."
+	@echo "Modified files to be staged:"
+	@git diff --name-only
+	@git add -u
+	@echo ""
+	@$(MAKE) git-status
+
+pre-commit-workflow:
+	@echo "🔒 Running complete pre-commit workflow..."
+	@echo "⚠️  Remember: Use commit-message-specialist subagent for commit message"
+	@echo "⚠️  Then run: git commit -m 'Generated message' && git push origin \$$(git branch --show-current)"
+	@echo ""
+	@$(MAKE) pre-commit-check
+	@echo ""
+	@$(MAKE) git-status
+	@echo ""
+	@echo "✅ Pre-commit workflow complete!"
+	@echo "📝 Next steps:"
+	@echo "  1. Use commit-message-specialist subagent to generate commit message"
+	@echo "  2. Stage additional files if needed: git add <file>"
+	@echo "  3. Commit: git commit -m 'Your generated message'"
+	@echo "  4. Push: git push origin \$$(git branch --show-current)"
