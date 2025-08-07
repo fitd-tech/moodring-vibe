@@ -6,17 +6,19 @@ interface LoadingSpinnerProps {
   text?: string;
   size?: 'small' | 'large';
   color?: string;
+  compact?: boolean;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   text = 'Loading...',
   size = 'large',
   color = theme.colors.accent.purple,
+  compact = false,
 }) => {
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size={size} color={color} />
-      <Text style={styles.text}>{text}</Text>
+    <View style={compact ? styles.compactContainer : styles.container}>
+      <ActivityIndicator size={size} color={color} testID="activity-indicator" />
+      <Text style={compact ? styles.compactText : styles.text}>{text}</Text>
     </View>
   );
 };
@@ -35,5 +37,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     marginTop: theme.spacing.md,
     fontWeight: theme.typography.fontWeight.bold,
+  },
+  compactContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  compactText: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.sm,
+    marginLeft: theme.spacing.sm,
+    fontWeight: theme.typography.fontWeight.medium,
   },
 });

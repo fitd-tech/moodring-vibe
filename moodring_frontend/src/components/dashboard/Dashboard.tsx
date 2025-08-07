@@ -6,6 +6,7 @@ import { UserProfile } from './UserProfile';
 import { QuickActions } from './QuickActions';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { theme } from '../../styles/theme';
 
 interface DashboardProps {
@@ -42,13 +43,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <ScrollView 
       style={styles.container}
+      testID="dashboard-scroll-view"
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={onRefresh}
           tintColor={theme.colors.accent.purple}
-          colors={[theme.colors.accent.purple]}
-          progressBackgroundColor={theme.colors.background.primary}
+          colors={[theme.colors.accent.purple, theme.colors.accent.pink, theme.colors.accent.cyan]}
+          progressBackgroundColor={theme.colors.background.card}
+          progressViewOffset={20}
         />
       }
     >
@@ -57,6 +60,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </View>
 
       <View style={styles.dashboardContainer}>
+        {isRefreshing && (
+          <View style={styles.refreshingOverlay}>
+            <LoadingSpinner text="Refreshing..." size="small" compact />
+          </View>
+        )}
+        
         <UserProfile user={user} />
 
         <NowPlaying 
@@ -107,6 +116,26 @@ const styles = StyleSheet.create({
   },
   dashboardContainer: {
     flex: 1,
+    position: 'relative',
+  },
+  refreshingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: theme.colors.background.primary,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+    shadowColor: theme.colors.shadow.default,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutButton: {
     backgroundColor: theme.colors.ui.overlay,
