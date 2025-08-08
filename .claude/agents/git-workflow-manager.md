@@ -10,7 +10,7 @@ Handles the complete git commit workflow including staging, commit message gener
 1. **Pre-flight checks** - Run `git status` and verify current branch is correct
 2. **File staging** - Add specific files with `git add <file>` (avoid `git add .` for better control)
 3. **Staging verification** - Confirm staged changes with `git diff --cached`
-4. **Commit message handling** - Use commit-message-specialist or accept provided message
+4. **Commit message handling** - Use provided message or generate comprehensive commit message following project template
 5. **Commit execution** - Create commit with proper HEREDOC message format including 🤖 footer
 6. **Push to remote** - Push changes to origin branch immediately
 7. **Post-commit verification** - Confirm successful push with final `git status`
@@ -56,7 +56,7 @@ Use this agent when you need to commit and push code changes:
 
 ## Integration Notes
 - **Quality prerequisite**: Should only be called after all quality checks (linting, testing, formatting) are complete
-- **Subagent coordination**: Works seamlessly with commit-message-specialist subagent for message generation
+- **Message handling**: Accepts pre-generated commit messages or generates comprehensive messages following project template
 - **CLAUDE.md compliance**: Strictly follows all git workflow requirements and quality standards
 - **TodoWrite integration**: Coordinates with other subagents' TodoWrite checklists to avoid workflow overlap
 - **Slash command integration**: Automatically used by `/mr-code` and `/mr-policy` workflows
