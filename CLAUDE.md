@@ -94,8 +94,8 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 
 **TodoWrite Template for Quality Workflow:**
 1. **Code Implementation** - Use code-implementation-specialist for file changes
-2. **Pre-commit Quality Checks** - Run quality enforcement subagent  
-3. **Coverage Verification** - Run test-coverage-enforcer after code changes
+2. **Coverage Verification** - Run test-coverage-enforcer after code changes
+3. **Pre-commit Quality Checks** - Run pre-commit-quality-guard subagent
 4. **Commit Message Generation** - Use commit-message-specialist subagent
 5. **Git Workflow Execution** - Use git-workflow-manager for staging/commit/push
 6. **Server Cleanup** - Kill development servers and verify ports
