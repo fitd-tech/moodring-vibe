@@ -64,6 +64,7 @@ jest.mock('react-native', () => ({
   ScrollView: 'ScrollView',
   Image: 'Image',
   RefreshControl: 'RefreshControl',
+  Modal: 'Modal',
   useColorScheme: jest.fn(() => 'light'),
   Animated: {
     View: 'Animated.View',

@@ -5,6 +5,7 @@ export { LoginScreen } from './auth/LoginScreen';
 export { Dashboard } from './dashboard/Dashboard';
 export { UserProfile } from './dashboard/UserProfile';
 export { QuickActions } from './dashboard/QuickActions';
+export { ProfileMenu } from './dashboard/ProfileMenu';
 
 // Track components
 export { NowPlaying } from './tracks/NowPlaying';

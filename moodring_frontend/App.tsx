@@ -37,6 +37,22 @@ const AppContent: React.FC = () => {
 
   const redirectUri = 'moodring://auth';
 
+  // Placeholder handlers for menu options
+  const handleCreatePlaylist = () => {
+    // TODO: Implement create playlist functionality
+    console.log('Create playlist pressed');
+  };
+
+  const handleBrowseTags = () => {
+    // TODO: Implement browse tags functionality
+    console.log('Browse tags pressed');
+  };
+
+  const handleSettings = () => {
+    // TODO: Implement settings functionality
+    console.log('Settings pressed');
+  };
+
   const [request, response, promptAsync] = useAuthRequest(
     {
       responseType: ResponseType.Code,
@@ -98,6 +114,9 @@ const AppContent: React.FC = () => {
         isRefreshing={isRefreshing}
         onRefresh={refresh}
         onLogout={logout}
+        onCreatePlaylist={handleCreatePlaylist}
+        onBrowseTags={handleBrowseTags}
+        onSettings={handleSettings}
       />
     );
   }

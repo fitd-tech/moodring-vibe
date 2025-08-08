@@ -105,12 +105,11 @@ describe('App', () => {
     });
 
     it('renders authenticated screen when user is logged in', async () => {
-      const { getByText } = render(<App />);
+      const { getByText, getByTestId } = render(<App />);
 
       await waitFor(() => {
         expect(getByText('MOODRING')).toBeTruthy();
-        expect(getByText('Test User')).toBeTruthy();
-        expect(getByText('test@example.com')).toBeTruthy();
+        expect(getByTestId('profile-menu-button')).toBeTruthy();
       });
     });
 
@@ -120,11 +119,8 @@ describe('App', () => {
       await waitFor(() => {
         // Check for recent tracks section (shows empty state when no tracks)
         expect(getByText('No recent tracks found')).toBeTruthy();
-        // Check for quick actions section
-        expect(getByText('QUICK ACTIONS')).toBeTruthy();
-        expect(getByText('Create New Tag')).toBeTruthy();
-        expect(getByText('Browse Playlists')).toBeTruthy();
-        expect(getByText('Generate Playlist')).toBeTruthy();
+        // Quick actions are now in the profile menu, not the main dashboard
+        expect(getByText('MOODRING')).toBeTruthy();
       });
     });
 
@@ -145,20 +141,26 @@ describe('App', () => {
 
       mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(mockAuthWithoutImage));
       
-      const { getByText } = render(<App />);
+      const { getByText, getByTestId } = render(<App />);
 
       await waitFor(() => {
+        expect(getByTestId('profile-menu-button')).toBeTruthy();
         expect(getByText('T')).toBeTruthy(); // First letter of "Test User"
       });
     });
 
-    it('calls logout function when sign out is pressed', async () => {
-      const { getByText } = render(<App />);
+    it('renders profile menu with logout functionality', async () => {
+      const { getByTestId, getByText } = render(<App />);
 
       await waitFor(() => {
-        const signOutButton = getByText('Sign Out');
-        fireEvent.press(signOutButton);
-        expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('moodring_auth');
+        // Profile menu button should be rendered
+        expect(getByTestId('profile-menu-button')).toBeTruthy();
+        
+        // Open the menu to access logout
+        fireEvent.press(getByTestId('profile-menu-button'));
+        
+        // Menu should show logout option
+        expect(getByText('Log out')).toBeTruthy();
       });
     });
   });

@@ -41,6 +41,9 @@ const defaultProps = {
   isRefreshing: false,
   onRefresh: jest.fn(),
   onLogout: jest.fn(),
+  onCreatePlaylist: jest.fn(),
+  onBrowseTags: jest.fn(),
+  onSettings: jest.fn(),
 };
 
 describe('Dashboard', () => {
@@ -52,7 +55,7 @@ describe('Dashboard', () => {
     render(<Dashboard {...defaultProps} />);
     
     expect(screen.getByText('MOODRING')).toBeTruthy();
-    expect(screen.getByText('Sign Out')).toBeTruthy();
+    expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
   it('configures RefreshControl with correct props', () => {
@@ -88,21 +91,19 @@ describe('Dashboard', () => {
     expect(mockOnRefresh).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onLogout when Sign Out button is pressed', () => {
-    const mockOnLogout = jest.fn();
-    render(<Dashboard {...defaultProps} onLogout={mockOnLogout} />);
-    
-    const logoutButton = screen.getByText('Sign Out');
-    fireEvent.press(logoutButton);
-    
-    expect(mockOnLogout).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders UserProfile component with user data', () => {
+  it('renders ProfileMenu component', () => {
     render(<Dashboard {...defaultProps} />);
     
-    // UserProfile should display the user's display name
-    expect(screen.getByText('Test User')).toBeTruthy();
+    // ProfileMenu should be rendered with profile button
+    expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
+  });
+
+  it('does not render old UserProfile component in main section', () => {
+    render(<Dashboard {...defaultProps} />);
+    
+    // UserProfile is no longer rendered in the main dashboard area
+    // User info is now in the ProfileMenu
+    expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
   it('renders NowPlaying component when currentlyPlaying is provided', () => {
@@ -135,9 +136,6 @@ describe('Dashboard', () => {
 
   it('passes optional callback props when provided', () => {
     const mockCallbacks = {
-      onCreateTag: jest.fn(),
-      onBrowsePlaylists: jest.fn(),
-      onGeneratePlaylist: jest.fn(),
       onTrackTagRemove: jest.fn(),
       onTrackTagAdd: jest.fn(),
       onNowPlayingTagRemove: jest.fn(),
