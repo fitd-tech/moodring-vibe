@@ -95,10 +95,13 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
    - Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
 
 2. **Commit Process**:
-   - Stage specific files with `git add <file>` (avoid `git add .`)
-   - Verify staging with `git status` and `git diff --cached`
    - Use `commit-message-specialist` subagent for commit message generation
-   - Push immediately with `git push origin <branch>`
+   - Use `git-workflow-manager` subagent for complete git workflow (staging, commit, push)
+   - Alternative manual approach (only if subagents unavailable):
+     - Stage specific files with `git add <file>` (avoid `git add .`)
+     - Verify staging with `git status` and `git diff --cached`  
+     - Use `commit-message-specialist` subagent for commit message generation
+     - Push immediately with `git push origin <branch>`
 
 3. **Coverage and Organization**:
    - Use `test-coverage-enforcer` subagent after code changes
@@ -161,6 +164,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ### MANDATORY Subagent Usage:
 - **pre-commit-quality-guard**: For significant changes (>5 files or new features) - enforces zero-tolerance quality standards
 - **commit-message-specialist**: For ALL commit messages - ensures consistent template format and comprehensive descriptions
+- **git-workflow-manager**: For git operations (staging, commit, push) - handles complete git workflow with proper verification
 - **test-coverage-enforcer**: After writing/modifying code - verifies 80% minimum threshold requirement  
 - **tech-debt-cleanup-planner**: For TODO: TEMP items - creates systematic removal strategies
 - **claude-md-policy-analyst**: Before ANY CLAUDE.md changes - evaluates for conflicts and best practices
