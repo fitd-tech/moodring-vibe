@@ -163,6 +163,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 **Exception Handling**: Only bypass subagents if they are unavailable, malfunctioning, or would create excessive overhead for trivial operations.
 
 ### MANDATORY Subagent Usage:
+- **code-implementation-specialist**: For writing, editing, or creating code files for the Moodring project - handles all code implementation tasks including new features, modifications, database migrations, React Native components, and Rust backend code (does NOT handle testing, linting, or git operations)
 - **pre-commit-quality-guard**: For significant changes (>5 files or new features) - enforces zero-tolerance quality standards
 - **commit-message-specialist**: For ALL commit messages - ensures consistent template format and comprehensive descriptions
 - **git-workflow-manager**: For git operations (staging, commit, push) - handles complete git workflow with proper verification; accepts pre-generated commit messages from commit-message-specialist
