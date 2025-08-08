@@ -90,26 +90,35 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ### Manual Quality Checklist (Fallback Only)
 *Use only when specialized slash commands are unavailable:*
 
-1. **Pre-commit Quality Checks**:
-   - Backend: `cargo test && cargo clippy && cargo fmt --check` (from moodring_backend/)
-   - Frontend: `npm run lint && npm run test && npm run typecheck` (from moodring_frontend/)
+**CRITICAL**: Always use TodoWrite checklist to track these steps systematically:
+
+**TodoWrite Template for Quality Workflow:**
+1. **Code Implementation** - Use code-implementation-specialist for file changes
+2. **Pre-commit Quality Checks** - Run quality enforcement subagent  
+3. **Coverage Verification** - Run test-coverage-enforcer after code changes
+4. **Commit Message Generation** - Use commit-message-specialist subagent
+5. **Git Workflow Execution** - Use git-workflow-manager for staging/commit/push
+6. **Server Cleanup** - Kill development servers and verify ports
+
+**Subagent Delegation Steps:**
+1. **Code Implementation**:
+   - Use `code-implementation-specialist` subagent for all code writing, editing, and file creation
+   - Handles new features, modifications, database migrations, React Native components, Rust backend code
+
+2. **Pre-commit Quality Checks**:
    - Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
+   - Manual fallback: Backend `cargo test && cargo clippy && cargo fmt --check`, Frontend `npm run lint && npm run test && npm run typecheck`
 
-2. **Commit Process**:
+3. **Commit Process**:
    - Use `commit-message-specialist` subagent for commit message generation
-   - Pass the generated commit message to `git-workflow-manager` subagent for complete git workflow (staging, commit, push)
-   - Alternative manual approach (only if subagents unavailable):
-     - Stage specific files with `git add <file>` (avoid `git add .`)
-     - Verify staging with `git status` and `git diff --cached`  
-     - Use `commit-message-specialist` subagent for commit message generation
-     - Push immediately with `git push origin <branch>`
+   - Pass generated message to `git-workflow-manager` subagent for complete git workflow (staging, commit, push)
 
-3. **Coverage and Organization**:
+4. **Coverage and Organization**:
    - Use `test-coverage-enforcer` subagent after code changes
    - Use `codebase-organization-specialist` subagent for architectural changes
    - Use `tech-debt-cleanup-planner` subagent for TODO: TEMP items
 
-4. **Server Cleanup**:
+5. **Server Cleanup**:
    - Kill development servers on ports 8000-8099, 3000-3099, 8080-8089  
    - Verify with `lsof -ti:8000,3000` that ports are free
    - Preserve database servers and persistent services
