@@ -74,6 +74,7 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Never commit directly to main**: Always ask permission before pushing to `main` branch
 
 ### Development Environment
+- **Branch verification**: Always verify current branch with `git branch --show-current` before beginning file edits - ensure you are on the intended branch (`develop` for local work, feature branch for feature development) and not on a detached HEAD state
 - **Clean server state**: Kill development servers after task completion (ports 3000-3099, 8000-8099)
 - **Database preservation**: Never kill database servers or persistent services
 - **Test file protection**: Never modify test files without explicit permission
