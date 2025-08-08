@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import { TrackCard } from '../TrackCard';
-import { RecentTrack } from '../../../types';
+import { RecentTrack, Tag } from '../../../types';
 
 // Mock the useAnimation hook
 jest.mock('../../../hooks/useAnimation', () => ({
@@ -24,13 +24,13 @@ jest.mock('../../../hooks/useAnimation', () => ({
 
 // Mock TaggingInterface
 jest.mock('../TaggingInterface', () => ({
-  TaggingInterface: ({ tags, onRemoveTag, onAddTag }: any) => {
+  TaggingInterface: ({ tags, onRemoveTag, onAddTag }: { tags: Tag[]; onRemoveTag: (_tagId: string) => void; onAddTag: () => void }) => {
     const React = require('react');
     const { View, Text, TouchableOpacity } = require('react-native');
     return React.createElement(View, { testID: 'tagging-interface' },
       React.createElement(Text, null, 'Tags'),
       React.createElement(View, null,
-        tags.map((tag: any) => 
+        tags.map((tag: Tag) => 
           React.createElement(View, { key: tag.id },
             React.createElement(Text, null, tag.name),
             React.createElement(TouchableOpacity, {
@@ -117,32 +117,16 @@ describe('TrackCard', () => {
     expect(defaultProps.onToggleExpansion).toHaveBeenCalledWith(0);
   });
 
-  it('calls onToggleExpansion when menu button is pressed', () => {
-    render(<TrackCard {...defaultProps} />);
-
-    // Find the menu button by its accessibility role or test ID
-    const menuButtons = screen.getAllByText('⌄');
-    fireEvent.press(menuButtons[0].parent!);
-
-    expect(defaultProps.onToggleExpansion).toHaveBeenCalledWith(0);
-  });
-
-  it('renders heart button', () => {
-    render(<TrackCard {...defaultProps} />);
-
-    expect(screen.getByText('♡')).toBeTruthy();
-  });
-
   it('does not render expanded content when not expanded', () => {
     render(<TrackCard {...defaultProps} />);
 
-    expect(screen.queryByText('Collapse')).toBeNull();
+    expect(screen.queryByTestId('tagging-interface')).toBeNull();
   });
 
   it('renders expanded content when expanded', () => {
     render(<TrackCard {...defaultProps} isExpanded={true} />);
 
-    expect(screen.getByText('Collapse')).toBeTruthy();
+    expect(screen.getByTestId('tagging-interface')).toBeTruthy();
   });
 
   it('renders TaggingInterface in expanded state', () => {
@@ -151,15 +135,6 @@ describe('TrackCard', () => {
     // TaggingInterface should render mock tags
     expect(screen.getByText('pop')).toBeTruthy();
     expect(screen.getByText('recent')).toBeTruthy();
-  });
-
-  it('calls onToggleExpansion when collapse button is pressed', () => {
-    render(<TrackCard {...defaultProps} isExpanded={true} />);
-
-    const collapseButton = screen.getByText('Collapse');
-    fireEvent.press(collapseButton);
-
-    expect(defaultProps.onToggleExpansion).toHaveBeenCalledWith(0);
   });
 
   it('passes onTagRemove callback to TaggingInterface', () => {
@@ -260,7 +235,7 @@ describe('TrackCard', () => {
 
     // Animation should be called when isExpanded changes
     // This is handled by the useEffect in the component
-    expect(screen.getByText('Collapse')).toBeTruthy();
+    expect(screen.getByTestId('tagging-interface')).toBeTruthy();
   });
 
   it('renders with different track indices', () => {

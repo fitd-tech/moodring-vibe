@@ -13,6 +13,18 @@ const mockSpotifyApi = spotifyApi as jest.Mocked<typeof spotifyApi>;
 jest.mock('../../services/authService');
 const mockAuthService = authService as jest.Mocked<typeof authService>;
 
+// Mock useAuth hook
+const mockUseAuth = {
+  user: null as any,
+  authToken: null as any,
+  refreshUserToken: jest.fn(),
+};
+
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => mockUseAuth,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 describe('useSpotifyActivity', () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     React.createElement(AuthProvider, {}, children)
@@ -22,8 +34,14 @@ describe('useSpotifyActivity', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockAuthService.loadSavedAuthData.mockResolvedValue(null);
+    mockAuthService.isTokenExpired.mockReturnValue(false);
     jest.spyOn(global, 'setInterval');
     jest.spyOn(global, 'clearInterval');
+    
+    // Reset useAuth mock
+    mockUseAuth.user = null;
+    mockUseAuth.authToken = null;
+    mockUseAuth.refreshUserToken.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -82,7 +100,7 @@ describe('useSpotifyActivity', () => {
     expect(result.current.currentlyPlaying).toEqual(mockCurrentlyPlaying);
     expect(result.current.recentTracks).toEqual(mockRecentTracks);
     expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledWith('access-token');
-    expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('access-token');
+    expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('access-token', 10);
   });
 
   it('handles getCurrentlyPlaying API error', async () => {
@@ -173,11 +191,11 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+    // Set up useAuth to return user and token
+    mockUseAuth.user = mockUser as any;
+    mockUseAuth.authToken = 'test-token' as any;
 
-    act(() => {
-      result.current.loadActivity('test-token', mockUser);
-    });
+    renderHook(() => useSpotifyActivity(), { wrapper });
 
     expect(global.setInterval).toHaveBeenCalledWith(expect.any(Function), 30000);
   });
@@ -199,11 +217,11 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
-    const { result, unmount } = renderHook(() => useSpotifyActivity(), { wrapper });
+    // Set up useAuth to return user and token
+    mockUseAuth.user = mockUser as any;
+    mockUseAuth.authToken = 'test-token' as any;
 
-    act(() => {
-      result.current.loadActivity('test-token', mockUser);
-    });
+    const { unmount } = renderHook(() => useSpotifyActivity(), { wrapper });
 
     unmount();
 
@@ -227,15 +245,16 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+    // Set up useAuth to return user and token
+    mockUseAuth.user = mockUser as any;
+    mockUseAuth.authToken = 'test-token' as any;
 
-    await act(async () => {
-      await result.current.loadActivity('test-token', mockUser);
-    });
+    renderHook(() => useSpotifyActivity(), { wrapper });
 
     // Fast-forward time to trigger interval
-    act(() => {
+    await act(async () => {
       jest.advanceTimersByTime(30000);
+      await Promise.resolve(); // Allow async operations to complete
     });
 
     expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledTimes(2);
@@ -261,15 +280,16 @@ describe('useSpotifyActivity', () => {
       .mockRejectedValueOnce(new Error('Interval Error'));
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+    // Set up useAuth to return user and token
+    mockUseAuth.user = mockUser as any;
+    mockUseAuth.authToken = 'access-token' as any;
 
-    await act(async () => {
-      await result.current.loadActivity('access-token', mockUser);
-    });
+    renderHook(() => useSpotifyActivity(), { wrapper });
 
     // Fast-forward time to trigger interval
     await act(async () => {
       jest.advanceTimersByTime(30000);
+      await Promise.resolve(); // Allow async operations to complete
     });
 
     // Error is handled gracefully, no need to check console logs

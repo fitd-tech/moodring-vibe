@@ -72,26 +72,6 @@ export const TrackCard: React.FC<TrackCardProps> = ({
             <Text style={styles.trackTime}>
               {formatTime(track.played_at)}
             </Text>
-            <TouchableOpacity style={styles.heartButton}>
-              <Text style={styles.heartIcon}>♡</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuButton}>
-              <Animated.Text 
-                style={[
-                  styles.menuIcon,
-                  {
-                    transform: [{
-                      rotate: animatedValues.rotation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '180deg'],
-                      }),
-                    }],
-                  },
-                ]}
-              >
-                ⌄
-              </Animated.Text>
-            </TouchableOpacity>
           </View>
         </TouchableOpacity>
         
@@ -113,12 +93,6 @@ export const TrackCard: React.FC<TrackCardProps> = ({
               onRemoveTag={onTagRemove}
               onAddTag={onTagAdd}
             />
-            <TouchableOpacity 
-              style={styles.collapseButton}
-              onPress={() => onToggleExpansion(_index)}
-            >
-              <Text style={styles.collapseText}>Collapse</Text>
-            </TouchableOpacity>
           </Animated.View>
         )}
       </GradientCard>
@@ -179,34 +153,10 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     marginBottom: theme.spacing.sm,
   },
-  heartButton: {
-    padding: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
-  },
-  heartIcon: {
-    fontSize: 20,
-    color: theme.colors.accent.pink,
-  },
-  menuButton: {
-    padding: theme.spacing.xs,
-  },
-  menuIcon: {
-    fontSize: 20,
-    color: theme.colors.text.muted,
-  },
   expandedContent: {
     paddingHorizontal: theme.spacing.xl,
     paddingBottom: theme.spacing.xl,
     borderTopWidth: 1,
     borderTopColor: theme.colors.ui.border,
-  },
-  collapseButton: {
-    alignSelf: 'center',
-    marginTop: theme.spacing.sm,
-  },
-  collapseText: {
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
   },
 });

@@ -1,49 +1,83 @@
 import { renderHook } from '@testing-library/react-native';
-import { useAnimation } from '../useAnimation';
 
-// Mock Animated functions
+// Mock all react-native Animated functions first
 const mockTiming = jest.fn(() => ({ start: jest.fn() }));
+const mockSpring = jest.fn(() => ({ start: jest.fn() }));
 const mockParallel = jest.fn(() => ({ start: jest.fn() }));
-
-// Mock Animated Value
 const mockAnimatedValue = {
   setValue: jest.fn(),
   interpolate: jest.fn(() => mockAnimatedValue),
 };
 
-jest.doMock('react-native', () => ({
-  Animated: {
-    Value: jest.fn(() => mockAnimatedValue),
-    timing: mockTiming,
-    parallel: mockParallel,
+// Mock react-native with hoisted variables
+jest.mock('react-native', () => {
+  const mockTiming = jest.fn(() => ({ start: jest.fn() }));
+  const mockSpring = jest.fn(() => ({ start: jest.fn() }));  
+  const mockParallel = jest.fn(() => ({ start: jest.fn() }));
+  const mockAnimatedValue = {
+    setValue: jest.fn(),
+    interpolate: jest.fn(() => mockAnimatedValue),
+  };
+
+  return {
+    Animated: {
+      Value: jest.fn(() => mockAnimatedValue),
+      timing: mockTiming,
+      spring: mockSpring,
+      parallel: mockParallel,
+    },
+  };
+});
+
+// Mock theme
+jest.mock('../../styles/theme', () => ({
+  theme: {
+    animation: {
+      duration: {
+        slow: 400,
+      },
+      spring: {
+        tension: 100,
+        friction: 8,
+      },
+    },
   },
 }));
+
+import { Animated } from 'react-native';
+import { useAnimation } from '../useAnimation';
 
 describe('useAnimation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock timing to return an object with start method
-    mockTiming.mockReturnValue({
+    // Get the mocked functions
+    const mockedAnimated = Animated as any;
+    
+    // Set up return values
+    mockedAnimated.timing.mockReturnValue({
       start: jest.fn((callback) => callback && callback()),
     });
     
-    // Mock parallel to return an object with start method
-    mockParallel.mockReturnValue({
+    mockedAnimated.spring.mockReturnValue({
+      start: jest.fn((callback) => callback && callback()),
+    });
+    
+    mockedAnimated.parallel.mockReturnValue({
       start: jest.fn((callback) => callback && callback()),
     });
   });
 
   it('creates animated values with default initial values', () => {
     const { result } = renderHook(() => useAnimation());
-
     const animatedValues = result.current.createAnimatedValues();
 
-    expect(Animated.Value).toHaveBeenCalledTimes(4);
-    expect(Animated.Value).toHaveBeenNthCalledWith(1, 1); // scale
-    expect(Animated.Value).toHaveBeenNthCalledWith(2, 0); // rotation
-    expect(Animated.Value).toHaveBeenNthCalledWith(3, 0); // height
-    expect(Animated.Value).toHaveBeenNthCalledWith(4, 0); // opacity
+    const mockedAnimated = Animated as any;
+    expect(mockedAnimated.Value).toHaveBeenCalledTimes(4);
+    expect(mockedAnimated.Value).toHaveBeenNthCalledWith(1, 0); // height
+    expect(mockedAnimated.Value).toHaveBeenNthCalledWith(2, 0); // opacity
+    expect(mockedAnimated.Value).toHaveBeenNthCalledWith(3, 1); // scale
+    expect(mockedAnimated.Value).toHaveBeenNthCalledWith(4, 0); // rotation
 
     expect(animatedValues).toHaveProperty('scale');
     expect(animatedValues).toHaveProperty('rotation');
@@ -53,157 +87,175 @@ describe('useAnimation', () => {
 
   it('animates expansion when isExpanded is true', () => {
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
     result.current.animateExpansion(mockAnimatedValues, true);
 
-    expect(mockTiming).toHaveBeenCalledTimes(4);
-    expect(mockParallel).toHaveBeenCalledTimes(1);
+    expect(mockedAnimated.timing).toHaveBeenCalledTimes(3); // height, opacity, rotation
+    expect(mockedAnimated.spring).toHaveBeenCalledTimes(1); // scale uses spring
+    expect(mockedAnimated.parallel).toHaveBeenCalledTimes(1);
     
     // Verify timing calls for expansion
-    expect(mockTiming).toHaveBeenNthCalledWith(1, mockAnimatedValues.scale, {
-      toValue: 1.02,
-      duration: 300,
-      useNativeDriver: true,
-    });
-    expect(mockTiming).toHaveBeenNthCalledWith(2, mockAnimatedValues.rotation, {
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(1, mockAnimatedValues.height, {
       toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    });
-    expect(mockTiming).toHaveBeenNthCalledWith(3, mockAnimatedValues.height, {
-      toValue: 1,
-      duration: 300,
+      duration: 400,
       useNativeDriver: false,
     });
-    expect(mockTiming).toHaveBeenNthCalledWith(4, mockAnimatedValues.opacity, {
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(2, mockAnimatedValues.opacity, {
       toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
+      duration: 320, // 400 * 0.8
+      useNativeDriver: false,
+    });
+    expect(mockedAnimated.spring).toHaveBeenNthCalledWith(1, mockAnimatedValues.scale, {
+      toValue: 1.02,
+      tension: 100,
+      friction: 8,
+      useNativeDriver: false,
+    });
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(3, mockAnimatedValues.rotation, {
+      toValue: 1,
+      duration: 240, // 400 * 0.6
+      useNativeDriver: false,
     });
   });
 
   it('animates collapse when isExpanded is false', () => {
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
     result.current.animateExpansion(mockAnimatedValues, false);
 
-    expect(mockTiming).toHaveBeenCalledTimes(4);
-    expect(mockParallel).toHaveBeenCalledTimes(1);
+    expect(mockedAnimated.timing).toHaveBeenCalledTimes(3); // height, opacity, rotation
+    expect(mockedAnimated.spring).toHaveBeenCalledTimes(1); // scale uses spring
+    expect(mockedAnimated.parallel).toHaveBeenCalledTimes(1);
     
     // Verify timing calls for collapse
-    expect(mockTiming).toHaveBeenNthCalledWith(1, mockAnimatedValues.scale, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    });
-    expect(mockTiming).toHaveBeenNthCalledWith(2, mockAnimatedValues.rotation, {
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(1, mockAnimatedValues.height, {
       toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    });
-    expect(mockTiming).toHaveBeenNthCalledWith(3, mockAnimatedValues.height, {
-      toValue: 0,
-      duration: 300,
+      duration: 320, // 400 * 0.8
       useNativeDriver: false,
     });
-    expect(mockTiming).toHaveBeenNthCalledWith(4, mockAnimatedValues.opacity, {
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(2, mockAnimatedValues.opacity, {
       toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
+      duration: 240, // 400 * 0.6
+      useNativeDriver: false,
+    });
+    expect(mockedAnimated.spring).toHaveBeenNthCalledWith(1, mockAnimatedValues.scale, {
+      toValue: 1,
+      tension: 100,
+      friction: 8,
+      useNativeDriver: false,
+    });
+    expect(mockedAnimated.timing).toHaveBeenNthCalledWith(3, mockAnimatedValues.rotation, {
+      toValue: 0,
+      duration: 240, // 400 * 0.6
+      useNativeDriver: false,
     });
   });
 
   it('starts parallel animation', () => {
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
     result.current.animateExpansion(mockAnimatedValues, true);
 
-    const parallelAnimation = mockParallel.mock.calls[0][0];
-    expect(parallelAnimation).toHaveLength(4); // Four timing animations
+    expect(mockedAnimated.parallel).toHaveBeenCalledWith([
+      expect.any(Object), // height timing
+      expect.any(Object), // opacity timing
+      expect.any(Object), // scale spring
+      expect.any(Object), // rotation timing
+    ]);
 
-    const startMethod = mockParallel.mock.results[0].value.start;
+    const startMethod = mockedAnimated.parallel.mock.results[0]?.value?.start;
     expect(startMethod).toHaveBeenCalled();
   });
 
   it('handles animation completion callback', () => {
-    const mockCallback = jest.fn();
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,  
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
-    // Mock parallel start to call the callback
-    mockParallel.mockReturnValue({
-      start: jest.fn((callback) => {
-        if (callback) callback();
-      }),
+    // Override parallel mock for this test
+    const mockStartFn = jest.fn((callback) => {
+      if (callback) callback();
+    });
+    mockedAnimated.parallel.mockReturnValue({
+      start: mockStartFn,
     });
 
     result.current.animateExpansion(mockAnimatedValues, true);
 
-    // The parallel animation should have been started
-    expect(mockParallel().start).toHaveBeenCalled();
+    expect(mockStartFn).toHaveBeenCalled();
   });
 
-  it('maintains consistent animation duration', () => {
+  it('maintains consistent animation duration base', () => {
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
     result.current.animateExpansion(mockAnimatedValues, true);
 
-    // All timing animations should use 300ms duration
-    mockTiming.mock.calls.forEach(call => {
-      expect(call[1].duration).toBe(300);
-    });
+    // Check that timing calls have appropriate durations
+    const timingCalls = mockedAnimated.timing.mock.calls;
+    expect(timingCalls).toHaveLength(3);
+    expect(timingCalls[0][1].duration).toBe(400); // height: full duration
+    expect(timingCalls[1][1].duration).toBe(320); // opacity: 0.8 * duration
+    expect(timingCalls[2][1].duration).toBe(240); // rotation: 0.6 * duration
   });
 
   it('uses correct native driver settings', () => {
     const { result } = renderHook(() => useAnimation());
+    const mockedAnimated = Animated as any;
     
     const mockAnimatedValues = {
-      scale: { setValue: jest.fn() },
-      rotation: { setValue: jest.fn() },
-      height: { setValue: jest.fn() },
-      opacity: { setValue: jest.fn() },
+      scale: mockAnimatedValue,
+      rotation: mockAnimatedValue,
+      height: mockAnimatedValue,
+      opacity: mockAnimatedValue,
     };
 
     result.current.animateExpansion(mockAnimatedValues, true);
 
-    // Scale, rotation, and opacity should use native driver
-    expect(mockTiming.mock.calls[0][1].useNativeDriver).toBe(true); // scale
-    expect(mockTiming.mock.calls[1][1].useNativeDriver).toBe(true); // rotation
-    expect(mockTiming.mock.calls[2][1].useNativeDriver).toBe(false); // height (layout property)
-    expect(mockTiming.mock.calls[3][1].useNativeDriver).toBe(true); // opacity
+    // Check that all animations use useNativeDriver: false
+    const timingCalls = mockedAnimated.timing.mock.calls;
+    const springCalls = mockedAnimated.spring.mock.calls;
+    
+    expect(timingCalls[0][1].useNativeDriver).toBe(false); // height
+    expect(timingCalls[1][1].useNativeDriver).toBe(false); // opacity  
+    expect(springCalls[0][1].useNativeDriver).toBe(false); // scale
+    expect(timingCalls[2][1].useNativeDriver).toBe(false); // rotation
   });
 });
