@@ -336,7 +336,7 @@ async fn delete_tag(
 #[get("/songs/<song_id>/tags?<user_id>")]
 async fn get_song_tags(
     pool: &State<DbPool>,
-    song_id: String,
+    song_id: &str,
     user_id: i32,
 ) -> Result<Json<Vec<Tag>>, rocket::response::status::BadRequest<String>> {
     use schema::song_tags::dsl;
@@ -344,6 +344,7 @@ async fn get_song_tags(
 
     let pool = pool.inner().clone();
     let query_user_id = user_id;
+    let song_id = song_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
@@ -374,19 +375,24 @@ async fn get_song_tags(
 #[post("/songs/<song_id>/tags", data = "<new_song_tag>")]
 async fn add_tag_to_song(
     pool: &State<DbPool>,
-    song_id: String,
+    song_id: &str,
     new_song_tag: Json<NewSongTag>,
 ) -> Result<Json<SongTag>, rocket::response::status::BadRequest<String>> {
     use schema::song_tags::dsl;
 
     let pool = pool.inner().clone();
     let mut new_song_tag_data = new_song_tag.into_inner();
-    new_song_tag_data.song_id = song_id;
+    new_song_tag_data.song_id = song_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
+        
+        // Log the insertion attempt for debugging
+        println!("Attempting to insert song_tag with song_id: '{}', tag_id: {}, user_id: {}", 
+                new_song_tag_data.song_id, new_song_tag_data.tag_id, new_song_tag_data.user_id);
+        
         diesel::insert_into(dsl::song_tags)
             .values(&new_song_tag_data)
             .get_result::<SongTag>(&mut conn)
@@ -405,7 +411,7 @@ async fn add_tag_to_song(
 #[delete("/songs/<song_id>/tags/<tag_id>?<user_id>")]
 async fn remove_tag_from_song(
     pool: &State<DbPool>,
-    song_id: String,
+    song_id: &str,
     tag_id: i32,
     user_id: i32,
 ) -> Result<rocket::response::status::NoContent, rocket::response::status::BadRequest<String>> {
@@ -414,12 +420,17 @@ async fn remove_tag_from_song(
     let pool = pool.inner().clone();
     let query_user_id = user_id;
     let query_tag_id = tag_id;
+    let song_id = song_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
-        diesel::delete(
+        
+        // Log the deletion attempt for debugging
+        println!("Attempting to delete song_tag with song_id: '{}', tag_id: {}, user_id: {}", song_id, query_tag_id, query_user_id);
+        
+        let result = diesel::delete(
             dsl::song_tags.filter(
                 dsl::song_id
                     .eq(&song_id)
@@ -428,7 +439,10 @@ async fn remove_tag_from_song(
             ),
         )
         .execute(&mut conn)
-        .map_err(|e| format!("Failed to remove tag from song: {e}"))
+        .map_err(|e| format!("Failed to remove tag from song: {e}"));
+        
+        println!("Delete result: {:?}", result);
+        result
     })
     .await
     {
