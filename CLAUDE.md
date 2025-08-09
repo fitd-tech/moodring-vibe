@@ -80,19 +80,22 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Test file protection**: Never modify test files without explicit permission
 
 ### Task Execution Policy
+- **For significant code changes**: MANDATORY use of TodoWrite Template for Quality Workflow - this includes new features, multi-file changes, architectural modifications, and complex bug fixes (>3 files or >50 lines changed)
+- **For simple code changes**: TodoWrite Template RECOMMENDED but not required - single file changes, typo fixes, configuration updates, and emergency hot fixes may use direct implementation
 - **For development tasks requiring file changes**: Use `/mr-code` slash command for comprehensive quality-enforced workflows
 - **For policy/workflow changes**: Use `/mr-policy` slash command for proper analysis and validation
-- **For information-only tasks**: Direct implementation is appropriate
-- **Fallback enforcement**: When slash commands are unavailable, manually execute equivalent quality checks using the fallback checklist below
-- **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement
+- **For information-only tasks**: Direct implementation is appropriate (no code changes)
+- **Emergency fixes**: Direct implementation allowed with post-hoc TodoWrite documentation for significant changes
+- **Fallback enforcement**: When slash commands are unavailable, manually execute equivalent quality checks using the fallback checklist below with TodoWrite tracking for significant changes
+- **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement using TodoWrite for significant changes
 - **TodoWrite subagent coordination**: When subagents are planned in TodoWrite workflows, do NOT perform overlapping tasks manually to avoid redundancy and ensure proper workflow orchestration
 
 ### Manual Quality Checklist (Fallback Only)
 *Use only when specialized slash commands are unavailable:*
 
-**CRITICAL**: Always use TodoWrite checklist to track these steps systematically:
+**CRITICAL**: TodoWrite checklist required for significant code changes, recommended for simple changes:
 
-**TodoWrite Template for Quality Workflow:**
+**TodoWrite Template for Quality Workflow - REQUIRED FOR SIGNIFICANT CODE CHANGES:**
 1. **Code Implementation** - Use code-implementation-specialist for file changes
 2. **Technical Debt Cleanup** - Run tech-debt-cleanup-planner after code changes
 3. **Codebase Organization** - Run codebase-organization-specialist after technical debt review
