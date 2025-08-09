@@ -382,16 +382,13 @@ async fn add_tag_to_song(
 
     let pool = pool.inner().clone();
     let mut new_song_tag_data = new_song_tag.into_inner();
+    // Use the song_id from the URL path, not from the POST body
     new_song_tag_data.song_id = song_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
-        
-        // Log the insertion attempt for debugging
-        println!("Attempting to insert song_tag with song_id: '{}', tag_id: {}, user_id: {}", 
-                new_song_tag_data.song_id, new_song_tag_data.tag_id, new_song_tag_data.user_id);
         
         diesel::insert_into(dsl::song_tags)
             .values(&new_song_tag_data)
@@ -427,10 +424,7 @@ async fn remove_tag_from_song(
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
         
-        // Log the deletion attempt for debugging
-        println!("Attempting to delete song_tag with song_id: '{}', tag_id: {}, user_id: {}", song_id, query_tag_id, query_user_id);
-        
-        let result = diesel::delete(
+        diesel::delete(
             dsl::song_tags.filter(
                 dsl::song_id
                     .eq(&song_id)
@@ -439,10 +433,7 @@ async fn remove_tag_from_song(
             ),
         )
         .execute(&mut conn)
-        .map_err(|e| format!("Failed to remove tag from song: {e}"));
-        
-        println!("Delete result: {:?}", result);
-        result
+        .map_err(|e| format!("Failed to remove tag from song: {e}"))
     })
     .await
     {
