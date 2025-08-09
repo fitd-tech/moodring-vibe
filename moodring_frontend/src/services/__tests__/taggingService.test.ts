@@ -182,7 +182,7 @@ describe('TaggingService', () => {
     it('deletes a tag successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}),
+        status: 204,
       });
 
       await taggingService.deleteTag(1, 1);
@@ -328,7 +328,7 @@ describe('TaggingService', () => {
     it('removes tag from song successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}),
+        status: 204,
       });
 
       await taggingService.removeTagFromSong('test_song', 1, 1);
@@ -348,7 +348,7 @@ describe('TaggingService', () => {
       const specialSongId = 'song%20with%20encoding';
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}),
+        status: 204,
       });
 
       await taggingService.removeTagFromSong(specialSongId, 1, 1);

@@ -19,6 +19,11 @@ export class TaggingService {
       throw new Error(`API call failed: ${response.status} - ${errorText}`);
     }
 
+    // Handle 204 No Content responses (successful DELETE operations)
+    if (response.status === 204) {
+      return undefined as unknown as T;
+    }
+
     return response.json();
   }
 
