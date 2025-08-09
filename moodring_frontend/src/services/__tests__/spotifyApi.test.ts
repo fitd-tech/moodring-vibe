@@ -163,7 +163,7 @@ describe('spotifyApi', () => {
         json: async () => {
           throw new Error('Invalid JSON');
         },
-      } as Response);
+      } as unknown as Response);
 
       const result = await spotifyApi.getCurrentlyPlaying(mockToken);
       expect(result).toBeNull();

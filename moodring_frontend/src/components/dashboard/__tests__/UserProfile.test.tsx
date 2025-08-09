@@ -49,7 +49,7 @@ describe('UserProfile', () => {
     expect(screen.getByText('Test User')).toBeTruthy();
     expect(screen.getByText('test@example.com')).toBeTruthy();
     
-    const image = UNSAFE_getByType('Image');
+    const image = UNSAFE_getByType(require('react-native').Image);
     expect(image.props.source.uri).toBe('https://example.com/avatar.jpg');
   });
 
@@ -90,7 +90,7 @@ describe('UserProfile', () => {
   it('renders profile image when profile_image_url is provided', () => {
     const { UNSAFE_getByType } = render(<UserProfile user={mockUserWithImage} />);
     
-    const image = UNSAFE_getByType('Image');
+    const image = UNSAFE_getByType(require('react-native').Image);
     expect(image).toBeTruthy();
     expect(image.props.source.uri).toBe('https://example.com/avatar.jpg');
   });
@@ -99,7 +99,7 @@ describe('UserProfile', () => {
     render(<UserProfile user={mockUserWithoutImage} />);
     
     // Should not render Image component
-    expect(() => screen.UNSAFE_getByType('Image')).toThrow();
+    expect(() => screen.UNSAFE_getByType(require('react-native').Image)).toThrow();
     
     // Should render avatar placeholder
     expect(screen.getByText('N')).toBeTruthy();

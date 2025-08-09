@@ -6,14 +6,10 @@ import { theme } from '../../styles/theme';
 
 interface RecentTracksListProps {
   tracks: RecentTrack[];
-  onTrackTagRemove?: (_trackIndex: number, _tagId: string) => void;
-  onTrackTagAdd?: (_trackIndex: number) => void;
 }
 
 export const RecentTracksList: React.FC<RecentTracksListProps> = ({
   tracks,
-  onTrackTagRemove = () => {},
-  onTrackTagAdd = () => {},
 }) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
 
@@ -39,8 +35,6 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
           _index={index}
           isExpanded={expandedTrack === index}
           onToggleExpansion={handleToggleExpansion}
-          onTagRemove={(tagId) => onTrackTagRemove(index, tagId)}
-          onTagAdd={() => onTrackTagAdd(index)}
         />
       ))}
     </View>

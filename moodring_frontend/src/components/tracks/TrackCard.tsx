@@ -1,18 +1,18 @@
-import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Animated } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { RecentTrack, Tag } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
 import { TaggingInterface } from './TaggingInterface';
 import { useAnimation } from '../../hooks/useAnimation';
 import { theme } from '../../styles/theme';
+import { taggingService } from '../../services/taggingService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TrackCardProps {
   track: RecentTrack;
   _index: number;
   isExpanded: boolean;
   onToggleExpansion: (_index: number) => void;
-  onTagRemove?: (_tagId: string) => void;
-  onTagAdd?: () => void;
 }
 
 export const TrackCard: React.FC<TrackCardProps> = ({
@@ -20,16 +20,40 @@ export const TrackCard: React.FC<TrackCardProps> = ({
   _index,
   isExpanded,
   onToggleExpansion,
-  onTagRemove = () => {},
-  onTagAdd = () => {},
 }) => {
+  const { user } = useAuth();
   const animatedValues = useRef(useAnimation().createAnimatedValues()).current;
   const { animateExpansion } = useAnimation();
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
+  const [songId, setSongId] = useState<string>('');
 
-  const mockTags: Tag[] = [
-    { id: '1', name: 'pop' },
-    { id: '2', name: 'recent' },
-  ];
+  useEffect(() => {
+    // Generate a consistent song ID from track information
+    const generatedSongId = taggingService.generateSongId(track.name, track.artist);
+    setSongId(generatedSongId);
+  }, [track.name, track.artist]);
+
+  useEffect(() => {
+    if (isExpanded && user && songId) {
+      loadSongTags();
+    }
+  }, [isExpanded, user, songId]);
+
+  const loadSongTags = async () => {
+    if (!user || !songId) return;
+    
+    setIsLoadingTags(true);
+    try {
+      const songTags = await taggingService.getSongTags(songId, user.id);
+      setTags(songTags);
+    } catch (error) {
+      console.error('Failed to load song tags:', error);
+      setTags([]);
+    } finally {
+      setIsLoadingTags(false);
+    }
+  };
 
   React.useEffect(() => {
     animateExpansion(animatedValues, isExpanded);
@@ -88,11 +112,18 @@ export const TrackCard: React.FC<TrackCardProps> = ({
               },
             ]}
           >
-            <TaggingInterface
-              tags={mockTags}
-              onRemoveTag={onTagRemove}
-              onAddTag={onTagAdd}
-            />
+            {isLoadingTags ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={theme.colors.accent.purple} />
+                <Text style={styles.loadingText}>Loading tags...</Text>
+              </View>
+            ) : (
+              <TaggingInterface
+                tags={tags}
+                songId={songId}
+                onTagsChanged={loadSongTags}
+              />
+            )}
           </Animated.View>
         )}
       </GradientCard>
@@ -158,5 +189,16 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xl,
     borderTopWidth: 1,
     borderTopColor: theme.colors.ui.border,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.lg,
+  },
+  loadingText: {
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
   },
 });

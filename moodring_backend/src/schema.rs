@@ -1,6 +1,27 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    song_tags (id) {
+        id -> Int4,
+        user_id -> Int4,
+        song_id -> Varchar,
+        tag_id -> Int4,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    tags (id) {
+        id -> Int4,
+        user_id -> Int4,
+        name -> Varchar,
+        color -> Nullable<Varchar>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     temp_songs (id) {
         id -> Int4,
         title -> Varchar,
@@ -26,4 +47,8 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(temp_songs, users,);
+diesel::joinable!(song_tags -> tags (tag_id));
+diesel::joinable!(song_tags -> users (user_id));
+diesel::joinable!(tags -> users (user_id));
+
+diesel::allow_tables_to_appear_in_same_query!(song_tags, tags, temp_songs, users,);

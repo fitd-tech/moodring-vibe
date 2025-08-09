@@ -27,7 +27,7 @@ jest.mock('../../contexts/AuthContext', () => ({
 
 describe('useSpotifyActivity', () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    React.createElement(AuthProvider, {}, children)
+    React.createElement(AuthProvider, { children }, children)
   );
 
   beforeEach(() => {

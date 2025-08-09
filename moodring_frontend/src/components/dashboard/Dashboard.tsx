@@ -19,10 +19,6 @@ interface DashboardProps {
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
   onSettings?: () => void;
-  onTrackTagRemove?: (_trackIndex: number, _tagId: string) => void;
-  onTrackTagAdd?: (_trackIndex: number) => void;
-  onNowPlayingTagRemove?: (_tagId: string) => void;
-  onNowPlayingTagAdd?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -35,10 +31,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onCreatePlaylist,
   onBrowseTags,
   onSettings,
-  onTrackTagRemove,
-  onTrackTagAdd,
-  onNowPlayingTagRemove,
-  onNowPlayingTagAdd,
 }) => {
   const insets = useSafeAreaInsets();
   return (
@@ -70,14 +62,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <NowPlaying 
             currentlyPlaying={currentlyPlaying}
-            onTagRemove={onNowPlayingTagRemove}
-            onTagAdd={onNowPlayingTagAdd}
           />
 
           <RecentTracksList 
             tracks={recentTracks}
-            onTrackTagRemove={onTrackTagRemove}
-            onTrackTagAdd={onTrackTagAdd}
           />
         </View>
       </ScrollView>

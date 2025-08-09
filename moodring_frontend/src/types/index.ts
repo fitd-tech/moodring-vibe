@@ -22,6 +22,7 @@ export interface RecentTrack {
   album: string;
   album_image_url?: string;
   played_at: string;
+  song_id?: string;
 }
 
 export interface CurrentlyPlaying {
@@ -30,6 +31,7 @@ export interface CurrentlyPlaying {
   album: string;
   album_image_url?: string;
   is_playing: boolean;
+  song_id?: string;
 }
 
 export interface SpotifyTrack {
@@ -67,9 +69,32 @@ export interface AuthTokens {
 }
 
 export interface Tag {
-  id: string;
+  id: number;
+  user_id: number;
   name: string;
   color?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NewTag {
+  name: string;
+  color?: string;
+  user_id?: number;
+}
+
+export interface SongTag {
+  id: number;
+  user_id: number;
+  song_id: string;
+  tag_id: number;
+  created_at: string;
+}
+
+export interface NewSongTag {
+  user_id: number;
+  tag_id: number;
+  song_id?: string;
 }
 
 export interface AnimatedValues {

@@ -10,6 +10,47 @@ pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<PgConnectio
 
 #[derive(Queryable, Serialize, Deserialize, Clone, PartialEq, Debug)]
 #[serde(crate = "rocket::serde")]
+#[diesel(table_name = schema::tags)]
+pub struct Tag {
+    pub id: i32,
+    pub user_id: i32,
+    pub name: String,
+    pub color: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Deserialize, Clone, Debug)]
+#[serde(crate = "rocket::serde")]
+#[diesel(table_name = schema::tags)]
+pub struct NewTag {
+    pub user_id: i32,
+    pub name: String,
+    pub color: Option<String>,
+}
+
+#[derive(Queryable, Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[serde(crate = "rocket::serde")]
+#[diesel(table_name = schema::song_tags)]
+pub struct SongTag {
+    pub id: i32,
+    pub user_id: i32,
+    pub song_id: String,
+    pub tag_id: i32,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Deserialize, Clone, Debug)]
+#[serde(crate = "rocket::serde")]
+#[diesel(table_name = schema::song_tags)]
+pub struct NewSongTag {
+    pub user_id: i32,
+    pub song_id: String,
+    pub tag_id: i32,
+}
+
+#[derive(Queryable, Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[serde(crate = "rocket::serde")]
 #[diesel(table_name = schema::users)]
 pub struct User {
     pub id: i32,

@@ -1,10 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 
 // Mock all react-native Animated functions first
-const mockTiming = jest.fn(() => ({ start: jest.fn() }));
-const mockSpring = jest.fn(() => ({ start: jest.fn() }));
-const mockParallel = jest.fn(() => ({ start: jest.fn() }));
-const mockAnimatedValue = {
+const mockAnimatedValue: any = {
   setValue: jest.fn(),
   interpolate: jest.fn(() => mockAnimatedValue),
 };
@@ -14,7 +11,7 @@ jest.mock('react-native', () => {
   const mockTiming = jest.fn(() => ({ start: jest.fn() }));
   const mockSpring = jest.fn(() => ({ start: jest.fn() }));  
   const mockParallel = jest.fn(() => ({ start: jest.fn() }));
-  const mockAnimatedValue = {
+  const mockAnimatedValue: any = {
     setValue: jest.fn(),
     interpolate: jest.fn(() => mockAnimatedValue),
   };
@@ -56,15 +53,15 @@ describe('useAnimation', () => {
     
     // Set up return values
     mockedAnimated.timing.mockReturnValue({
-      start: jest.fn((callback) => callback && callback()),
+      start: jest.fn((callback?: () => void) => callback && callback()),
     });
     
     mockedAnimated.spring.mockReturnValue({
-      start: jest.fn((callback) => callback && callback()),
+      start: jest.fn((callback?: () => void) => callback && callback()),
     });
     
     mockedAnimated.parallel.mockReturnValue({
-      start: jest.fn((callback) => callback && callback()),
+      start: jest.fn((callback?: () => void) => callback && callback()),
     });
   });
 
@@ -89,7 +86,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const mockedAnimated = Animated as any;
     
-    const mockAnimatedValues = {
+    const mockAnimatedValues: any = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
@@ -130,7 +127,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const mockedAnimated = Animated as any;
     
-    const mockAnimatedValues = {
+    const mockAnimatedValues: any = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
@@ -171,7 +168,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const mockedAnimated = Animated as any;
     
-    const mockAnimatedValues = {
+    const mockAnimatedValues: any = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
@@ -203,7 +200,7 @@ describe('useAnimation', () => {
     };
 
     // Override parallel mock for this test
-    const mockStartFn = jest.fn((callback) => {
+    const mockStartFn = jest.fn((callback?: () => void) => {
       if (callback) callback();
     });
     mockedAnimated.parallel.mockReturnValue({
@@ -219,7 +216,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const mockedAnimated = Animated as any;
     
-    const mockAnimatedValues = {
+    const mockAnimatedValues: any = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
@@ -240,7 +237,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const mockedAnimated = Animated as any;
     
-    const mockAnimatedValues = {
+    const mockAnimatedValues: any = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,

@@ -8,22 +8,18 @@ import { theme } from '../../styles/theme';
 
 interface NowPlayingProps {
   currentlyPlaying: CurrentlyPlaying | null;
-  onTagRemove?: (_tagId: string) => void;
-  onTagAdd?: () => void;
 }
 
 export const NowPlaying: React.FC<NowPlayingProps> = ({
   currentlyPlaying,
-  onTagRemove = () => {},
-  onTagAdd = () => {},
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const animatedValues = useRef(useAnimation().createAnimatedValues()).current;
   const { animateExpansion } = useAnimation();
 
   const mockTags: Tag[] = [
-    { id: '1', name: 'synthwave' },
-    { id: '2', name: 'currently-playing' },
+    { id: 1, name: 'synthwave', user_id: 1, color: undefined, created_at: '', updated_at: '' },
+    { id: 2, name: 'currently-playing', user_id: 1, color: undefined, created_at: '', updated_at: '' },
   ];
 
   const toggleExpansion = () => {
@@ -100,8 +96,8 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
           >
             <TaggingInterface
               tags={mockTags}
-              onRemoveTag={onTagRemove}
-              onAddTag={onTagAdd}
+              songId={currentlyPlaying?.song_id || `${currentlyPlaying?.name || 'unknown'}__${currentlyPlaying?.artist || 'unknown'}`}
+              onTagsChanged={() => {}}
             />
             <TouchableOpacity style={styles.collapseButton} onPress={toggleExpansion}>
               <Text style={styles.collapseText}>Collapse</Text>

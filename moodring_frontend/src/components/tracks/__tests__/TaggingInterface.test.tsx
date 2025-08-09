@@ -1,28 +1,77 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { TaggingInterface } from '../TaggingInterface';
 import { Tag } from '../../../types';
+import { taggingService } from '../../../services/taggingService';
+
+// Mock the tagging service
+jest.mock('../../../services/taggingService');
+const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
+
+// Mock the AuthContext hook
+jest.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
+      id: 1,
+      spotify_id: 'test_spotify_id',
+      email: 'test@example.com',
+      display_name: 'Test User',
+      spotify_access_token: 'test_token',
+      spotify_refresh_token: null,
+      token_expires_at: null,
+      profile_image_url: null,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    },
+    isAuthenticated: true,
+    login: jest.fn(),
+    logout: jest.fn(),
+    refreshToken: jest.fn(),
+  }),
+}));
+
 
 describe('TaggingInterface', () => {
   const mockTags: Tag[] = [
-    { id: '1', name: 'pop' },
-    { id: '2', name: 'recent' },
+    {
+      id: 1,
+      user_id: 1,
+      name: 'pop',
+      color: '#ff0000',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: 2,
+      user_id: 1,
+      name: 'recent',
+      color: '#00ff00',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    },
   ];
 
-  const mockOnRemoveTag = jest.fn();
-  const mockOnAddTag = jest.fn();
+  const mockOnTagsChanged = jest.fn();
 
   beforeEach(() => {
-    mockOnRemoveTag.mockClear();
-    mockOnAddTag.mockClear();
+    jest.clearAllMocks();
+    mockTaggingService.getUserTags.mockResolvedValue([]);
+    mockTaggingService.createTag.mockResolvedValue(mockTags[0]);
+    mockTaggingService.addTagToSong.mockResolvedValue({
+      id: 1,
+      user_id: 1,
+      song_id: 'test_song',
+      tag_id: 1,
+      created_at: '2024-01-01T00:00:00Z',
+    });
   });
 
   it('renders tags correctly', () => {
     const { getByText } = render(
       <TaggingInterface
         tags={mockTags}
-        onRemoveTag={mockOnRemoveTag}
-        onAddTag={mockOnAddTag}
+        songId="test_song"
+        onTagsChanged={mockOnTagsChanged}
       />
     );
 
@@ -31,45 +80,77 @@ describe('TaggingInterface', () => {
     expect(getByText('recent')).toBeTruthy();
   });
 
-  it('calls onRemoveTag when remove button is pressed', () => {
+  it('calls onTagsChanged when remove button is pressed', async () => {
+    mockTaggingService.removeTagFromSong.mockResolvedValue(undefined);
+
     const { getAllByText } = render(
       <TaggingInterface
         tags={mockTags}
-        onRemoveTag={mockOnRemoveTag}
-        onAddTag={mockOnAddTag}
+        songId="test_song"
+        onTagsChanged={mockOnTagsChanged}
       />
     );
 
     const removeButtons = getAllByText('×');
     fireEvent.press(removeButtons[0]);
     
-    expect(mockOnRemoveTag).toHaveBeenCalledWith('1');
+    await waitFor(() => {
+      expect(mockTaggingService.removeTagFromSong).toHaveBeenCalledWith('test_song', 1, 1);
+      expect(mockOnTagsChanged).toHaveBeenCalled();
+    });
   });
 
-  it('calls onAddTag when add button is pressed', () => {
-    const { getByText } = render(
+  it('creates and adds new tag when add button is pressed', async () => {
+    const { getByPlaceholderText, getByText } = render(
       <TaggingInterface
-        tags={mockTags}
-        onRemoveTag={mockOnRemoveTag}
-        onAddTag={mockOnAddTag}
+        tags={[]}
+        songId="test_song"
+        onTagsChanged={mockOnTagsChanged}
       />
     );
 
+    const textInput = getByPlaceholderText('Add tag...');
+    fireEvent.changeText(textInput, 'new tag');
     fireEvent.press(getByText('+ Add'));
-    expect(mockOnAddTag).toHaveBeenCalled();
+    
+    await waitFor(() => {
+      expect(mockTaggingService.createTag).toHaveBeenCalledWith(1, {
+        name: 'new tag',
+        user_id: 1,
+      });
+      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith('test_song', 1, 1);
+      expect(mockOnTagsChanged).toHaveBeenCalled();
+    });
   });
 
   it('renders with empty tags array', () => {
     const { getByText, queryByText } = render(
       <TaggingInterface
         tags={[]}
-        onRemoveTag={mockOnRemoveTag}
-        onAddTag={mockOnAddTag}
+        songId="test_song"
+        onTagsChanged={mockOnTagsChanged}
       />
     );
 
     expect(getByText('Tags')).toBeTruthy();
     expect(queryByText('pop')).toBeNull();
     expect(queryByText('recent')).toBeNull();
+  });
+
+  it('loads available tags on mount', async () => {
+    const availableTags = [mockTags[0]];
+    mockTaggingService.getUserTags.mockResolvedValue(availableTags);
+
+    render(
+      <TaggingInterface
+        tags={[]}
+        songId="test_song"
+        onTagsChanged={mockOnTagsChanged}
+      />
+    );
+
+    await waitFor(() => {
+      expect(mockTaggingService.getUserTags).toHaveBeenCalledWith(1);
+    });
   });
 });
