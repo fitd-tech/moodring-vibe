@@ -7,6 +7,7 @@ interface ProfileMenuProps {
   user: BackendUser;
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
+  onHome?: () => void;
   onSettings?: () => void;
   onLogout: () => void;
 }
@@ -22,12 +23,25 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   user,
   onCreatePlaylist,
   onBrowseTags,
+  onHome,
   onSettings,
   onLogout,
 }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   const menuOptions: MenuOption[] = [
+    ...(onHome
+      ? [
+          {
+            id: 'home',
+            label: 'Home',
+            onPress: () => {
+              setIsMenuVisible(false);
+              onHome();
+            },
+          },
+        ]
+      : []),
     {
       id: 'create-playlist',
       label: 'Create playlist',
@@ -72,61 +86,45 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
 
   return (
     <>
-      <TouchableOpacity 
-        style={styles.profileButton} 
+      <TouchableOpacity
+        style={styles.profileButton}
         onPress={toggleMenu}
         testID="profile-menu-button"
       >
         {user.profile_image_url ? (
-          <Image 
-            source={{ uri: user.profile_image_url }}
-            style={styles.profileImage}
-          />
+          <Image source={{ uri: user.profile_image_url }} style={styles.profileImage} />
         ) : (
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarPlaceholder}>
-              {user.display_name?.charAt(0).toUpperCase() || user.spotify_id.charAt(0).toUpperCase()}
+              {user.display_name?.charAt(0).toUpperCase() ||
+                user.spotify_id.charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
       </TouchableOpacity>
 
-      <Modal
-        visible={isMenuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeMenu}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={closeMenu}
-        >
+      <Modal visible={isMenuVisible} transparent animationType="fade" onRequestClose={closeMenu}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeMenu}>
           <View style={styles.menuContainer}>
             <View style={styles.menuHeader}>
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>
-                  {user.display_name || user.spotify_id}
-                </Text>
+                <Text style={styles.userName}>{user.display_name || user.spotify_id}</Text>
                 <Text style={styles.userEmail}>{user.email}</Text>
               </View>
             </View>
-            
+
             <View style={styles.menuDivider} />
-            
+
             <View style={styles.menuOptions}>
-              {menuOptions.map((option) => (
+              {menuOptions.map(option => (
                 <TouchableOpacity
                   key={option.id}
                   style={styles.menuOption}
                   onPress={option.onPress}
                   testID={`menu-option-${option.id}`}
                 >
-                  <Text 
-                    style={[
-                      styles.menuOptionText,
-                      option.id === 'logout' && styles.logoutText
-                    ]}
+                  <Text
+                    style={[styles.menuOptionText, option.id === 'logout' && styles.logoutText]}
                   >
                     {option.label}
                   </Text>

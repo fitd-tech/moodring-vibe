@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useSpotifyActivity } from './src/hooks/useSpotifyActivity';
 import { authService } from './src/services/authService';
 import { LoginScreen, Dashboard, LoadingSpinner } from './src/components';
+import { TagsDashboard } from './src/components/dashboard/TagsDashboard';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -33,19 +34,24 @@ const SCOPES = [
 
 const AppContent: React.FC = () => {
   const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
-  const { currentlyPlaying, recentTracks, isRefreshing, refresh, loadActivity } = useSpotifyActivity();
+  const { currentlyPlaying, recentTracks, isRefreshing, refresh, loadActivity } =
+    useSpotifyActivity();
+  const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
 
   const redirectUri = 'moodring://auth';
 
-  // Placeholder handlers for menu options
+  // Navigation handlers
   const handleCreatePlaylist = () => {
     // TODO: Implement create playlist functionality
     console.log('Create playlist pressed');
   };
 
   const handleBrowseTags = () => {
-    // TODO: Implement browse tags functionality
-    console.log('Browse tags pressed');
+    setCurrentView('tags');
+  };
+
+  const handleHome = () => {
+    setCurrentView('dashboard');
   };
 
   const handleSettings = () => {
@@ -79,7 +85,7 @@ const AppContent: React.FC = () => {
         try {
           setError(null);
           const authData = await authService.authenticateWithBackend(
-            response.params.code, 
+            response.params.code,
             request.codeVerifier
           );
 
@@ -106,6 +112,18 @@ const AppContent: React.FC = () => {
   }
 
   if (user && authToken) {
+    if (currentView === 'tags') {
+      return (
+        <TagsDashboard
+          user={user}
+          onLogout={logout}
+          onCreatePlaylist={handleCreatePlaylist}
+          onHome={handleHome}
+          onSettings={handleSettings}
+        />
+      );
+    }
+
     return (
       <Dashboard
         user={user}
@@ -121,13 +139,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return (
-    <LoginScreen
-      error={error}
-      onLogin={handleLogin}
-      isLoginDisabled={!request}
-    />
-  );
+  return <LoginScreen error={error} onLogin={handleLogin} isLoginDisabled={!request} />;
 };
 
 export default function App() {
@@ -139,5 +151,3 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
-

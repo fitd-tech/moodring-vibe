@@ -1,5 +1,5 @@
 import { TaggingService, taggingService } from '../taggingService';
-import { Tag, NewTag, SongTag, NewSongTag } from '../../types';
+import { Tag, NewTag, SongTag } from '../../types';
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -9,19 +9,6 @@ global.fetch = mockFetch;
 const originalEnv = process.env;
 
 describe('TaggingService', () => {
-  const mockUser = {
-    id: 1,
-    spotify_id: 'test_spotify_id',
-    email: 'test@example.com',
-    display_name: 'Test User',
-    spotify_access_token: 'test_token',
-    spotify_refresh_token: null,
-    token_expires_at: null,
-    profile_image_url: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  };
-
   const mockTag: Tag = {
     id: 1,
     user_id: 1,
@@ -62,7 +49,7 @@ describe('TaggingService', () => {
     it('uses default backend URL when environment variable is not set', () => {
       delete process.env.EXPO_PUBLIC_BACKEND_URL;
       const service = new TaggingService();
-      
+
       // Access private method for testing
       const backendUrl = (service as any).getBackendUrl();
       expect(backendUrl).toBe('http://localhost:8000');
@@ -71,7 +58,7 @@ describe('TaggingService', () => {
     it('uses environment variable for backend URL when set', () => {
       process.env.EXPO_PUBLIC_BACKEND_URL = 'https://api.example.com';
       const service = new TaggingService();
-      
+
       const backendUrl = (service as any).getBackendUrl();
       expect(backendUrl).toBe('https://api.example.com');
     });
@@ -378,7 +365,7 @@ describe('TaggingService', () => {
     it('generates consistent song ID from track name and artist', () => {
       const songId1 = taggingService.generateSongId('Test Song', 'Test Artist');
       const songId2 = taggingService.generateSongId('Test Song', 'Test Artist');
-      
+
       expect(songId1).toBe(songId2);
       expect(songId1).toBe('test_song__test_artist');
     });
@@ -401,7 +388,7 @@ describe('TaggingService', () => {
     it('converts to lowercase consistently', () => {
       const songId1 = taggingService.generateSongId('UPPERCASE SONG', 'UPPERCASE ARTIST');
       const songId2 = taggingService.generateSongId('uppercase song', 'uppercase artist');
-      
+
       expect(songId1).toBe(songId2);
       expect(songId1).toBe('uppercase_song__uppercase_artist');
     });
@@ -440,6 +427,31 @@ describe('TaggingService', () => {
       await expect(taggingService.getUserTags(1)).rejects.toThrow(
         'API call failed: 500 - Internal server error: Database connection failed'
       );
+    });
+  });
+
+  describe('getSongsWithTag', () => {
+    it('returns empty array as placeholder implementation', async () => {
+      const result = await taggingService.getSongsWithTag(1, 2);
+
+      expect(result).toEqual([]);
+    });
+
+    it('handles different user and tag IDs', async () => {
+      const result1 = await taggingService.getSongsWithTag(123, 456);
+      const result2 = await taggingService.getSongsWithTag(789, 101);
+
+      expect(result1).toEqual([]);
+      expect(result2).toEqual([]);
+    });
+
+    it('returns promise that resolves immediately', async () => {
+      const startTime = Date.now();
+      const result = await taggingService.getSongsWithTag(1, 1);
+      const endTime = Date.now();
+
+      expect(result).toEqual([]);
+      expect(endTime - startTime).toBeLessThan(10); // Should resolve almost immediately
     });
   });
 });

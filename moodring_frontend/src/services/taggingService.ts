@@ -36,7 +36,7 @@ export class TaggingService {
   async createTag(userId: number, tagData: NewTag): Promise<Tag> {
     const url = `${this.getBackendUrl()}/users/${userId}/tags`;
     const tagWithUser = { ...tagData, user_id: userId };
-    
+
     return this.makeApiCall<Tag>(url, {
       method: 'POST',
       body: JSON.stringify(tagWithUser),
@@ -77,10 +77,21 @@ export class TaggingService {
     });
   }
 
+  // Get songs that have a specific tag
+  // TODO: Implement backend endpoint for this functionality
+  async getSongsWithTag(_userId: number, _tagId: number): Promise<string[]> {
+    // For now, return empty array since backend endpoint doesn't exist yet
+    // This will be implemented when backend adds GET /users/{userId}/tags/{tagId}/songs
+    return Promise.resolve([]);
+  }
+
   // Utility method to generate a song ID from track information
   generateSongId(trackName: string, artist: string): string {
     // Create a consistent identifier from track name and artist
-    return `${trackName.toLowerCase().trim()}__${artist.toLowerCase().trim()}`.replace(/[^a-z0-9_]/g, '_');
+    return `${trackName.toLowerCase().trim()}__${artist.toLowerCase().trim()}`.replace(
+      /[^a-z0-9_]/g,
+      '_'
+    );
   }
 }
 
