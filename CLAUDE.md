@@ -94,11 +94,13 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 
 **TodoWrite Template for Quality Workflow:**
 1. **Code Implementation** - Use code-implementation-specialist for file changes
-2. **Coverage Verification** - Run test-coverage-enforcer after code changes
-3. **Pre-commit Quality Checks** - Run pre-commit-quality-guard subagent
-4. **Commit Message Generation** - Use commit-message-specialist subagent
-5. **Git Workflow Execution** - Use git-workflow-manager for staging/commit/push
-6. **Server Cleanup** - Kill development servers and verify ports
+2. **Technical Debt Cleanup** - Run tech-debt-cleanup-planner after code changes
+3. **Codebase Organization** - Run codebase-organization-specialist after technical debt review
+4. **Coverage Verification** - Run test-coverage-enforcer after code changes
+5. **Pre-commit Quality Checks** - Run pre-commit-quality-guard subagent
+6. **Commit Message Generation** - Use commit-message-specialist subagent
+7. **Git Workflow Execution** - Use git-workflow-manager for staging/commit/push
+8. **Server Cleanup** - Kill development servers and verify ports
 
 **Subagent Delegation Steps:**
 1. **Code Implementation**:
@@ -113,12 +115,18 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
    - Use `commit-message-specialist` subagent for commit message generation
    - Pass generated message to `git-workflow-manager` subagent for complete git workflow (staging, commit, push)
 
-4. **Coverage and Organization**:
-   - Use `test-coverage-enforcer` subagent after code changes
-   - Use `codebase-organization-specialist` subagent for architectural changes
-   - Use `tech-debt-cleanup-planner` subagent for TODO: TEMP items
+4. **Technical Debt Cleanup**:
+   - Use `tech-debt-cleanup-planner` subagent after all code changes regardless of size
+   - Run immediately after code-implementation-specialist to identify and plan cleanup of technical debt
 
-5. **Server Cleanup**:
+5. **Codebase Organization**:
+   - Use `codebase-organization-specialist` subagent after technical debt cleanup regardless of size
+   - Run immediately after tech-debt-cleanup-planner to assess and improve code architecture
+
+6. **Coverage Verification**:
+   - Use `test-coverage-enforcer` subagent after code changes
+
+7. **Server Cleanup**:
    - Kill development servers on ports 8000-8099, 3000-3099, 8080-8089  
    - Verify with `lsof -ti:8000,3000` that ports are free
    - Preserve database servers and persistent services
