@@ -4,6 +4,7 @@ import { taggingService } from '../../../services/taggingService';
 jest.mock('../../../services/taggingService', () => ({
   taggingService: {
     getSongsWithTag: jest.fn(),
+    removeTagFromSong: jest.fn(),
   },
 }));
 
@@ -42,10 +43,14 @@ describe('TagCard', () => {
   const mockGetSongsWithTag = taggingService.getSongsWithTag as jest.MockedFunction<
     typeof taggingService.getSongsWithTag
   >;
+  const mockRemoveTagFromSong = taggingService.removeTagFromSong as jest.MockedFunction<
+    typeof taggingService.removeTagFromSong
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetSongsWithTag.mockResolvedValue(['song1', 'song2', 'song3']);
+    mockRemoveTagFromSong.mockResolvedValue();
   });
 
   describe('basic functionality', () => {
@@ -87,6 +92,32 @@ describe('TagCard', () => {
       const result = await taggingService.getSongsWithTag(1, 1);
       expect(Array.isArray(result)).toBe(true);
       expect(result).toEqual(testData);
+    });
+  });
+
+  describe('tag removal functionality', () => {
+    it('calls removeTagFromSong with correct parameters', async () => {
+      await taggingService.removeTagFromSong('test_song', 123, 456);
+
+      expect(mockRemoveTagFromSong).toHaveBeenCalledWith('test_song', 123, 456);
+    });
+
+    it('handles removeTagFromSong API errors gracefully', async () => {
+      mockRemoveTagFromSong.mockRejectedValue(new Error('Removal failed'));
+
+      await expect(taggingService.removeTagFromSong('test_song', 1, 1)).rejects.toThrow('Removal failed');
+    });
+
+    it('successfully removes tag from song', async () => {
+      mockRemoveTagFromSong.mockResolvedValue();
+
+      await expect(taggingService.removeTagFromSong('test_song', 1, 1)).resolves.toBeUndefined();
+      expect(mockRemoveTagFromSong).toHaveBeenCalledWith('test_song', 1, 1);
+    });
+
+    it('removeTagFromSong is defined and callable', () => {
+      expect(taggingService.removeTagFromSong).toBeDefined();
+      expect(typeof taggingService.removeTagFromSong).toBe('function');
     });
   });
 });

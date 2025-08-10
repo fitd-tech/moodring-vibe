@@ -67,6 +67,14 @@ export const TagsDashboard: React.FC<TagsDashboardProps> = ({
     setExpandedTagIndex(expandedTagIndex === index ? null : index);
   };
 
+  const handleTagRemoved = (_tagId: number, _songId: string) => {
+    // This callback is called when a tag is removed from a song
+    // We can use this to trigger any necessary refreshes or updates
+    console.log(`Tag ${_tagId} removed from song ${_songId}`);
+    // Optionally refresh tags if needed to update counts, etc.
+    // loadTags(true);
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -123,6 +131,7 @@ export const TagsDashboard: React.FC<TagsDashboardProps> = ({
                   index={index}
                   isExpanded={expandedTagIndex === index}
                   onToggleExpansion={handleToggleExpansion}
+                  onTagRemoved={handleTagRemoved}
                 />
               ))}
             </View>

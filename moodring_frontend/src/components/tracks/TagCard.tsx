@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Animated,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Tag } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
@@ -19,6 +20,7 @@ interface TagCardProps {
   index: number;
   isExpanded: boolean;
   onToggleExpansion: (_index: number) => void;
+  onTagRemoved?: (_tagId: number, _songId: string) => void;
 }
 
 export const TagCard: React.FC<TagCardProps> = ({
@@ -26,12 +28,14 @@ export const TagCard: React.FC<TagCardProps> = ({
   index: _index,
   isExpanded,
   onToggleExpansion,
+  onTagRemoved,
 }) => {
   const { user } = useAuth();
   const animatedValues = useRef(useAnimation().createAnimatedValues()).current;
   const { animateExpansion } = useAnimation();
   const [songs, setSongs] = useState<string[]>([]);
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
+  const [removingSongs, setRemovingSongs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isExpanded && user) {
@@ -67,6 +71,57 @@ export const TagCard: React.FC<TagCardProps> = ({
       return `${trackName} - ${artist}`;
     }
     return songId.replace(/_/g, ' ');
+  };
+
+  const handleRemoveTag = async (songId: string) => {
+    if (!user) return;
+
+    Alert.alert(
+      'Remove Tag',
+      `Remove "${tag.name}" tag from "${formatSongId(songId)}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeTagFromSong(songId),
+        },
+      ],
+    );
+  };
+
+  const removeTagFromSong = async (songId: string) => {
+    if (!user) return;
+
+    setRemovingSongs(prev => new Set(prev).add(songId));
+
+    try {
+      await taggingService.removeTagFromSong(songId, user.id, tag.id);
+      
+      // Update local state by removing the song from the list
+      setSongs(prevSongs => prevSongs.filter(id => id !== songId));
+      
+      // Notify parent component if callback provided
+      if (onTagRemoved) {
+        onTagRemoved(tag.id, songId);
+      }
+    } catch (error) {
+      console.error('Failed to remove tag from song:', error);
+      Alert.alert(
+        'Error',
+        'Failed to remove tag from song. Please try again.',
+        [{ text: 'OK' }],
+      );
+    } finally {
+      setRemovingSongs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(songId);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -119,11 +174,31 @@ export const TagCard: React.FC<TagCardProps> = ({
                 {songs.length > 0 ? (
                   <>
                     <Text style={styles.songsHeader}>Tagged Songs ({songs.length})</Text>
-                    {songs.map((songId, _songIndex) => (
-                      <View key={songId} style={styles.songItem}>
-                        <Text style={styles.songText}>{formatSongId(songId)}</Text>
-                      </View>
-                    ))}
+                    {songs.map((songId, _songIndex) => {
+                      const isRemoving = removingSongs.has(songId);
+                      return (
+                        <View key={songId} style={styles.songItem}>
+                          <View style={styles.songContent}>
+                            <Text style={styles.songText}>{formatSongId(songId)}</Text>
+                            {isRemoving ? (
+                              <ActivityIndicator 
+                                size="small" 
+                                color={theme.colors.accent.pink} 
+                                style={styles.removeLoader}
+                              />
+                            ) : (
+                              <TouchableOpacity
+                                style={styles.removeButton}
+                                onPress={() => handleRemoveTag(songId)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                              >
+                                <Text style={styles.removeButtonText}>×</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
                   </>
                 ) : (
                   <View style={styles.emptySongs}>
@@ -219,10 +294,36 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: theme.colors.accent.cyan,
   },
+  songContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   songText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  removeButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.accent.pink,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.8,
+  },
+  removeButtonText: {
+    fontSize: 18,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+    lineHeight: 20,
+  },
+  removeLoader: {
+    width: 24,
+    height: 24,
   },
   emptySongs: {
     paddingVertical: theme.spacing.xl,
