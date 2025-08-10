@@ -13,7 +13,7 @@ export const useSpotifyActivity = () => {
   const [hasMoreTracks, setHasMoreTracks] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadActivity = async (token?: string, userOverride?: typeof user) => {
+  const loadActivity = async (token?: string, userOverride?: typeof user, preserveAdditionalTracks: boolean = true) => {
     const currentUser = userOverride || user;
     const currentToken = token || authToken;
 
@@ -60,9 +60,9 @@ export const useSpotifyActivity = () => {
       setCurrentlyPlaying(currentlyPlayingData);
       
       // Only replace tracks if we don't have more than the initial load
-      // This preserves additional tracks loaded via "See More"
+      // This preserves additional tracks loaded via "See More" unless explicitly disabled
       setRecentTracks(prevTracks => {
-        if (prevTracks.length <= 10) {
+        if (!preserveAdditionalTracks || prevTracks.length <= 10) {
           return recentTracksData;
         } else {
           // Update existing tracks and preserve additional ones
@@ -92,7 +92,7 @@ export const useSpotifyActivity = () => {
 
     setIsRefreshing(true);
     try {
-      await loadActivity(authToken, user);
+      await loadActivity(authToken, user, false); // Don't preserve additional tracks during refresh
     } catch (error) {
       if (__DEV__) {
         console.warn('Refresh failed:', error);
@@ -112,7 +112,7 @@ export const useSpotifyActivity = () => {
     
     // Load fresh data from Spotify API
     if (user && authToken) {
-      await loadActivity(authToken, user);
+      await loadActivity(authToken, user, false); // Don't preserve additional tracks during reset
     }
   };
 
