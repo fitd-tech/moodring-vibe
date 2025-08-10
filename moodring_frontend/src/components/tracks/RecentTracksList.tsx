@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { RecentTrack } from '../../types';
 import { TrackCard } from './TrackCard';
@@ -19,8 +19,30 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
 }) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const prevTracksRef = useRef<RecentTrack[]>([]);
   
   const INITIAL_DISPLAY_COUNT = 10;
+
+  // Reset showAll when tracks change due to refresh
+  useEffect(() => {
+    const prevTracks = prevTracksRef.current;
+    const currentTracks = tracks;
+    
+    // Check if this looks like a refresh (tracks replaced rather than appended)
+    if (prevTracks.length > 0 && currentTracks.length > 0) {
+      // If the first track changed, it's likely a refresh
+      const firstTrackChanged = prevTracks[0]?.played_at !== currentTracks[0]?.played_at;
+      // Or if we have fewer tracks than before (but more than 0)
+      const tracksDecreased = currentTracks.length < prevTracks.length;
+      
+      if (firstTrackChanged || tracksDecreased) {
+        setShowAll(false);
+      }
+    }
+    
+    // Update the ref with current tracks
+    prevTracksRef.current = currentTracks;
+  }, [tracks]);
 
   const handleToggleExpansion = (index: number) => {
     setExpandedTrack(expandedTrack === index ? null : index);
