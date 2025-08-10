@@ -34,7 +34,7 @@ const SCOPES = [
 
 const AppContent: React.FC = () => {
   const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
-  const { currentlyPlaying, recentTracks, isRefreshing, isLoadingMore, hasMoreTracks, refresh, loadActivity, loadMoreTracks } =
+  const { currentlyPlaying, recentTracks, isRefreshing, isLoadingMore, hasMoreTracks, refresh, loadActivity, loadMoreTracks, resetToFreshState } =
     useSpotifyActivity();
   const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
 
@@ -50,8 +50,10 @@ const AppContent: React.FC = () => {
     setCurrentView('tags');
   };
 
-  const handleHome = () => {
+  const handleHome = async () => {
     setCurrentView('dashboard');
+    // Reset to fresh state to ensure we always get latest Spotify data
+    await resetToFreshState();
   };
 
   const handleSettings = () => {

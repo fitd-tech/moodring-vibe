@@ -329,4 +329,64 @@ describe('useSpotifyActivity', () => {
       expect(typeof result.current.loadMoreTracks).toBe('function');
     });
   });
+
+  describe('resetToFreshState', () => {
+    it('should return resetToFreshState function', () => {
+      const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+
+      expect(result.current.resetToFreshState).toBeDefined();
+      expect(typeof result.current.resetToFreshState).toBe('function');
+    });
+
+    it('should reset all state to initial values and reload activity', async () => {
+      const mockCurrentlyPlaying = {
+        name: 'Test Song',
+        artist: 'Test Artist',
+        album: 'Test Album',
+        album_image_url: 'https://example.com/image.jpg',
+        is_playing: true,
+      };
+
+      const mockRecentTracks = [
+        {
+          name: 'Recent Song',
+          artist: 'Recent Artist',
+          album: 'Recent Album',
+          album_image_url: 'https://example.com/recent.jpg',
+          played_at: '2025-08-08T01:00:00Z',
+        },
+      ];
+
+      mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
+      mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
+
+      const mockUser = {
+        id: 1,
+        spotify_id: 'test_user',
+        email: 'test@example.com',
+        display_name: 'Test User',
+        profile_image_url: null,
+        spotify_access_token: 'access-token',
+        spotify_refresh_token: 'refresh-token',
+        token_expires_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      mockUseAuth.user = mockUser as any;
+      mockUseAuth.authToken = 'test-token' as any;
+
+      const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+
+      await act(async () => {
+        await result.current.resetToFreshState();
+      });
+
+      expect(result.current.currentlyPlaying).toEqual(mockCurrentlyPlaying);
+      expect(result.current.recentTracks).toEqual(mockRecentTracks);
+      expect(result.current.hasMoreTracks).toBe(true);
+      expect(result.current.isLoadingMore).toBe(false);
+      expect(result.current.isRefreshing).toBe(false);
+    });
+  });
 });

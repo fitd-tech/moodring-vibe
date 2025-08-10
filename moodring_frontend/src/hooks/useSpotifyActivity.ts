@@ -95,6 +95,20 @@ export const useSpotifyActivity = () => {
     }
   };
 
+  const resetToFreshState = async () => {
+    // Reset all state to initial values
+    setCurrentlyPlaying(null);
+    setRecentTracks([]);
+    setIsRefreshing(false);
+    setIsLoadingMore(false);
+    setHasMoreTracks(true);
+    
+    // Load fresh data from Spotify API
+    if (user && authToken) {
+      await loadActivity(authToken, user);
+    }
+  };
+
   const loadMoreTracks = async () => {
     if (!user || !authToken || isLoadingMore || !hasMoreTracks) return;
 
@@ -193,5 +207,6 @@ export const useSpotifyActivity = () => {
     refresh,
     loadActivity,
     loadMoreTracks,
+    resetToFreshState,
   };
 };
