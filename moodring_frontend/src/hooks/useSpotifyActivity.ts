@@ -117,18 +117,7 @@ export const useSpotifyActivity = () => {
   };
 
   const loadMoreTracks = async () => {
-    console.log('DEBUG - loadMoreTracks called:', {
-      user: !!user,
-      authToken: !!authToken,
-      isLoadingMore,
-      hasMoreTracks,
-      currentTracksLength: recentTracks.length,
-    });
-
-    if (!user || !authToken || isLoadingMore || !hasMoreTracks) {
-      console.log('DEBUG - Early return from loadMoreTracks');
-      return;
-    }
+    if (!user || !authToken || isLoadingMore || !hasMoreTracks) return;
 
     setIsLoadingMore(true);
     try {
@@ -144,7 +133,10 @@ export const useSpotifyActivity = () => {
       }
 
       // Get the oldest track's played_at timestamp for pagination
-      const before = recentTracks.length > 0 ? recentTracks[recentTracks.length - 1].played_at : undefined;
+      // Convert ISO string to Unix timestamp in milliseconds for Spotify API
+      const before = recentTracks.length > 0 
+        ? new Date(recentTracks[recentTracks.length - 1].played_at).getTime().toString()
+        : undefined;
       
       const moreTracksData = await spotifyApi.getMoreRecentTracks(spotifyToken, before).catch(async error => {
         if (error.message === 'TOKEN_EXPIRED') {
@@ -159,39 +151,24 @@ export const useSpotifyActivity = () => {
         return [];
       });
 
-      console.log('DEBUG - Processing loaded tracks:', {
-        moreTracksDataLength: moreTracksData.length,
-        currentTracksLength: recentTracks.length,
-      });
-
       if (moreTracksData.length > 0) {
         // Filter out duplicates and add new tracks
         const existingPlayedAt = new Set(recentTracks.map(track => track.played_at));
         const newTracks = moreTracksData.filter(track => !existingPlayedAt.has(track.played_at));
         
-        console.log('DEBUG - Duplicate filtering:', {
-          existingPlayedAtSize: existingPlayedAt.size,
-          newTracksLength: newTracks.length,
-          allDuplicates: newTracks.length === 0,
-        });
-        
         if (newTracks.length > 0) {
-          console.log('DEBUG - Adding new tracks to state');
           setRecentTracks(prevTracks => [...prevTracks, ...newTracks]);
         } else {
           // If we got tracks but they were all duplicates, we might be at the end
           // This can happen if Spotify doesn't have more unique tracks to return
-          console.log('DEBUG - All tracks were duplicates, setting hasMoreTracks to false');
           setHasMoreTracks(false);
         }
         
         // If we got less than 10 tracks, we've reached the end
         if (moreTracksData.length < 10) {
-          console.log('DEBUG - Got less than 10 tracks, setting hasMoreTracks to false');
           setHasMoreTracks(false);
         }
       } else {
-        console.log('DEBUG - No tracks returned, setting hasMoreTracks to false');
         setHasMoreTracks(false);
       }
     } catch (error) {

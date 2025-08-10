@@ -27,24 +27,12 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
   };
 
   const handleSeeMore = async () => {
-    console.log('DEBUG - See More clicked:', {
-      tracksLength: tracks.length,
-      INITIAL_DISPLAY_COUNT,
-      showAll,
-      hasMoreTracks,
-      onLoadMoreExists: !!onLoadMore,
-    });
-
     if (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) {
       // If we have more than 10 tracks locally and not showing all, expand them
-      console.log('DEBUG - Expanding local tracks');
       setShowAll(true);
     } else if (onLoadMore && hasMoreTracks) {
       // Otherwise, load more tracks from API
-      console.log('DEBUG - Loading more tracks from API');
       await onLoadMore();
-    } else {
-      console.log('DEBUG - No action taken');
     }
   };
 
