@@ -58,7 +58,19 @@ export const useSpotifyActivity = () => {
       ]);
 
       setCurrentlyPlaying(currentlyPlayingData);
-      setRecentTracks(recentTracksData);
+      
+      // Only replace tracks if we don't have more than the initial load
+      // This preserves additional tracks loaded via "See More"
+      setRecentTracks(prevTracks => {
+        if (prevTracks.length <= 10) {
+          return recentTracksData;
+        } else {
+          // Update existing tracks and preserve additional ones
+          const newPlayedAtSet = new Set(recentTracksData.map(track => track.played_at));
+          const additionalTracks = prevTracks.slice(10).filter(track => !newPlayedAtSet.has(track.played_at));
+          return [...recentTracksData, ...additionalTracks];
+        }
+      });
     } catch (error) {
       if (__DEV__) {
         console.warn('Error loading Spotify activity:', error);
@@ -124,8 +136,8 @@ export const useSpotifyActivity = () => {
           setRecentTracks(prevTracks => [...prevTracks, ...newTracks]);
         }
         
-        // If we got less than 50 tracks, we've reached the end
-        if (moreTracksData.length < 50) {
+        // If we got less than 10 tracks, we've reached the end
+        if (moreTracksData.length < 10) {
           setHasMoreTracks(false);
         }
       } else {
