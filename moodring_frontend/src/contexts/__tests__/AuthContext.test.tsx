@@ -10,16 +10,7 @@ const mockAuthService = authService as jest.Mocked<typeof authService>;
 
 // Test component to access auth context
 const TestComponent: React.FC = () => {
-  const { 
-    user, 
-    authToken, 
-    isLoading, 
-    error, 
-    setUser, 
-    setAuthToken, 
-    setError, 
-    logout 
-  } = useAuth();
+  const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
 
   return (
     <>
@@ -27,21 +18,34 @@ const TestComponent: React.FC = () => {
       <Text testID="token">{authToken || 'No token'}</Text>
       <Text testID="loading">{isLoading ? 'Loading' : 'Not loading'}</Text>
       <Text testID="error">{error || 'No error'}</Text>
-      <Text testID="setUser" onPress={() => setUser({
-        id: 1,
-        spotify_id: 'test_user',
-        email: 'test@example.com',
-        display_name: 'Test User',
-        profile_image_url: null,
-        spotify_access_token: 'access-token',
-        spotify_refresh_token: 'refresh-token',
-        token_expires_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })}>Set User</Text>
-      <Text testID="setToken" onPress={() => setAuthToken('test-token')}>Set Token</Text>
-      <Text testID="setError" onPress={() => setError('Test error')}>Set Error</Text>
-      <Text testID="logout" onPress={() => logout()}>Logout</Text>
+      <Text
+        testID="setUser"
+        onPress={() =>
+          setUser({
+            id: 1,
+            spotify_id: 'test_user',
+            email: 'test@example.com',
+            display_name: 'Test User',
+            profile_image_url: null,
+            spotify_access_token: 'access-token',
+            spotify_refresh_token: 'refresh-token',
+            token_expires_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+        }
+      >
+        Set User
+      </Text>
+      <Text testID="setToken" onPress={() => setAuthToken('test-token')}>
+        Set Token
+      </Text>
+      <Text testID="setError" onPress={() => setError('Test error')}>
+        Set Error
+      </Text>
+      <Text testID="logout" onPress={() => logout()}>
+        Logout
+      </Text>
     </>
   );
 };
@@ -132,7 +136,7 @@ describe('AuthContext', () => {
     // Set user and token first
     const setUserText = getByTestId('setUser');
     const setTokenText = getByTestId('setToken');
-    
+
     setUserText.props.onPress();
     setTokenText.props.onPress();
 
@@ -148,7 +152,6 @@ describe('AuthContext', () => {
       expect(getByTestId('token').children[0]).toBe('No token');
     });
   });
-
 
   it('updates user state when setUser is called', async () => {
     mockAuthService.loadSavedAuthData.mockResolvedValue(null);

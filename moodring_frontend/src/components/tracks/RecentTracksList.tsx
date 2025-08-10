@@ -8,9 +8,7 @@ interface RecentTracksListProps {
   tracks: RecentTrack[];
 }
 
-export const RecentTracksList: React.FC<RecentTracksListProps> = ({
-  tracks,
-}) => {
+export const RecentTracksList: React.FC<RecentTracksListProps> = ({ tracks }) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
 
   const handleToggleExpansion = (index: number) => {

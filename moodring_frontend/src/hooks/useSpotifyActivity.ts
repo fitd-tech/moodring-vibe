@@ -14,7 +14,7 @@ export const useSpotifyActivity = () => {
   const loadActivity = async (token?: string, userOverride?: typeof user) => {
     const currentUser = userOverride || user;
     const currentToken = token || authToken;
-    
+
     if (!currentUser || !currentToken) return;
 
     try {
@@ -30,24 +30,29 @@ export const useSpotifyActivity = () => {
       }
 
       const [currentlyPlayingData, recentTracksData] = await Promise.all([
-        spotifyApi.getCurrentlyPlaying(spotifyToken).catch(async (error) => {
+        spotifyApi.getCurrentlyPlaying(spotifyToken).catch(async error => {
           if (error.message === 'TOKEN_EXPIRED') {
             const refreshResult = await refreshUserToken(activeUser.id);
             if (refreshResult) {
-              return spotifyApi.getCurrentlyPlaying(refreshResult.user.spotify_access_token || refreshResult.token);
+              return spotifyApi.getCurrentlyPlaying(
+                refreshResult.user.spotify_access_token || refreshResult.token
+              );
             }
           }
           return null;
         }),
-        spotifyApi.getRecentTracks(spotifyToken, 10).catch(async (error) => {
+        spotifyApi.getRecentTracks(spotifyToken, 10).catch(async error => {
           if (error.message === 'TOKEN_EXPIRED') {
             const refreshResult = await refreshUserToken(activeUser.id);
             if (refreshResult) {
-              return spotifyApi.getRecentTracks(refreshResult.user.spotify_access_token || refreshResult.token, 10);
+              return spotifyApi.getRecentTracks(
+                refreshResult.user.spotify_access_token || refreshResult.token,
+                10
+              );
             }
           }
           return [];
-        })
+        }),
       ]);
 
       setCurrentlyPlaying(currentlyPlayingData);
@@ -63,7 +68,7 @@ export const useSpotifyActivity = () => {
 
   const refresh = async () => {
     if (!user || !authToken) return;
-    
+
     setIsRefreshing(true);
     try {
       await loadActivity(authToken, user);
@@ -87,7 +92,7 @@ export const useSpotifyActivity = () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      
+
       intervalRef.current = setInterval(async () => {
         try {
           await loadActivity(authToken, user);
@@ -97,7 +102,7 @@ export const useSpotifyActivity = () => {
           }
         }
       }, 30000);
-      
+
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);

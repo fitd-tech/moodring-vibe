@@ -8,6 +8,23 @@ import { taggingService } from '../../../services/taggingService';
 jest.mock('../../../services/taggingService');
 const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
 
+// Mock theme
+jest.mock('../../../styles/theme', () => ({
+  theme: {
+    colors: {
+      ui: { tag: '#ff6b9d' },
+      text: { primary: '#ffffff' },
+      background: { primary: '#1a0a1a' }
+    },
+    spacing: { sm: 8, lg: 16 },
+    borderRadius: { lg: 12 },
+    typography: {
+      fontSize: { md: 16 },
+      fontWeight: { semibold: '600' }
+    }
+  }
+}));
+
 // Mock the AuthContext hook
 jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -29,7 +46,6 @@ jest.mock('../../../contexts/AuthContext', () => ({
     refreshToken: jest.fn(),
   }),
 }));
-
 
 describe('TaggingInterface', () => {
   const mockTags: Tag[] = [
@@ -68,11 +84,7 @@ describe('TaggingInterface', () => {
 
   it('renders tags correctly', () => {
     const { getByText } = render(
-      <TaggingInterface
-        tags={mockTags}
-        songId="test_song"
-        onTagsChanged={mockOnTagsChanged}
-      />
+      <TaggingInterface tags={mockTags} songId="test_song" onTagsChanged={mockOnTagsChanged} />
     );
 
     expect(getByText('Tags')).toBeTruthy();
@@ -84,16 +96,12 @@ describe('TaggingInterface', () => {
     mockTaggingService.removeTagFromSong.mockResolvedValue(undefined);
 
     const { getAllByText } = render(
-      <TaggingInterface
-        tags={mockTags}
-        songId="test_song"
-        onTagsChanged={mockOnTagsChanged}
-      />
+      <TaggingInterface tags={mockTags} songId="test_song" onTagsChanged={mockOnTagsChanged} />
     );
 
     const removeButtons = getAllByText('×');
     fireEvent.press(removeButtons[0]);
-    
+
     await waitFor(() => {
       expect(mockTaggingService.removeTagFromSong).toHaveBeenCalledWith('test_song', 1, 1);
       expect(mockOnTagsChanged).toHaveBeenCalled();
@@ -102,17 +110,13 @@ describe('TaggingInterface', () => {
 
   it('creates and adds new tag when add button is pressed', async () => {
     const { getByPlaceholderText, getByText } = render(
-      <TaggingInterface
-        tags={[]}
-        songId="test_song"
-        onTagsChanged={mockOnTagsChanged}
-      />
+      <TaggingInterface tags={[]} songId="test_song" onTagsChanged={mockOnTagsChanged} />
     );
 
     const textInput = getByPlaceholderText('Add tag...');
     fireEvent.changeText(textInput, 'new tag');
     fireEvent.press(getByText('+ Add'));
-    
+
     await waitFor(() => {
       expect(mockTaggingService.createTag).toHaveBeenCalledWith(1, {
         name: 'new tag',
@@ -125,11 +129,7 @@ describe('TaggingInterface', () => {
 
   it('renders with empty tags array', () => {
     const { getByText, queryByText } = render(
-      <TaggingInterface
-        tags={[]}
-        songId="test_song"
-        onTagsChanged={mockOnTagsChanged}
-      />
+      <TaggingInterface tags={[]} songId="test_song" onTagsChanged={mockOnTagsChanged} />
     );
 
     expect(getByText('Tags')).toBeTruthy();
@@ -141,13 +141,7 @@ describe('TaggingInterface', () => {
     const availableTags = [mockTags[0]];
     mockTaggingService.getUserTags.mockResolvedValue(availableTags);
 
-    render(
-      <TaggingInterface
-        tags={[]}
-        songId="test_song"
-        onTagsChanged={mockOnTagsChanged}
-      />
-    );
+    render(<TaggingInterface tags={[]} songId="test_song" onTagsChanged={mockOnTagsChanged} />);
 
     await waitFor(() => {
       expect(mockTaggingService.getUserTags).toHaveBeenCalledWith(1);

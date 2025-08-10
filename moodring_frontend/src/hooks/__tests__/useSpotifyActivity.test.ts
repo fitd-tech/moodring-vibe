@@ -26,9 +26,8 @@ jest.mock('../../contexts/AuthContext', () => ({
 }));
 
 describe('useSpotifyActivity', () => {
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    React.createElement(AuthProvider, { children }, children)
-  );
+  const wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(AuthProvider, { children }, children);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -37,7 +36,7 @@ describe('useSpotifyActivity', () => {
     mockAuthService.isTokenExpired.mockReturnValue(false);
     jest.spyOn(global, 'setInterval');
     jest.spyOn(global, 'clearInterval');
-    
+
     // Reset useAuth mock
     mockUseAuth.user = null;
     mockUseAuth.authToken = null;
@@ -69,7 +68,7 @@ describe('useSpotifyActivity', () => {
     const mockRecentTracks = [
       {
         name: 'Recent Song',
-        artist: 'Recent Artist', 
+        artist: 'Recent Artist',
         album: 'Recent Album',
         album_image_url: 'https://example.com/recent.jpg',
         played_at: '2025-08-08T01:00:00Z',
@@ -157,7 +156,7 @@ describe('useSpotifyActivity', () => {
     const mockCurrentlyPlaying = {
       name: 'Test Song',
       artist: 'Test Artist',
-      album: 'Test Album', 
+      album: 'Test Album',
       album_image_url: 'https://example.com/image.jpg',
       is_playing: true,
     };

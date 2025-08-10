@@ -140,7 +140,7 @@ describe('App', () => {
       };
 
       mockSecureStore.getItemAsync.mockResolvedValue(JSON.stringify(mockAuthWithoutImage));
-      
+
       const { getByText, getByTestId } = render(<App />);
 
       await waitFor(() => {
@@ -155,10 +155,10 @@ describe('App', () => {
       await waitFor(() => {
         // Profile menu button should be rendered
         expect(getByTestId('profile-menu-button')).toBeTruthy();
-        
+
         // Open the menu to access logout
         fireEvent.press(getByTestId('profile-menu-button'));
-        
+
         // Menu should show logout option
         expect(getByText('Log out')).toBeTruthy();
       });

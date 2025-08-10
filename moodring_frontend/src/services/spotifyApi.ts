@@ -1,7 +1,14 @@
-import { SpotifyCurrentlyPlayingResponse, SpotifyRecentTracksResponse, CurrentlyPlaying, RecentTrack } from '../types';
+import {
+  SpotifyCurrentlyPlayingResponse,
+  SpotifyRecentTracksResponse,
+  CurrentlyPlaying,
+  RecentTrack,
+} from '../types';
 
 export class SpotifyApiService {
-  private getImageUrl(images: Array<{ url: string; height: number; width: number }>): string | undefined {
+  private getImageUrl(
+    images: Array<{ url: string; height: number; width: number }>
+  ): string | undefined {
     return images && images.length > 0 ? images[0].url : undefined;
   }
 
@@ -9,19 +16,19 @@ export class SpotifyApiService {
     try {
       const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 200) {
-        const data = await response.json() as SpotifyCurrentlyPlayingResponse;
+        const data = (await response.json()) as SpotifyCurrentlyPlayingResponse;
         if (data && data.item && data.is_playing) {
           return {
             name: data.item.name,
             artist: data.item.artists[0]?.name || 'Unknown Artist',
             album: data.item.album.name,
             album_image_url: this.getImageUrl(data.item.album.images),
-            is_playing: data.is_playing
+            is_playing: data.is_playing,
           };
         }
       } else if (response.status === 204) {
@@ -29,7 +36,7 @@ export class SpotifyApiService {
       } else if (response.status === 401) {
         throw new Error('TOKEN_EXPIRED');
       }
-      
+
       return null;
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
@@ -44,15 +51,18 @@ export class SpotifyApiService {
 
   async getRecentTracks(token: string, limit: number = 10): Promise<RecentTrack[]> {
     try {
-      const response = await fetch(`https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
-        const data = await response.json() as SpotifyRecentTracksResponse;
-        return data.items.map((item) => ({
+        const data = (await response.json()) as SpotifyRecentTracksResponse;
+        return data.items.map(item => ({
           name: item.track.name,
           artist: item.track.artists[0]?.name || 'Unknown Artist',
           album: item.track.album.name,
@@ -62,7 +72,7 @@ export class SpotifyApiService {
       } else if (response.status === 401) {
         throw new Error('TOKEN_EXPIRED');
       }
-      
+
       return [];
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {

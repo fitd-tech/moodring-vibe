@@ -28,7 +28,7 @@ describe('ProfileMenu', () => {
 
   it('renders profile button with user image', () => {
     render(<ProfileMenu {...defaultProps} />);
-    
+
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
@@ -37,27 +37,27 @@ describe('ProfileMenu', () => {
       ...mockUser,
       profile_image_url: null,
     };
-    
+
     render(<ProfileMenu {...defaultProps} user={userWithoutImage} />);
-    
+
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
     expect(screen.getByText('T')).toBeTruthy(); // First letter of display name
   });
 
   it('opens menu when profile button is pressed', () => {
     render(<ProfileMenu {...defaultProps} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
-    
+
     expect(screen.getByText('Test User')).toBeTruthy();
     expect(screen.getByText('test@example.com')).toBeTruthy();
   });
 
   it('renders all menu options', () => {
     render(<ProfileMenu {...defaultProps} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
-    
+
     expect(screen.getByText('Create playlist')).toBeTruthy();
     expect(screen.getByText('Browse tags')).toBeTruthy();
     expect(screen.getByText('Settings')).toBeTruthy();
@@ -67,40 +67,40 @@ describe('ProfileMenu', () => {
   it('calls onCreatePlaylist when create playlist option is pressed', () => {
     const onCreatePlaylist = jest.fn();
     render(<ProfileMenu {...defaultProps} onCreatePlaylist={onCreatePlaylist} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
     fireEvent.press(screen.getByTestId('menu-option-create-playlist'));
-    
+
     expect(onCreatePlaylist).toHaveBeenCalledTimes(1);
   });
 
   it('calls onBrowseTags when browse tags option is pressed', () => {
     const onBrowseTags = jest.fn();
     render(<ProfileMenu {...defaultProps} onBrowseTags={onBrowseTags} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
     fireEvent.press(screen.getByTestId('menu-option-browse-tags'));
-    
+
     expect(onBrowseTags).toHaveBeenCalledTimes(1);
   });
 
   it('calls onSettings when settings option is pressed', () => {
     const onSettings = jest.fn();
     render(<ProfileMenu {...defaultProps} onSettings={onSettings} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
     fireEvent.press(screen.getByTestId('menu-option-settings'));
-    
+
     expect(onSettings).toHaveBeenCalledTimes(1);
   });
 
   it('calls onLogout when log out option is pressed', () => {
     const onLogout = jest.fn();
     render(<ProfileMenu {...defaultProps} onLogout={onLogout} />);
-    
+
     fireEvent.press(screen.getByTestId('profile-menu-button'));
     fireEvent.press(screen.getByTestId('menu-option-logout'));
-    
+
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 });

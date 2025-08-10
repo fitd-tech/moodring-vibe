@@ -26,26 +26,12 @@ export const Button: React.FC<ButtonProps> = ({
       onPress();
     }
   };
-  const buttonStyle = [
-    styles.base,
-    styles[variant],
-    disabled && styles.disabled,
-    style,
-  ];
+  const buttonStyle = [styles.base, styles[variant], disabled && styles.disabled, style];
 
-  const buttonTextStyle = [
-    styles.baseText,
-    styles[`${variant}Text`],
-    textStyle,
-  ];
+  const buttonTextStyle = [styles.baseText, styles[`${variant}Text`], textStyle];
 
   return (
-    <TouchableOpacity
-      style={buttonStyle}
-      onPress={handlePress}
-      disabled={disabled}
-      testID={testID}
-    >
+    <TouchableOpacity style={buttonStyle} onPress={handlePress} disabled={disabled} testID={testID}>
       <Text style={buttonTextStyle}>{title}</Text>
     </TouchableOpacity>
   );

@@ -48,7 +48,7 @@ describe('UserProfile', () => {
 
     expect(screen.getByText('Test User')).toBeTruthy();
     expect(screen.getByText('test@example.com')).toBeTruthy();
-    
+
     const image = UNSAFE_getByType(require('react-native').Image);
     expect(image.props.source.uri).toBe('https://example.com/avatar.jpg');
   });
@@ -58,7 +58,7 @@ describe('UserProfile', () => {
 
     expect(screen.getByText('No Image User')).toBeTruthy();
     expect(screen.getByText('noimage@example.com')).toBeTruthy();
-    
+
     // Should show first letter of display name as avatar placeholder
     expect(screen.getByText('N')).toBeTruthy();
   });
@@ -68,7 +68,7 @@ describe('UserProfile', () => {
 
     expect(screen.getByText('spotify_user_123')).toBeTruthy();
     expect(screen.getByText('nodisplay@example.com')).toBeTruthy();
-    
+
     // Should show first letter of spotify_id as avatar placeholder
     expect(screen.getByText('S')).toBeTruthy();
   });
@@ -89,7 +89,7 @@ describe('UserProfile', () => {
 
   it('renders profile image when profile_image_url is provided', () => {
     const { UNSAFE_getByType } = render(<UserProfile user={mockUserWithImage} />);
-    
+
     const image = UNSAFE_getByType(require('react-native').Image);
     expect(image).toBeTruthy();
     expect(image.props.source.uri).toBe('https://example.com/avatar.jpg');
@@ -97,10 +97,10 @@ describe('UserProfile', () => {
 
   it('renders avatar placeholder when profile_image_url is null', () => {
     render(<UserProfile user={mockUserWithoutImage} />);
-    
+
     // Should not render Image component
     expect(() => screen.UNSAFE_getByType(require('react-native').Image)).toThrow();
-    
+
     // Should render avatar placeholder
     expect(screen.getByText('N')).toBeTruthy();
   });

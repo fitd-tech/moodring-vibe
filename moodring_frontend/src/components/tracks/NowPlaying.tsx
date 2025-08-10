@@ -10,16 +10,21 @@ interface NowPlayingProps {
   currentlyPlaying: CurrentlyPlaying | null;
 }
 
-export const NowPlaying: React.FC<NowPlayingProps> = ({
-  currentlyPlaying,
-}) => {
+export const NowPlaying: React.FC<NowPlayingProps> = ({ currentlyPlaying }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const animatedValues = useRef(useAnimation().createAnimatedValues()).current;
   const { animateExpansion } = useAnimation();
 
   const mockTags: Tag[] = [
     { id: 1, name: 'synthwave', user_id: 1, color: undefined, created_at: '', updated_at: '' },
-    { id: 2, name: 'currently-playing', user_id: 1, color: undefined, created_at: '', updated_at: '' },
+    {
+      id: 2,
+      name: 'currently-playing',
+      user_id: 1,
+      color: undefined,
+      created_at: '',
+      updated_at: '',
+    },
   ];
 
   const toggleExpansion = () => {
@@ -46,10 +51,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
         <TouchableOpacity style={styles.header} onPress={toggleExpansion}>
           <View style={styles.albumArt}>
             {currentlyPlaying.album_image_url ? (
-              <Image 
-                source={{ uri: currentlyPlaying.album_image_url }}
-                style={styles.albumImage}
-              />
+              <Image source={{ uri: currentlyPlaying.album_image_url }} style={styles.albumImage} />
             ) : (
               <View style={styles.albumPlaceholder} />
             )}
@@ -60,18 +62,22 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
             <Text style={styles.trackAlbum}>{currentlyPlaying.album}</Text>
           </View>
           <View style={styles.actions}>
-            <View style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]} />
+            <View
+              style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]}
+            />
             <TouchableOpacity style={styles.menuButton}>
-              <Animated.Text 
+              <Animated.Text
                 style={[
                   styles.menuIcon,
                   {
-                    transform: [{
-                      rotate: animatedValues.rotation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '180deg'],
-                      }),
-                    }],
+                    transform: [
+                      {
+                        rotate: animatedValues.rotation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '180deg'],
+                        }),
+                      },
+                    ],
                   },
                 ]}
               >
@@ -80,9 +86,9 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-        
+
         {isExpanded && (
-          <Animated.View 
+          <Animated.View
             style={[
               styles.expandedContent,
               {
@@ -96,7 +102,10 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
           >
             <TaggingInterface
               tags={mockTags}
-              songId={currentlyPlaying?.song_id || `${currentlyPlaying?.name || 'unknown'}__${currentlyPlaying?.artist || 'unknown'}`}
+              songId={
+                currentlyPlaying?.song_id ||
+                `${currentlyPlaying?.name || 'unknown'}__${currentlyPlaying?.artist || 'unknown'}`
+              }
               onTagsChanged={() => {}}
             />
             <TouchableOpacity style={styles.collapseButton} onPress={toggleExpansion}>

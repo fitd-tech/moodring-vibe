@@ -8,6 +8,29 @@ import { taggingService } from '../../../services/taggingService';
 jest.mock('../../../services/taggingService');
 const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
 
+// Mock TaggingInterface component
+jest.mock('../TaggingInterface', () => ({
+  TaggingInterface: ({ tags, onTagsChanged }: { 
+    tags: Array<{ id: number; name: string }>; 
+    onTagsChanged: (tags: Array<{ id: number; name: string }>) => void;
+  }) => {
+    const React = require('react');
+    const { View, Text, TouchableOpacity } = require('react-native');
+    return React.createElement(View, { testID: 'tagging-interface' },
+      React.createElement(Text, null, 'Tags'),
+      React.createElement(View, null, 
+        tags?.map((tag: { id: number; name: string }) => 
+          React.createElement(Text, { key: tag.id }, tag.name)
+        )
+      ),
+      React.createElement(TouchableOpacity, { 
+        testID: 'add-tag-button',
+        onPress: () => onTagsChanged && onTagsChanged([...tags, { id: 99, name: 'new-tag' }])
+      }, React.createElement(Text, null, '+ Add'))
+    );
+  }
+}));
+
 // Mock the AuthContext hook
 jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -35,13 +58,13 @@ jest.mock('../../../hooks/useAnimation', () => ({
   useAnimation: () => ({
     createAnimatedValues: () => ({
       scale: { setValue: jest.fn() },
-      rotation: { 
+      rotation: {
         setValue: jest.fn(),
-        interpolate: jest.fn(() => ({ interpolate: jest.fn() }))
+        interpolate: jest.fn(() => ({ interpolate: jest.fn() })),
       },
-      height: { 
+      height: {
         setValue: jest.fn(),
-        interpolate: jest.fn(() => ({ interpolate: jest.fn() }))
+        interpolate: jest.fn(() => ({ interpolate: jest.fn() })),
       },
       opacity: { setValue: jest.fn() },
     }),
@@ -51,28 +74,49 @@ jest.mock('../../../hooks/useAnimation', () => ({
 
 // Mock TaggingInterface with correct props
 jest.mock('../TaggingInterface', () => ({
-  TaggingInterface: ({ tags, onTagsChanged }: { tags: Tag[]; songId: string; onTagsChanged: () => void }) => {
+  TaggingInterface: ({
+    tags,
+    onTagsChanged,
+  }: {
+    tags: Tag[];
+    songId: string;
+    onTagsChanged: () => void;
+  }) => {
     const React = require('react');
     const { View, Text, TouchableOpacity } = require('react-native');
-    return React.createElement(View, { testID: 'tagging-interface' },
+    return React.createElement(
+      View,
+      { testID: 'tagging-interface' },
       React.createElement(Text, null, 'Tags'),
-      React.createElement(View, null,
-        tags.map((tag: Tag) => 
-          React.createElement(View, { key: tag.id },
+      React.createElement(
+        View,
+        null,
+        tags.map((tag: Tag) =>
+          React.createElement(
+            View,
+            { key: tag.id },
             React.createElement(Text, null, tag.name),
-            React.createElement(TouchableOpacity, {
-              testID: `remove-tag-${tag.id}`,
-              onPress: onTagsChanged
-            }, React.createElement(Text, null, '×'))
+            React.createElement(
+              TouchableOpacity,
+              {
+                testID: `remove-tag-${tag.id}`,
+                onPress: onTagsChanged,
+              },
+              React.createElement(Text, null, '×')
+            )
           )
         )
       ),
-      React.createElement(TouchableOpacity, {
-        testID: 'add-tag-button',
-        onPress: onTagsChanged
-      }, React.createElement(Text, null, '+ Add'))
+      React.createElement(
+        TouchableOpacity,
+        {
+          testID: 'add-tag-button',
+          onPress: onTagsChanged,
+        },
+        React.createElement(Text, null, '+ Add')
+      )
     );
-  }
+  },
 }));
 
 const mockTrack: RecentTrack = {
@@ -134,14 +178,14 @@ describe('TrackCard', () => {
 
   it('renders album image when provided', () => {
     const { UNSAFE_getByType } = render(<TrackCard {...defaultProps} />);
-    
+
     const images = UNSAFE_getByType(require('react-native').Image);
     expect(images.props.source.uri).toBe('https://example.com/album.jpg');
   });
 
   it('renders album placeholder when no image provided', () => {
     render(<TrackCard {...defaultProps} track={mockTrackWithoutImage} />);
-    
+
     // The placeholder is a View with specific styling
     expect(screen.getByText('Test Song No Image')).toBeTruthy();
   });
@@ -272,12 +316,12 @@ describe('TrackCard', () => {
     };
 
     const { rerender } = render(<TrackCard {...defaultProps} track={morningTrack} />);
-    
+
     // Should format morning time
     expect(screen.getByText(/\d{1,2}:\d{2}/)).toBeTruthy();
 
     rerender(<TrackCard {...defaultProps} track={eveningTrack} />);
-    
+
     // Should format evening time
     expect(screen.getByText(/\d{1,2}:\d{2}/)).toBeTruthy();
   });

@@ -13,14 +13,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
     <GradientCard colors={theme.colors.gradients.profile}>
       <View style={styles.profileHeader}>
         {user.profile_image_url ? (
-          <Image 
-            source={{ uri: user.profile_image_url }}
-            style={styles.profileImage}
-          />
+          <Image source={{ uri: user.profile_image_url }} style={styles.profileImage} />
         ) : (
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarPlaceholder}>
-              {user.display_name?.charAt(0).toUpperCase() || user.spotify_id.charAt(0).toUpperCase()}
+              {user.display_name?.charAt(0).toUpperCase() ||
+                user.spotify_id.charAt(0).toUpperCase()}
             </Text>
           </View>
         )}

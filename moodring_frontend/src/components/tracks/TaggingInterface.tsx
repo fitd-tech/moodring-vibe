@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+} from 'react-native';
 import { Tag, NewTag } from '../../types';
 import { theme } from '../../styles/theme';
 import { taggingService } from '../../services/taggingService';
@@ -30,7 +39,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
 
   const loadAvailableTags = async () => {
     if (!user) return;
-    
+
     try {
       const userTags = await taggingService.getUserTags(user.id);
       setAvailableTags(userTags);
@@ -41,7 +50,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
 
   const handleRemoveTag = async (tagId: number) => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       await taggingService.removeTagFromSong(songId, user.id, tagId);
@@ -56,7 +65,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
 
   const handleCreateAndAddTag = async () => {
     if (!user || !newTagName.trim()) return;
-    
+
     setIsLoading(true);
     try {
       // Create new tag
@@ -64,12 +73,12 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
         name: newTagName.trim(),
         user_id: user.id,
       };
-      
+
       const newTag = await taggingService.createTag(user.id, tagData);
-      
+
       // Add tag to song
       await taggingService.addTagToSong(songId, user.id, newTag.id);
-      
+
       setNewTagName('');
       setShowAvailableTags(false);
       await loadAvailableTags(); // Refresh available tags
@@ -84,14 +93,14 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
 
   const handleAddExistingTag = async (tag: Tag) => {
     if (!user) return;
-    
+
     // Check if tag is already added to this song
     const isAlreadyAdded = tags.some(t => t.id === tag.id);
     if (isAlreadyAdded) {
       Alert.alert('Tag Already Added', 'This tag is already applied to this song.');
       return;
     }
-    
+
     setIsLoading(true);
     try {
       await taggingService.addTagToSong(songId, user.id, tag.id);
@@ -112,13 +121,13 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Tags</Text>
-      
+
       {/* Current tags */}
       <View style={styles.tagsContainer}>
-        {tags.map((tag) => (
+        {tags.map(tag => (
           <View key={tag.id} style={styles.tag}>
             <Text style={styles.tagText}>{tag.name}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.tagRemove}
               onPress={() => handleRemoveTag(tag.id)}
               disabled={isLoading}
@@ -128,7 +137,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
           </View>
         ))}
       </View>
-      
+
       {/* Add new tag */}
       <View style={styles.addTagContainer}>
         <TextInput
@@ -140,8 +149,8 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
           onSubmitEditing={handleCreateAndAddTag}
           editable={!isLoading}
         />
-        <TouchableOpacity 
-          style={[styles.addButton, isLoading && styles.addButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.addButton, isLoading && styles.addButtonDisabled]}
           onPress={handleCreateAndAddTag}
           disabled={isLoading || !newTagName.trim()}
         >
@@ -152,11 +161,11 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
           )}
         </TouchableOpacity>
       </View>
-      
+
       {/* Existing tags suggestions */}
       {getUnusedTags().length > 0 && (
         <>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.suggestionToggle}
             onPress={() => setShowAvailableTags(!showAvailableTags)}
           >
@@ -164,10 +173,14 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
               {showAvailableTags ? 'Hide' : 'Show'} Available Tags ({getUnusedTags().length})
             </Text>
           </TouchableOpacity>
-          
+
           {showAvailableTags && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestionsContainer}>
-              {getUnusedTags().map((tag) => (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.suggestionsContainer}
+            >
+              {getUnusedTags().map(tag => (
                 <TouchableOpacity
                   key={tag.id}
                   style={styles.suggestionTag}

@@ -35,7 +35,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.wrapper}>
-      <ScrollView 
+      <ScrollView
         style={[styles.container, { paddingTop: insets.top + theme.spacing.md }]}
         testID="dashboard-scroll-view"
         refreshControl={
@@ -43,7 +43,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             refreshing={isRefreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.accent.purple}
-            colors={[theme.colors.accent.purple, theme.colors.accent.pink, theme.colors.accent.cyan]}
+            colors={[
+              theme.colors.accent.purple,
+              theme.colors.accent.pink,
+              theme.colors.accent.cyan,
+            ]}
             progressBackgroundColor={theme.colors.background.card}
             progressViewOffset={insets.top}
           />
@@ -60,21 +64,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </View>
           )}
 
-          <NowPlaying 
-            currentlyPlaying={currentlyPlaying}
-          />
+          <NowPlaying currentlyPlaying={currentlyPlaying} />
 
-          <RecentTracksList 
-            tracks={recentTracks}
-          />
+          <RecentTracksList tracks={recentTracks} />
         </View>
       </ScrollView>
 
       {/* Fixed position ProfileMenu outside ScrollView */}
-      <View style={[styles.fixedProfileMenuContainer, { 
-        top: insets.top + theme.spacing.sm,
-        right: theme.spacing.xl 
-      }]}>
+      <View
+        style={[
+          styles.fixedProfileMenuContainer,
+          {
+            top: insets.top + theme.spacing.sm,
+            right: theme.spacing.xl,
+          },
+        ]}
+      >
         <ProfileMenu
           user={user}
           onCreatePlaylist={onCreatePlaylist}

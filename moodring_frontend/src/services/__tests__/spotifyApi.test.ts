@@ -49,7 +49,7 @@ describe('spotifyApi', () => {
         'https://api.spotify.com/v1/me/player/currently-playing',
         {
           headers: {
-            'Authorization': `Bearer ${mockToken}`,
+            Authorization: `Bearer ${mockToken}`,
           },
         }
       );
@@ -230,7 +230,7 @@ describe('spotifyApi', () => {
         'https://api.spotify.com/v1/me/player/recently-played?limit=10',
         {
           headers: {
-            'Authorization': `Bearer ${mockToken}`,
+            Authorization: `Bearer ${mockToken}`,
           },
         }
       );

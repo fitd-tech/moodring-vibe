@@ -11,11 +11,7 @@ interface LoginScreenProps {
   isLoginDisabled: boolean;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({
-  error,
-  onLogin,
-  isLoginDisabled,
-}) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ error, onLogin, isLoginDisabled }) => {
   return (
     <View style={styles.container}>
       <View style={styles.loginContainer}>

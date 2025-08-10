@@ -63,8 +63,8 @@ jest.mock('../../tracks/TagCard', () => ({
     tag: _tag,
     onToggleExpansion: _onToggleExpansion,
   }: {
-    tag: any;
-    onToggleExpansion: any;
+    tag: { id: number; name: string };
+    onToggleExpansion: () => void;
   }) => jest.requireActual('react-native').View(),
 }));
 

@@ -67,7 +67,7 @@ describe('AuthService', () => {
       });
 
       const result = await authService.authenticateWithBackend('test_code', 'test_verifier');
-      
+
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:8000/auth/spotify',
@@ -108,7 +108,7 @@ describe('AuthService', () => {
       });
 
       const result = await authService.refreshSpotifyToken(1);
-      
+
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:8000/auth/refresh/1',
@@ -126,9 +126,7 @@ describe('AuthService', () => {
         text: jest.fn().mockResolvedValue('Unauthorized'),
       });
 
-      await expect(
-        authService.refreshSpotifyToken(1)
-      ).rejects.toThrow('Failed to refresh token');
+      await expect(authService.refreshSpotifyToken(1)).rejects.toThrow('Failed to refresh token');
     });
   });
 });

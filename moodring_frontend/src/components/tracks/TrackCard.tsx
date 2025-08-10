@@ -1,5 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
 import { RecentTrack, Tag } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
 import { TaggingInterface } from './TaggingInterface';
@@ -42,7 +50,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
   const loadSongTags = async () => {
     if (!user || !songId) return;
-    
+
     setIsLoadingTags(true);
     try {
       const songTags = await taggingService.getSongTags(songId, user.id);
@@ -60,7 +68,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
   }, [isExpanded]);
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -73,16 +81,10 @@ export const TrackCard: React.FC<TrackCardProps> = ({
       ]}
     >
       <GradientCard colors={theme.colors.gradients.track}>
-        <TouchableOpacity 
-          style={styles.header}
-          onPress={() => onToggleExpansion(_index)}
-        >
+        <TouchableOpacity style={styles.header} onPress={() => onToggleExpansion(_index)}>
           <View style={styles.albumArt}>
             {track.album_image_url ? (
-              <Image 
-                source={{ uri: track.album_image_url }}
-                style={styles.albumImage}
-              />
+              <Image source={{ uri: track.album_image_url }} style={styles.albumImage} />
             ) : (
               <View style={styles.albumPlaceholder} />
             )}
@@ -93,14 +95,12 @@ export const TrackCard: React.FC<TrackCardProps> = ({
             {track.album && <Text style={styles.trackAlbum}>Album: {track.album}</Text>}
           </View>
           <View style={styles.actions}>
-            <Text style={styles.trackTime}>
-              {formatTime(track.played_at)}
-            </Text>
+            <Text style={styles.trackTime}>{formatTime(track.played_at)}</Text>
           </View>
         </TouchableOpacity>
-        
+
         {isExpanded && (
-          <Animated.View 
+          <Animated.View
             style={[
               styles.expandedContent,
               {
@@ -118,11 +118,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
                 <Text style={styles.loadingText}>Loading tags...</Text>
               </View>
             ) : (
-              <TaggingInterface
-                tags={tags}
-                songId={songId}
-                onTagsChanged={loadSongTags}
-              />
+              <TaggingInterface tags={tags} songId={songId} onTagsChanged={loadSongTags} />
             )}
           </Animated.View>
         )}

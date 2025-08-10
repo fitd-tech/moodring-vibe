@@ -31,7 +31,7 @@ const mockRecentTracks: RecentTrack[] = [
     album: 'Recent Album 1',
     album_image_url: 'https://example.com/recent1.jpg',
     played_at: new Date().toISOString(),
-  }
+  },
 ];
 
 const defaultProps = {
@@ -53,14 +53,14 @@ describe('Dashboard', () => {
 
   it('renders successfully with all props', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
   it('configures RefreshControl with correct props', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     // The RefreshControl is part of ScrollView, so we test its configuration indirectly
     // by ensuring the ScrollView is rendered with RefreshControl
     const scrollView = screen.getByTestId('dashboard-scroll-view');
@@ -69,23 +69,23 @@ describe('Dashboard', () => {
 
   it('shows refreshing overlay when isRefreshing is true', () => {
     render(<Dashboard {...defaultProps} isRefreshing={true} />);
-    
+
     expect(screen.getByText('Refreshing...')).toBeTruthy();
     expect(screen.getByTestId('activity-indicator')).toBeTruthy();
   });
 
   it('hides refreshing overlay when isRefreshing is false', () => {
     render(<Dashboard {...defaultProps} isRefreshing={false} />);
-    
+
     expect(screen.queryByText('Refreshing...')).toBeNull();
   });
 
   it('calls onRefresh when RefreshControl is triggered', () => {
     const mockOnRefresh = jest.fn();
     render(<Dashboard {...defaultProps} onRefresh={mockOnRefresh} />);
-    
+
     const scrollView = screen.getByTestId('dashboard-scroll-view');
-    
+
     // Simulate refresh gesture
     fireEvent(scrollView, 'refresh');
     expect(mockOnRefresh).toHaveBeenCalledTimes(1);
@@ -93,14 +93,14 @@ describe('Dashboard', () => {
 
   it('renders ProfileMenu component', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     // ProfileMenu should be rendered with profile button
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
   it('does not render old UserProfile component in main section', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     // UserProfile is no longer rendered in the main dashboard area
     // User info is now in the ProfileMenu
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
@@ -108,28 +108,28 @@ describe('Dashboard', () => {
 
   it('renders NowPlaying component when currentlyPlaying is provided', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     // Just verify the NowPlaying section is rendered with the heading
     expect(screen.getByText('NOW PLAYING')).toBeTruthy();
   });
 
   it('renders RecentTracksList with recent tracks', () => {
     render(<Dashboard {...defaultProps} />);
-    
+
     // Just verify the Recent Tracks section is rendered with the heading
     expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
   });
 
   it('handles null currentlyPlaying', () => {
     render(<Dashboard {...defaultProps} currentlyPlaying={null} />);
-    
+
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('Test Song')).toBeNull();
   });
 
   it('handles empty recent tracks array', () => {
     render(<Dashboard {...defaultProps} recentTracks={[]} />);
-    
+
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('Recent Song 1')).toBeNull();
   });
@@ -143,17 +143,17 @@ describe('Dashboard', () => {
     };
 
     render(<Dashboard {...defaultProps} {...mockCallbacks} />);
-    
+
     expect(screen.getByText('MOODRING')).toBeTruthy();
   });
 
   it('refreshing overlay has correct styling', () => {
     render(<Dashboard {...defaultProps} isRefreshing={true} />);
-    
+
     // Just verify the refreshing overlay appears when isRefreshing is true
     const refreshingText = screen.getByText('Refreshing...');
     expect(refreshingText).toBeTruthy();
-    
+
     // The overlay should be visible (parent container exists)
     expect(refreshingText.parent).toBeTruthy();
   });

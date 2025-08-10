@@ -78,11 +78,9 @@ export class TaggingService {
   }
 
   // Get songs that have a specific tag
-  // TODO: Implement backend endpoint for this functionality
-  async getSongsWithTag(_userId: number, _tagId: number): Promise<string[]> {
-    // For now, return empty array since backend endpoint doesn't exist yet
-    // This will be implemented when backend adds GET /users/{userId}/tags/{tagId}/songs
-    return Promise.resolve([]);
+  async getSongsWithTag(userId: number, tagId: number): Promise<string[]> {
+    const url = `${this.getBackendUrl()}/users/${userId}/tags/${tagId}/songs`;
+    return this.makeApiCall<string[]>(url);
   }
 
   // Utility method to generate a song ID from track information

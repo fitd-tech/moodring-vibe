@@ -37,7 +37,7 @@ export interface CurrentlyPlaying {
 export interface SpotifyTrack {
   name: string;
   artists: Array<{ name: string }>;
-  album: { 
+  album: {
     name: string;
     images: Array<{
       url: string;
