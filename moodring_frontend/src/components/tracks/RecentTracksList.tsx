@@ -33,6 +33,8 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
     } else if (onLoadMore && hasMoreTracks) {
       // Otherwise, load more tracks from API
       await onLoadMore();
+      // After loading new tracks, show all available tracks
+      setShowAll(true);
     }
   };
 
