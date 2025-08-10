@@ -384,9 +384,57 @@ describe('useSpotifyActivity', () => {
 
       expect(result.current.currentlyPlaying).toEqual(mockCurrentlyPlaying);
       expect(result.current.recentTracks).toEqual(mockRecentTracks);
-      expect(result.current.hasMoreTracks).toBe(true);
+      // hasMoreTracks should be false since we only loaded 1 track (less than 10)
+      expect(result.current.hasMoreTracks).toBe(false);
       expect(result.current.isLoadingMore).toBe(false);
       expect(result.current.isRefreshing).toBe(false);
+    });
+
+    it('should set hasMoreTracks to true when loading exactly 10 tracks', async () => {
+      const mockCurrentlyPlaying = {
+        name: 'Test Song',
+        artist: 'Test Artist',
+        album: 'Test Album',
+        album_image_url: 'https://example.com/image.jpg',
+        is_playing: true,
+      };
+
+      // Create exactly 10 mock tracks
+      const mockTenTracks = Array.from({ length: 10 }, (_, i) => ({
+        name: `Recent Song ${i + 1}`,
+        artist: `Recent Artist ${i + 1}`,
+        album: `Recent Album ${i + 1}`,
+        album_image_url: `https://example.com/recent${i + 1}.jpg`,
+        played_at: `2025-08-08T0${i}:00:00Z`,
+      }));
+
+      mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
+      mockSpotifyApi.getRecentTracks.mockResolvedValue(mockTenTracks);
+
+      const mockUser = {
+        id: 1,
+        spotify_id: 'test_user',
+        email: 'test@example.com',
+        display_name: 'Test User',
+        profile_image_url: null,
+        spotify_access_token: 'access-token',
+        spotify_refresh_token: 'refresh-token',
+        token_expires_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      mockUseAuth.user = mockUser as any;
+      mockUseAuth.authToken = 'test-token' as any;
+
+      const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+
+      await act(async () => {
+        await result.current.resetToFreshState();
+      });
+
+      expect(result.current.recentTracks).toHaveLength(10);
+      expect(result.current.hasMoreTracks).toBe(true);
     });
   });
 });

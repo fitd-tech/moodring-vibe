@@ -71,6 +71,13 @@ export const useSpotifyActivity = () => {
           return [...recentTracksData, ...additionalTracks];
         }
       });
+      
+      // Set hasMoreTracks based on initial load - if we got less than 10, there are no more
+      if (recentTracksData.length < 10) {
+        setHasMoreTracks(false);
+      } else {
+        setHasMoreTracks(true);
+      }
     } catch (error) {
       if (__DEV__) {
         console.warn('Error loading Spotify activity:', error);
@@ -148,6 +155,10 @@ export const useSpotifyActivity = () => {
         
         if (newTracks.length > 0) {
           setRecentTracks(prevTracks => [...prevTracks, ...newTracks]);
+        } else {
+          // If we got tracks but they were all duplicates, we might be at the end
+          // This can happen if Spotify doesn't have more unique tracks to return
+          setHasMoreTracks(false);
         }
         
         // If we got less than 10 tracks, we've reached the end
