@@ -27,19 +27,17 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
   };
 
   const handleSeeMore = async () => {
-    if (tracks.length <= INITIAL_DISPLAY_COUNT) {
-      // If we have 10 or fewer tracks, we need to load more from API
-      if (onLoadMore && hasMoreTracks) {
-        await onLoadMore();
-      }
-    } else {
-      // If we have more than 10 tracks locally, just show them all
+    if (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) {
+      // If we have more than 10 tracks locally and not showing all, expand them
       setShowAll(true);
+    } else if (onLoadMore && hasMoreTracks) {
+      // Otherwise, load more tracks from API
+      await onLoadMore();
     }
   };
 
   const displayedTracks = showAll ? tracks : tracks.slice(0, INITIAL_DISPLAY_COUNT);
-  const shouldShowSeeMoreButton = (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || hasMoreTracks;
+  const shouldShowSeeMoreButton = (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
 
   if (tracks.length === 0) {
     return (
@@ -75,7 +73,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
               </View>
             ) : (
               <Text style={styles.seeMoreText}>
-                See More {tracks.length > INITIAL_DISPLAY_COUNT ? `(${tracks.length - INITIAL_DISPLAY_COUNT} more)` : ''}
+                See More
               </Text>
             )}
           </TouchableOpacity>

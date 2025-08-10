@@ -103,23 +103,36 @@ describe('RecentTracksList', () => {
       expect(queryByTestId('track-card-Test Song 11')).toBeNull();
     });
 
-    it('shows correct See More button text when local tracks exceed limit', () => {
+    it('shows See More button when local tracks exceed limit', () => {
       const { getByText } = render(
         <RecentTracksList tracks={manyTracks} />
       );
       
-      expect(getByText('See More (5 more)')).toBeTruthy();
+      expect(getByText('See More')).toBeTruthy();
     });
 
-    it('shows See More button when hasMoreTracks is true', () => {
+    it('shows See More button when hasMoreTracks is true and onLoadMore is provided', () => {
+      const mockLoadMore = jest.fn();
       const { getByText } = render(
+        <RecentTracksList 
+          tracks={mockTracks} 
+          hasMoreTracks={true}
+          onLoadMore={mockLoadMore}
+        />
+      );
+      
+      expect(getByText('See More')).toBeTruthy();
+    });
+
+    it('does not show See More button when hasMoreTracks is true but onLoadMore is not provided', () => {
+      const { queryByText } = render(
         <RecentTracksList 
           tracks={mockTracks} 
           hasMoreTracks={true}
         />
       );
       
-      expect(getByText('See More')).toBeTruthy();
+      expect(queryByText('See More')).toBeNull();
     });
 
     it('expands to show all tracks when See More is pressed with local tracks', async () => {
@@ -131,7 +144,7 @@ describe('RecentTracksList', () => {
       expect(() => getByTestId('track-card-Test Song 11')).toThrow();
       
       // Press See More button
-      fireEvent.press(getByText('See More (5 more)'));
+      fireEvent.press(getByText('See More'));
       
       // Now track 11 should be visible
       await waitFor(() => {
@@ -160,11 +173,13 @@ describe('RecentTracksList', () => {
     });
 
     it('shows loading state when isLoadingMore is true', () => {
+      const mockLoadMore = jest.fn();
       const { getByText } = render(
         <RecentTracksList 
           tracks={mockTracks}
           hasMoreTracks={true}
           isLoadingMore={true}
+          onLoadMore={mockLoadMore}
         />
       );
       
