@@ -79,6 +79,18 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Database preservation**: Never kill database servers or persistent services
 - **Test file protection**: Never modify test files without explicit permission
 
+### Spotify Data Freshness Policy
+- **Strategic cache invalidation**: Implement intelligent caching with smart invalidation rather than constant API fetching
+- **Navigation-based state reset**: Reset Spotify activity state when navigating between major app sections (Home ↔ Browse Tags) to ensure users see current listening context
+- **API rate limit compliance**: Respect Spotify's rate limits (1000 requests/hour per user) through efficient caching strategies
+- **Critical vs acceptable staleness**: 
+  - **Real-time required**: Currently playing status, active playback controls
+  - **Near-real-time acceptable**: Recent tracks (2-5 minutes), user library changes
+  - **Periodic refresh acceptable**: Playlists, saved albums (10-15 minutes)
+- **User-triggered refresh**: Always provide manual refresh options for user-initiated data updates
+- **Offline functionality**: Implement cached data fallbacks for network-poor conditions while prioritizing fresh data when connectivity allows
+- **Battery optimization**: Balance data freshness with battery life through intelligent polling intervals and user activity detection
+
 ### Task Execution Policy
 - **For ALL code changes**: MANDATORY use of TodoWrite Template for Quality Workflow - this includes ALL modifications to code files regardless of size, scope, or complexity (new features, bug fixes, single-line changes, typo corrections, configuration updates, etc.)
 - **For development tasks requiring file changes**: Use `/mr-code` slash command for comprehensive quality-enforced workflows
