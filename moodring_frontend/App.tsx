@@ -34,7 +34,7 @@ const SCOPES = [
 
 const AppContent: React.FC = () => {
   const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
-  const { currentlyPlaying, recentTracks, isRefreshing, refresh, loadActivity } =
+  const { currentlyPlaying, recentTracks, isRefreshing, isLoadingMore, hasMoreTracks, refresh, loadActivity, loadMoreTracks } =
     useSpotifyActivity();
   const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
 
@@ -130,7 +130,10 @@ const AppContent: React.FC = () => {
         currentlyPlaying={currentlyPlaying}
         recentTracks={recentTracks}
         isRefreshing={isRefreshing}
+        isLoadingMore={isLoadingMore}
+        hasMoreTracks={hasMoreTracks}
         onRefresh={refresh}
+        onLoadMoreTracks={loadMoreTracks}
         onLogout={logout}
         onCreatePlaylist={handleCreatePlaylist}
         onBrowseTags={handleBrowseTags}

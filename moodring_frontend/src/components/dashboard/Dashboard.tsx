@@ -14,7 +14,10 @@ interface DashboardProps {
   currentlyPlaying: CurrentlyPlaying | null;
   recentTracks: RecentTrack[];
   isRefreshing: boolean;
+  isLoadingMore?: boolean;
+  hasMoreTracks?: boolean;
   onRefresh: () => void;
+  onLoadMoreTracks?: () => Promise<void>;
   onLogout: () => void;
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
@@ -26,7 +29,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentlyPlaying,
   recentTracks,
   isRefreshing,
+  isLoadingMore = false,
+  hasMoreTracks = false,
   onRefresh,
+  onLoadMoreTracks,
   onLogout,
   onCreatePlaylist,
   onBrowseTags,
@@ -66,7 +72,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <NowPlaying currentlyPlaying={currentlyPlaying} />
 
-          <RecentTracksList tracks={recentTracks} />
+          <RecentTracksList 
+            tracks={recentTracks} 
+            onLoadMore={onLoadMoreTracks}
+            hasMoreTracks={hasMoreTracks}
+            isLoadingMore={isLoadingMore}
+          />
         </View>
       </ScrollView>
 

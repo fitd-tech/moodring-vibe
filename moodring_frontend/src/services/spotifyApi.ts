@@ -84,6 +84,44 @@ export class SpotifyApiService {
       return [];
     }
   }
+
+  async getMoreRecentTracks(token: string, before?: string): Promise<RecentTrack[]> {
+    try {
+      // Spotify API supports up to 50 tracks per request
+      const url = before 
+        ? `https://api.spotify.com/v1/me/player/recently-played?limit=50&before=${before}`
+        : `https://api.spotify.com/v1/me/player/recently-played?limit=50`;
+      
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyRecentTracksResponse;
+        return data.items.map(item => ({
+          name: item.track.name,
+          artist: item.track.artists[0]?.name || 'Unknown Artist',
+          album: item.track.album.name,
+          album_image_url: this.getImageUrl(item.track.album.images),
+          played_at: item.played_at,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('More recent tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
 }
 
 export const spotifyApi = new SpotifyApiService();

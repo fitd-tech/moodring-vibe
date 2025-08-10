@@ -304,4 +304,29 @@ describe('useSpotifyActivity', () => {
 
     expect(global.setInterval).not.toHaveBeenCalled();
   });
+
+  describe('loadMoreTracks', () => {
+    beforeEach(() => {
+      // Set up mock to include getMoreRecentTracks
+      mockSpotifyApi.getMoreRecentTracks = jest.fn().mockResolvedValue([]);
+    });
+
+    it('should return new state properties for loading more tracks', () => {
+      const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+
+      expect(result.current.isLoadingMore).toBe(false);
+      expect(result.current.hasMoreTracks).toBe(true);
+      expect(typeof result.current.loadMoreTracks).toBe('function');
+    });
+
+    it('should handle loadMoreTracks function existence', async () => {
+      mockUseAuth.user = { id: 1, spotify_access_token: 'test_token' };
+      mockUseAuth.authToken = 'test_token';
+
+      const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
+
+      expect(result.current.loadMoreTracks).toBeDefined();
+      expect(typeof result.current.loadMoreTracks).toBe('function');
+    });
+  });
 });

@@ -1,19 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { RecentTrack } from '../../types';
 import { TrackCard } from './TrackCard';
 import { theme } from '../../styles/theme';
 
 interface RecentTracksListProps {
   tracks: RecentTrack[];
+  onLoadMore?: () => Promise<void>;
+  hasMoreTracks?: boolean;
+  isLoadingMore?: boolean;
 }
 
-export const RecentTracksList: React.FC<RecentTracksListProps> = ({ tracks }) => {
+export const RecentTracksList: React.FC<RecentTracksListProps> = ({ 
+  tracks, 
+  onLoadMore, 
+  hasMoreTracks = false, 
+  isLoadingMore = false 
+}) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  
+  const INITIAL_DISPLAY_COUNT = 10;
 
   const handleToggleExpansion = (index: number) => {
     setExpandedTrack(expandedTrack === index ? null : index);
   };
+
+  const handleSeeMore = async () => {
+    if (tracks.length <= INITIAL_DISPLAY_COUNT) {
+      // If we have 10 or fewer tracks, we need to load more from API
+      if (onLoadMore && hasMoreTracks) {
+        await onLoadMore();
+      }
+    }
+    setShowAll(true);
+  };
+
+  const displayedTracks = showAll ? tracks : tracks.slice(0, INITIAL_DISPLAY_COUNT);
+  const shouldShowSeeMoreButton = !showAll && (tracks.length > INITIAL_DISPLAY_COUNT || hasMoreTracks);
 
   if (tracks.length === 0) {
     return (
@@ -26,7 +50,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({ tracks }) =>
   return (
     <View style={styles.container}>
       <Text style={styles.title}>RECENT TRACKS</Text>
-      {tracks.map((track, index) => (
+      {displayedTracks.map((track, index) => (
         <TrackCard
           key={`${track.name}-${track.played_at}-${index}`}
           track={track}
@@ -35,6 +59,26 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({ tracks }) =>
           onToggleExpansion={handleToggleExpansion}
         />
       ))}
+      {shouldShowSeeMoreButton && (
+        <View style={styles.seeMoreContainer}>
+          <TouchableOpacity 
+            style={styles.seeMoreButton}
+            onPress={handleSeeMore}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={theme.colors.text.primary} />
+                <Text style={styles.seeMoreText}>Loading...</Text>
+              </View>
+            ) : (
+              <Text style={styles.seeMoreText}>
+                See More {hasMoreTracks ? '(Load from Spotify)' : `(${tracks.length - INITIAL_DISPLAY_COUNT} more)`}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -60,5 +104,27 @@ const styles = StyleSheet.create({
     color: theme.colors.text.muted,
     fontSize: theme.typography.fontSize.md,
     fontStyle: 'italic',
+  },
+  seeMoreContainer: {
+    marginTop: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  seeMoreButton: {
+    backgroundColor: theme.colors.accent.purple,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.lg,
+    opacity: 0.8,
+  },
+  seeMoreText: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

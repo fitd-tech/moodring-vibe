@@ -12,7 +12,7 @@ const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
 jest.mock('../TaggingInterface', () => ({
   TaggingInterface: ({ tags, onTagsChanged }: { 
     tags: Array<{ id: number; name: string }>; 
-    onTagsChanged: (tags: Array<{ id: number; name: string }>) => void;
+    onTagsChanged: (_tags: Array<{ id: number; name: string }>) => void;
   }) => {
     const React = require('react');
     const { View, Text, TouchableOpacity } = require('react-native');
