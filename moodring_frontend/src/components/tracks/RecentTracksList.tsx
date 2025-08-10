@@ -32,12 +32,14 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
       if (onLoadMore && hasMoreTracks) {
         await onLoadMore();
       }
+    } else {
+      // If we have more than 10 tracks locally, just show them all
+      setShowAll(true);
     }
-    setShowAll(true);
   };
 
   const displayedTracks = showAll ? tracks : tracks.slice(0, INITIAL_DISPLAY_COUNT);
-  const shouldShowSeeMoreButton = !showAll && (tracks.length > INITIAL_DISPLAY_COUNT || hasMoreTracks);
+  const shouldShowSeeMoreButton = (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || hasMoreTracks;
 
   if (tracks.length === 0) {
     return (
@@ -73,7 +75,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
               </View>
             ) : (
               <Text style={styles.seeMoreText}>
-                See More {hasMoreTracks ? '(Load from Spotify)' : `(${tracks.length - INITIAL_DISPLAY_COUNT} more)`}
+                See More {tracks.length > INITIAL_DISPLAY_COUNT ? `(${tracks.length - INITIAL_DISPLAY_COUNT} more)` : ''}
               </Text>
             )}
           </TouchableOpacity>

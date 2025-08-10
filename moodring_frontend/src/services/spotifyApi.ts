@@ -87,10 +87,10 @@ export class SpotifyApiService {
 
   async getMoreRecentTracks(token: string, before?: string): Promise<RecentTrack[]> {
     try {
-      // Spotify API supports up to 50 tracks per request
+      // Load 10 additional tracks at a time
       const url = before 
-        ? `https://api.spotify.com/v1/me/player/recently-played?limit=50&before=${before}`
-        : `https://api.spotify.com/v1/me/player/recently-played?limit=50`;
+        ? `https://api.spotify.com/v1/me/player/recently-played?limit=10&before=${before}`
+        : `https://api.spotify.com/v1/me/player/recently-played?limit=10`;
       
       const response = await fetch(url, {
         headers: {

@@ -111,7 +111,7 @@ describe('RecentTracksList', () => {
       expect(getByText('See More (5 more)')).toBeTruthy();
     });
 
-    it('shows See More button text for loading from Spotify when hasMoreTracks is true', () => {
+    it('shows See More button when hasMoreTracks is true', () => {
       const { getByText } = render(
         <RecentTracksList 
           tracks={mockTracks} 
@@ -119,7 +119,7 @@ describe('RecentTracksList', () => {
         />
       );
       
-      expect(getByText('See More (Load from Spotify)')).toBeTruthy();
+      expect(getByText('See More')).toBeTruthy();
     });
 
     it('expands to show all tracks when See More is pressed with local tracks', async () => {
@@ -152,7 +152,7 @@ describe('RecentTracksList', () => {
         />
       );
       
-      fireEvent.press(getByText('See More (Load from Spotify)'));
+      fireEvent.press(getByText('See More'));
       
       await waitFor(() => {
         expect(mockLoadMore).toHaveBeenCalledTimes(1);
