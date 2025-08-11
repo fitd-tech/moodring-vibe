@@ -93,13 +93,58 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 
 ### Task Execution Policy
 - **For ALL code changes**: MANDATORY use of TodoWrite Template for Quality Workflow - this includes ALL modifications to code files regardless of size, scope, or complexity (new features, bug fixes, single-line changes, typo corrections, configuration updates, etc.)
-- **For development tasks requiring file changes**: Use `/mr-code` slash command for comprehensive quality-enforced workflows
+- **For development tasks requiring file changes**: Use specialized slash commands for targeted workflows (see Specialized Slash Commands section below)
 - **For policy/workflow changes**: Use `/mr-policy` slash command for proper analysis and validation
 - **For information-only tasks**: Direct implementation is appropriate (no code changes)
 - **Emergency fixes**: MANDATORY TodoWrite Template still required - emergency status does not exempt from quality workflow tracking
 - **Fallback enforcement**: When slash commands are unavailable, manually execute equivalent quality checks using the fallback checklist below with MANDATORY TodoWrite tracking for ALL code changes
 - **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement using MANDATORY TodoWrite for ALL code changes
 - **TodoWrite subagent coordination**: When subagents are planned in TodoWrite workflows, do NOT perform overlapping tasks manually to avoid redundancy and ensure proper workflow orchestration
+
+## Specialized Slash Commands
+
+The project provides specialized slash commands for different types of development tasks. Each command provides targeted workflow orchestration with appropriate TodoWrite checklists and subagent routing:
+
+### `/mr-code` - General Development Workflow
+- **Use for**: Mixed development tasks, general code implementation, multi-step features
+- **Includes**: Full quality workflow with all subagents (code-implementation-specialist, tech-debt-cleanup-planner, codebase-organization-specialist, test-coverage-enforcer, pre-commit-quality-guard, commit-message-specialist, git-workflow-manager)
+- **Best for**: Complex tasks requiring comprehensive quality enforcement
+
+### `/mr-bug` - Bug Investigation Workflow  
+- **Use for**: Bug fixes, error resolution, crash investigation, issue troubleshooting
+- **Includes**: Specialized bug-investigator subagent for systematic debugging and root cause analysis
+- **Best for**: Problems requiring systematic investigation and debugging methodology
+
+### `/mr-feature` - Feature Development Workflow
+- **Use for**: New feature implementation, major functionality additions, feature enhancements  
+- **Includes**: Feature-focused workflow with emphasis on comprehensive testing and integration
+- **Best for**: Substantial new functionality that requires planning and systematic implementation
+
+### `/mr-clean` - Technical Debt Cleanup Workflow
+- **Use for**: Removing TODO: TEMP items, cleaning up temporary code, refactoring debt
+- **Includes**: Specialized tech-debt-cleanup-planner subagent for systematic cleanup planning
+- **Best for**: Focused cleanup sessions and technical debt reduction initiatives
+
+### `/mr-tests` - Test Coverage Workflow
+- **Use for**: Adding tests, improving coverage, test-driven development, coverage analysis
+- **Includes**: Specialized test-coverage-enforcer subagent for coverage verification and gap analysis  
+- **Best for**: Testing-focused tasks and ensuring coverage requirements are met
+
+### `/mr-policy` - Policy and Workflow Analysis
+- **Use for**: CLAUDE.md changes, workflow improvements, policy analysis, development guideline modifications
+- **Includes**: claude-md-policy-analyst and workflow-automation-analyst subagents
+- **Best for**: Meta-development tasks involving process and policy changes
+
+## Slash Command Selection Guidelines
+
+**Choose the most specific command that matches your primary task objective:**
+
+1. **Single-focus tasks** → Use specialized commands (`/mr-bug`, `/mr-feature`, `/mr-clean`, `/mr-tests`)
+2. **Mixed or complex tasks** → Use `/mr-code` for comprehensive workflow  
+3. **Policy/process changes** → Use `/mr-policy` for proper analysis
+4. **Information-only requests** → Direct implementation (no slash command needed)
+
+**When in doubt**: Use `/mr-code` for any development task involving file changes, as it provides the most comprehensive quality workflow.
 
 ### Manual Quality Checklist (Emergency Fallback Only)
 *ONLY USE when specialized slash commands are unavailable AND subagents are verified as unavailable:*
