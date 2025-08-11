@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackendUser, CurrentlyPlaying, RecentTrack } from '../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack } from '../../types';
 import { ProfileMenu } from './ProfileMenu';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';
+import { TopTracksList } from '../tracks/TopTracksList';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { theme } from '../../styles/theme';
 
@@ -13,11 +14,15 @@ interface DashboardProps {
   user: BackendUser;
   currentlyPlaying: CurrentlyPlaying | null;
   recentTracks: RecentTrack[];
+  topTracks: TopTrack[];
   isRefreshing: boolean;
   isLoadingMore?: boolean;
+  isLoadingMoreTopTracks?: boolean;
   hasMoreTracks?: boolean;
+  hasMoreTopTracks?: boolean;
   onRefresh: () => void;
   onLoadMoreTracks?: () => Promise<void>;
+  onLoadMoreTopTracks?: () => Promise<void>;
   onLogout: () => void;
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
@@ -28,11 +33,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   user,
   currentlyPlaying,
   recentTracks,
+  topTracks,
   isRefreshing,
   isLoadingMore = false,
+  isLoadingMoreTopTracks = false,
   hasMoreTracks = false,
+  hasMoreTopTracks = false,
   onRefresh,
   onLoadMoreTracks,
+  onLoadMoreTopTracks,
   onLogout,
   onCreatePlaylist,
   onBrowseTags,
@@ -77,6 +86,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onLoadMore={onLoadMoreTracks}
             hasMoreTracks={hasMoreTracks}
             isLoadingMore={isLoadingMore}
+          />
+
+          <TopTracksList 
+            tracks={topTracks} 
+            onLoadMore={onLoadMoreTopTracks}
+            hasMoreTracks={hasMoreTopTracks}
+            isLoadingMore={isLoadingMoreTopTracks}
           />
         </View>
       </ScrollView>

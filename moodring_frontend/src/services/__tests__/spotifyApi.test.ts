@@ -348,4 +348,213 @@ describe('spotifyApi', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('getTopTracks', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns top tracks when API responds with data', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'top-track-1',
+            name: 'Top Song 1',
+            popularity: 95,
+            artists: [{ name: 'Top Artist 1' }],
+            album: {
+              name: 'Top Album 1',
+              images: [{ url: 'https://example.com/top1.jpg' }],
+            },
+          },
+          {
+            id: 'top-track-2',
+            name: 'Top Song 2',
+            popularity: 90,
+            artists: [{ name: 'Top Artist 2' }],
+            album: {
+              name: 'Top Album 2',
+              images: [{ url: 'https://example.com/top2.jpg' }],
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+
+      expect(result).toEqual([
+        {
+          name: 'Top Song 1',
+          artist: 'Top Artist 1',
+          album: 'Top Album 1',
+          album_image_url: 'https://example.com/top1.jpg',
+          song_id: 'top-track-1',
+          popularity: 95,
+        },
+        {
+          name: 'Top Song 2',
+          artist: 'Top Artist 2',
+          album: 'Top Album 2',
+          album_image_url: 'https://example.com/top2.jpg',
+          song_id: 'top-track-2',
+          popularity: 90,
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=10',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('uses custom time range and limit parameters', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      await spotifyApi.getTopTracks(mockToken, 'short_term', 20);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=20',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('returns empty array when no top tracks', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles missing artist data in top tracks', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'top-track-1',
+            name: 'Top Song',
+            popularity: 95,
+            artists: [],
+            album: {
+              name: 'Top Album',
+              images: [{ url: 'https://example.com/top.jpg' }],
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+      expect(result[0].artist).toBe('Unknown Artist');
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getTopTracks(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+  });
+
+  describe('getMoreTopTracks', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns more top tracks with offset pagination', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'top-track-11',
+            name: 'Top Song 11',
+            popularity: 75,
+            artists: [{ name: 'Top Artist 11' }],
+            album: {
+              name: 'Top Album 11',
+              images: [{ url: 'https://example.com/top11.jpg' }],
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreTopTracks(mockToken, 10, 'long_term');
+
+      expect(result).toEqual([
+        {
+          name: 'Top Song 11',
+          artist: 'Top Artist 11',
+          album: 'Top Album 11',
+          album_image_url: 'https://example.com/top11.jpg',
+          song_id: 'top-track-11',
+          popularity: 75,
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=10&offset=10',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('returns empty array when no more tracks available', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreTopTracks(mockToken, 40);
+      expect(result).toEqual([]);
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getMoreTopTracks(mockToken, 10)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+  });
 });

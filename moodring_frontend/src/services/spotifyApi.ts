@@ -1,8 +1,10 @@
 import {
   SpotifyCurrentlyPlayingResponse,
   SpotifyRecentTracksResponse,
+  SpotifyTopTracksResponse,
   CurrentlyPlaying,
   RecentTrack,
+  TopTrack,
 } from '../types';
 
 export class SpotifyApiService {
@@ -118,6 +120,81 @@ export class SpotifyApiService {
       }
       if (__DEV__) {
         console.warn('More recent tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getTopTracks(token: string, timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term', limit: number = 10): Promise<TopTrack[]> {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyTopTracksResponse;
+        return data.items.map(track => ({
+          name: track.name,
+          artist: track.artists[0]?.name || 'Unknown Artist',
+          album: track.album.name,
+          album_image_url: this.getImageUrl(track.album.images),
+          song_id: track.id,
+          popularity: track.popularity,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('Top tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getMoreTopTracks(token: string, offset: number, timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term'): Promise<TopTrack[]> {
+    try {
+      // Load 10 additional tracks at a time with offset
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=10&offset=${offset}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyTopTracksResponse;
+        return data.items.map(track => ({
+          name: track.name,
+          artist: track.artists[0]?.name || 'Unknown Artist',
+          album: track.album.name,
+          album_image_url: this.getImageUrl(track.album.images),
+          song_id: track.id,
+          popularity: track.popularity,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('More top tracks fetch error:', error);
       }
       return [];
     }

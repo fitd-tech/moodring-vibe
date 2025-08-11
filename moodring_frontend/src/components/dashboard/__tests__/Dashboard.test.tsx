@@ -1,7 +1,25 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { Dashboard } from '../Dashboard';
-import { BackendUser, CurrentlyPlaying, RecentTrack } from '../../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack } from '../../../types';
+
+// Mock the TrackCard component to avoid AuthContext dependency
+jest.mock('../../tracks/TrackCard', () => ({
+  TrackCard: ({ track }: any) => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return React.createElement(Text, { testID: `track-card-${track.name}` }, `${track.name} by ${track.artist}`);
+  }
+}));
+
+// Mock NowPlaying component
+jest.mock('../../tracks/NowPlaying', () => ({
+  NowPlaying: ({ currentlyPlaying }: any) => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return currentlyPlaying ? React.createElement(Text, { testID: 'now-playing' }, `Now Playing: ${currentlyPlaying.name}`) : null;
+  }
+}));
 
 const mockUser: BackendUser = {
   id: 123,
@@ -34,15 +52,30 @@ const mockRecentTracks: RecentTrack[] = [
   },
 ];
 
+const mockTopTracks: TopTrack[] = [
+  {
+    name: 'Top Song 1',
+    artist: 'Top Artist 1',
+    album: 'Top Album 1',
+    album_image_url: 'https://example.com/top1.jpg',
+    song_id: 'top-song-1',
+    popularity: 95,
+  },
+];
+
 const defaultProps = {
   user: mockUser,
   currentlyPlaying: mockCurrentlyPlaying,
   recentTracks: mockRecentTracks,
+  topTracks: mockTopTracks,
   isRefreshing: false,
   isLoadingMore: false,
+  isLoadingMoreTopTracks: false,
   hasMoreTracks: false,
+  hasMoreTopTracks: false,
   onRefresh: jest.fn(),
   onLoadMoreTracks: jest.fn(),
+  onLoadMoreTopTracks: jest.fn(),
   onLogout: jest.fn(),
   onCreatePlaylist: jest.fn(),
   onBrowseTags: jest.fn(),
@@ -112,8 +145,9 @@ describe('Dashboard', () => {
   it('renders NowPlaying component when currentlyPlaying is provided', () => {
     render(<Dashboard {...defaultProps} />);
 
-    // Just verify the NowPlaying section is rendered with the heading
-    expect(screen.getByText('NOW PLAYING')).toBeTruthy();
+    // Verify the NowPlaying component is rendered with currently playing song
+    expect(screen.getByTestId('now-playing')).toBeTruthy();
+    expect(screen.getByText('Now Playing: Test Song')).toBeTruthy();
   });
 
   it('renders RecentTracksList with recent tracks', () => {
@@ -121,6 +155,14 @@ describe('Dashboard', () => {
 
     // Just verify the Recent Tracks section is rendered with the heading
     expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
+  });
+
+  it('renders TopTracksList with top tracks', () => {
+    render(<Dashboard {...defaultProps} />);
+
+    // Verify the Top Tracks section is rendered with the heading and content
+    expect(screen.getByText('TOP TRACKS')).toBeTruthy();
+    expect(screen.getByTestId('track-card-Top Song 1')).toBeTruthy();
   });
 
   it('handles null currentlyPlaying', () => {

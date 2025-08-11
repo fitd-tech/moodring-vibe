@@ -25,6 +25,15 @@ export interface RecentTrack {
   song_id?: string;
 }
 
+export interface TopTrack {
+  name: string;
+  artist: string;
+  album: string;
+  album_image_url?: string;
+  song_id?: string;
+  popularity: number;
+}
+
 export interface CurrentlyPlaying {
   name: string;
   artist: string;
@@ -35,7 +44,9 @@ export interface CurrentlyPlaying {
 }
 
 export interface SpotifyTrack {
+  id: string;
   name: string;
+  popularity: number;
   artists: Array<{ name: string }>;
   album: {
     name: string;
@@ -59,6 +70,15 @@ export interface SpotifyRecentTrackItem {
 
 export interface SpotifyRecentTracksResponse {
   items: SpotifyRecentTrackItem[];
+}
+
+export interface SpotifyTopTracksResponse {
+  items: SpotifyTrack[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
 }
 
 export interface AuthTokens {
