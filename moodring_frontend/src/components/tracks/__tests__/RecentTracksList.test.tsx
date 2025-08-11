@@ -22,7 +22,7 @@ jest.mock('../../../styles/theme', () => ({
 
 // Mock TrackCard component 
 jest.mock('../TrackCard', () => ({
-  TrackCard: ({ track, onToggleExpansion }: any) => {
+  TrackCard: ({ track, onToggleExpansion }: { track: RecentTrack; onToggleExpansion?: (_index: number) => void }) => {
     const React = require('react');
     const { TouchableOpacity, Text } = require('react-native');
     return React.createElement(TouchableOpacity, {

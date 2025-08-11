@@ -5,7 +5,7 @@ import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack } from '../../../t
 
 // Mock the TrackCard component to avoid AuthContext dependency
 jest.mock('../../tracks/TrackCard', () => ({
-  TrackCard: ({ track }: any) => {
+  TrackCard: ({ track }: { track: RecentTrack | TopTrack }) => {
     const React = require('react');
     const { Text } = require('react-native');
     return React.createElement(Text, { testID: `track-card-${track.name}` }, `${track.name} by ${track.artist}`);
@@ -14,7 +14,7 @@ jest.mock('../../tracks/TrackCard', () => ({
 
 // Mock NowPlaying component
 jest.mock('../../tracks/NowPlaying', () => ({
-  NowPlaying: ({ currentlyPlaying }: any) => {
+  NowPlaying: ({ currentlyPlaying }: { currentlyPlaying: CurrentlyPlaying | null }) => {
     const React = require('react');
     const { Text } = require('react-native');
     return currentlyPlaying ? React.createElement(Text, { testID: 'now-playing' }, `Now Playing: ${currentlyPlaying.name}`) : null;

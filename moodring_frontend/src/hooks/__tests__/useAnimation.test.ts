@@ -1,17 +1,27 @@
 import { renderHook } from '@testing-library/react-native';
 
+// Define types for React Native Animated mocks
+interface MockAnimatedValue {
+  setValue: jest.Mock;
+  interpolate: jest.Mock;
+}
+
+interface MockAnimation {
+  start: jest.Mock;
+}
+
 // Mock all react-native Animated functions first
-const mockAnimatedValue: any = {
+const mockAnimatedValue: MockAnimatedValue = {
   setValue: jest.fn(),
   interpolate: jest.fn(() => mockAnimatedValue),
 };
 
 // Mock react-native with hoisted variables
 jest.mock('react-native', () => {
-  const mockTiming = jest.fn(() => ({ start: jest.fn() }));
-  const mockSpring = jest.fn(() => ({ start: jest.fn() }));
-  const mockParallel = jest.fn(() => ({ start: jest.fn() }));
-  const mockAnimatedValue: any = {
+  const mockTiming = jest.fn((): MockAnimation => ({ start: jest.fn() }));
+  const mockSpring = jest.fn((): MockAnimation => ({ start: jest.fn() }));
+  const mockParallel = jest.fn((): MockAnimation => ({ start: jest.fn() }));
+  const mockAnimatedValue: MockAnimatedValue = {
     setValue: jest.fn(),
     interpolate: jest.fn(() => mockAnimatedValue),
   };
@@ -49,7 +59,11 @@ describe('useAnimation', () => {
     jest.clearAllMocks();
 
     // Get the mocked functions
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     // Set up return values
     mockedAnimated.timing.mockReturnValue({
@@ -69,7 +83,7 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const animatedValues = result.current.createAnimatedValues();
 
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
     expect(mockedAnimated.Value).toHaveBeenCalledTimes(4);
     expect(mockedAnimated.Value).toHaveBeenNthCalledWith(1, 0); // height
     expect(mockedAnimated.Value).toHaveBeenNthCalledWith(2, 0); // opacity
@@ -84,16 +98,16 @@ describe('useAnimation', () => {
 
   it('animates expansion when isExpanded is true', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
-    const mockAnimatedValues: any = {
+    const mockAnimatedValues = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
       opacity: mockAnimatedValue,
     };
 
-    result.current.animateExpansion(mockAnimatedValues, true);
+    result.current.animateExpansion(mockAnimatedValues as any, true);
 
     expect(mockedAnimated.timing).toHaveBeenCalledTimes(3); // height, opacity, rotation
     expect(mockedAnimated.spring).toHaveBeenCalledTimes(1); // scale uses spring
@@ -125,16 +139,16 @@ describe('useAnimation', () => {
 
   it('animates collapse when isExpanded is false', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
-    const mockAnimatedValues: any = {
+    const mockAnimatedValues = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
       opacity: mockAnimatedValue,
     };
 
-    result.current.animateExpansion(mockAnimatedValues, false);
+    result.current.animateExpansion(mockAnimatedValues as any, false);
 
     expect(mockedAnimated.timing).toHaveBeenCalledTimes(3); // height, opacity, rotation
     expect(mockedAnimated.spring).toHaveBeenCalledTimes(1); // scale uses spring
@@ -166,16 +180,16 @@ describe('useAnimation', () => {
 
   it('starts parallel animation', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
-    const mockAnimatedValues: any = {
+    const mockAnimatedValues = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
       opacity: mockAnimatedValue,
     };
 
-    result.current.animateExpansion(mockAnimatedValues, true);
+    result.current.animateExpansion(mockAnimatedValues as any, true);
 
     expect(mockedAnimated.parallel).toHaveBeenCalledWith([
       expect.any(Object), // height timing
@@ -190,7 +204,7 @@ describe('useAnimation', () => {
 
   it('handles animation completion callback', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
     const mockAnimatedValues = {
       scale: mockAnimatedValue,
@@ -207,23 +221,23 @@ describe('useAnimation', () => {
       start: mockStartFn,
     });
 
-    result.current.animateExpansion(mockAnimatedValues, true);
+    result.current.animateExpansion(mockAnimatedValues as any, true);
 
     expect(mockStartFn).toHaveBeenCalled();
   });
 
   it('maintains consistent animation duration base', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
-    const mockAnimatedValues: any = {
+    const mockAnimatedValues = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
       opacity: mockAnimatedValue,
     };
 
-    result.current.animateExpansion(mockAnimatedValues, true);
+    result.current.animateExpansion(mockAnimatedValues as any, true);
 
     // Check that timing calls have appropriate durations
     const timingCalls = mockedAnimated.timing.mock.calls;
@@ -235,16 +249,16 @@ describe('useAnimation', () => {
 
   it('uses correct native driver settings', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as any;
+    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
 
-    const mockAnimatedValues: any = {
+    const mockAnimatedValues = {
       scale: mockAnimatedValue,
       rotation: mockAnimatedValue,
       height: mockAnimatedValue,
       opacity: mockAnimatedValue,
     };
 
-    result.current.animateExpansion(mockAnimatedValues, true);
+    result.current.animateExpansion(mockAnimatedValues as any, true);
 
     // Check that all animations use useNativeDriver: false
     const timingCalls = mockedAnimated.timing.mock.calls;

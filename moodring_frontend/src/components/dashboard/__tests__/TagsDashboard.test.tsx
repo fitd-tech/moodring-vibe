@@ -35,22 +35,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
-// Mock RefreshControl and ScrollView
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    RefreshControl: ({
-      onRefresh: _onRefresh,
-      refreshing: _refreshing,
-    }: {
-      onRefresh: () => void;
-      refreshing: boolean;
-    }) => null,
-    ScrollView: ({ children, testID }: { children: React.ReactNode; testID?: string }) =>
-      RN.View({ children, testID }),
-  };
-});
+// Note: React Native components are already mocked in jest.setup.js
 
 // Mock ProfileMenu
 jest.mock('../ProfileMenu', () => ({
@@ -65,7 +50,7 @@ jest.mock('../../tracks/TagCard', () => ({
   }: {
     tag: { id: number; name: string };
     onToggleExpansion: () => void;
-  }) => jest.requireActual('react-native').View(),
+  }) => 'View',
 }));
 
 const mockTags = [
@@ -120,8 +105,10 @@ describe('TagsDashboard', () => {
     it('renders dashboard with header', async () => {
       const { getByText } = render(<TagsDashboard {...defaultProps} />);
 
-      expect(getByText('Your Tags')).toBeTruthy();
-      expect(getByText('Browse and manage your music tags')).toBeTruthy();
+      await waitFor(() => {
+        expect(getByText('BROWSE TAGS')).toBeTruthy();
+        expect(getByText('Organize your music collection')).toBeTruthy();
+      });
     });
 
     it('displays loading state initially', () => {
@@ -157,7 +144,7 @@ describe('TagsDashboard', () => {
 
       await waitFor(() => {
         expect(getByText('No tags yet')).toBeTruthy();
-        expect(getByText('Start tagging songs to see them here!')).toBeTruthy();
+        expect(getByText('Start tagging your favorite songs to organize your music collection')).toBeTruthy();
       });
     });
   });
@@ -171,7 +158,7 @@ describe('TagsDashboard', () => {
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith('Failed to load tags:', expect.any(Error));
-        expect(getByText('No tags yet')).toBeTruthy();
+        expect(getByText('Failed to load tags. Please try again.')).toBeTruthy();
       });
 
       consoleSpy.mockRestore();

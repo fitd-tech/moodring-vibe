@@ -88,12 +88,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             isLoadingMore={isLoadingMore}
           />
 
-          <TopTracksList 
-            tracks={topTracks} 
-            onLoadMore={onLoadMoreTopTracks}
-            hasMoreTracks={hasMoreTopTracks}
-            isLoadingMore={isLoadingMoreTopTracks}
-          />
+          {topTracks.length > 0 && (
+            <TopTracksList 
+              tracks={topTracks} 
+              onLoadMore={onLoadMoreTopTracks}
+              hasMoreTracks={hasMoreTopTracks}
+              isLoadingMore={isLoadingMoreTopTracks}
+            />
+          )}
         </View>
       </ScrollView>
 

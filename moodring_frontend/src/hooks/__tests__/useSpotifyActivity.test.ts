@@ -14,9 +14,13 @@ jest.mock('../../services/authService');
 const mockAuthService = authService as jest.Mocked<typeof authService>;
 
 // Mock useAuth hook
-const mockUseAuth = {
-  user: null as any,
-  authToken: null as any,
+const mockUseAuth: {
+  user: any;
+  authToken: any;
+  refreshUserToken: jest.MockedFunction<any>;
+} = {
+  user: null,
+  authToken: null,
   refreshUserToken: jest.fn(),
 };
 
@@ -41,6 +45,11 @@ describe('useSpotifyActivity', () => {
     mockUseAuth.user = null;
     mockUseAuth.authToken = null;
     mockUseAuth.refreshUserToken.mockResolvedValue(null);
+
+    // Set default mock return values
+    mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
+    mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
+    mockSpotifyApi.getTopTracks.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -75,8 +84,20 @@ describe('useSpotifyActivity', () => {
       },
     ];
 
+    const mockTopTracks = [
+      {
+        song_id: 'top_song_1',
+        name: 'Top Song 1',
+        artist: 'Top Artist 1',
+        album: 'Top Album 1',
+        album_image_url: 'https://example.com/top1.jpg',
+        popularity: 80,
+      },
+    ];
+
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
     mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
+    mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
 
     const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
     const mockUser = {
@@ -100,11 +121,13 @@ describe('useSpotifyActivity', () => {
     expect(result.current.recentTracks).toEqual(mockRecentTracks);
     expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledWith('access-token');
     expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('access-token', 10);
+    expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('access-token', 'medium_term', 10);
   });
 
   it('handles getCurrentlyPlaying API error', async () => {
     mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('API Error'));
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
+    mockSpotifyApi.getTopTracks.mockResolvedValue([]);
 
     const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
     const mockUser = {
@@ -130,6 +153,7 @@ describe('useSpotifyActivity', () => {
   it('handles getRecentTracks API error', async () => {
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
     mockSpotifyApi.getRecentTracks.mockRejectedValue(new Error('API Error'));
+    mockSpotifyApi.getTopTracks.mockResolvedValue([]);
 
     const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
     const mockUser = {
@@ -163,6 +187,7 @@ describe('useSpotifyActivity', () => {
 
     mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
+    mockSpotifyApi.getTopTracks.mockResolvedValue([]);
 
     const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -191,8 +216,8 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
     // Set up useAuth to return user and token
-    mockUseAuth.user = mockUser as any;
-    mockUseAuth.authToken = 'test-token' as any;
+    mockUseAuth.user = mockUser;
+    mockUseAuth.authToken = 'test-token';
 
     renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -217,8 +242,8 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
     // Set up useAuth to return user and token
-    mockUseAuth.user = mockUser as any;
-    mockUseAuth.authToken = 'test-token' as any;
+    mockUseAuth.user = mockUser;
+    mockUseAuth.authToken = 'test-token';
 
     const { unmount } = renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -245,8 +270,8 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
     // Set up useAuth to return user and token
-    mockUseAuth.user = mockUser as any;
-    mockUseAuth.authToken = 'test-token' as any;
+    mockUseAuth.user = mockUser;
+    mockUseAuth.authToken = 'test-token';
 
     renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -280,8 +305,8 @@ describe('useSpotifyActivity', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue([]);
 
     // Set up useAuth to return user and token
-    mockUseAuth.user = mockUser as any;
-    mockUseAuth.authToken = 'access-token' as any;
+    mockUseAuth.user = mockUser;
+    mockUseAuth.authToken = 'access-token' as typeof mockUseAuth.authToken;
 
     renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -320,8 +345,8 @@ describe('useSpotifyActivity', () => {
     });
 
     it('should handle loadMoreTracks function existence', async () => {
-      mockUseAuth.user = { id: 1, spotify_access_token: 'test_token' };
-      mockUseAuth.authToken = 'test_token';
+      mockUseAuth.user = { id: 1, spotify_access_token: 'test_token' } as typeof mockUseAuth.user;
+      mockUseAuth.authToken = 'test_token' as typeof mockUseAuth.authToken;
 
       const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -357,8 +382,20 @@ describe('useSpotifyActivity', () => {
         },
       ];
 
+      const mockTopTracks = [
+        {
+          song_id: 'top_song_1',
+          name: 'Top Song 1',
+          artist: 'Top Artist 1',
+          album: 'Top Album 1',
+          album_image_url: 'https://example.com/top1.jpg',
+          popularity: 80,
+        },
+      ];
+
       mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
       mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
+      mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
 
       const mockUser = {
         id: 1,
@@ -373,8 +410,8 @@ describe('useSpotifyActivity', () => {
         updated_at: new Date().toISOString(),
       };
 
-      mockUseAuth.user = mockUser as any;
-      mockUseAuth.authToken = 'test-token' as any;
+      mockUseAuth.user = mockUser;
+      mockUseAuth.authToken = 'test-token';
 
       const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
 
@@ -408,8 +445,18 @@ describe('useSpotifyActivity', () => {
         played_at: `2025-08-08T0${i}:00:00Z`,
       }));
 
+      const mockTopTracks = Array.from({ length: 10 }, (_, i) => ({
+        song_id: `top_song_${i + 1}`,
+        name: `Top Song ${i + 1}`,
+        artist: `Top Artist ${i + 1}`,
+        album: `Top Album ${i + 1}`,
+        album_image_url: `https://example.com/top${i + 1}.jpg`,
+        popularity: 80 - i,
+      }));
+
       mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
       mockSpotifyApi.getRecentTracks.mockResolvedValue(mockTenTracks);
+      mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
 
       const mockUser = {
         id: 1,
@@ -424,8 +471,8 @@ describe('useSpotifyActivity', () => {
         updated_at: new Date().toISOString(),
       };
 
-      mockUseAuth.user = mockUser as any;
-      mockUseAuth.authToken = 'test-token' as any;
+      mockUseAuth.user = mockUser;
+      mockUseAuth.authToken = 'test-token';
 
       const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
 

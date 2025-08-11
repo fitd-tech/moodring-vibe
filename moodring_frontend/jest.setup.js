@@ -65,6 +65,10 @@ jest.mock('react-native', () => ({
   Image: 'Image',
   RefreshControl: 'RefreshControl',
   Modal: 'Modal',
+  TextInput: 'TextInput',
+  Alert: {
+    alert: jest.fn(),
+  },
   useColorScheme: jest.fn(() => 'light'),
   Animated: {
     View: 'Animated.View',
