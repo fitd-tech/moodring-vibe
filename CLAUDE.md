@@ -101,8 +101,14 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Command availability check**: If you cannot use slash commands, inform the user and proceed with fallback enforcement using MANDATORY TodoWrite for ALL code changes
 - **TodoWrite subagent coordination**: When subagents are planned in TodoWrite workflows, do NOT perform overlapping tasks manually to avoid redundancy and ensure proper workflow orchestration
 
-### Manual Quality Checklist (Fallback Only)
-*Use only when specialized slash commands are unavailable:*
+### Manual Quality Checklist (Emergency Fallback Only)
+*ONLY USE when specialized slash commands are unavailable AND subagents are verified as unavailable:*
+
+**SUBAGENT UNAVAILABILITY VERIFICATION REQUIRED**: Before using manual fallback:
+1. Attempt to call each required subagent and document the failure
+2. Confirm that subagent infrastructure is down or malfunctioning
+3. Get explicit user acknowledgment that manual fallback is authorized
+4. Document the unavailability reason in TodoWrite
 
 **CRITICAL**: MANDATORY TodoWrite checklist for ALL code changes - no exceptions for any modifications to code files:
 
@@ -122,8 +128,8 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
    - Handles new features, modifications, database migrations, React Native components, Rust backend code
 
 2. **Pre-commit Quality Checks**:
-   - Use `pre-commit-quality-guard` subagent for significant changes (>5 files or new features)
-   - Manual fallback: Backend `cargo test && cargo clippy && cargo fmt --check`, Frontend `npm run lint && npm run test && npm run typecheck`
+   - MANDATORY: Use `pre-commit-quality-guard` subagent for ALL changes regardless of size
+   - Manual commands (cargo test, npm run lint, etc.) are STRICTLY PROHIBITED during development when subagents are available
 
 3. **Commit Process**:
    - Use `commit-message-specialist` subagent for commit message generation
@@ -145,30 +151,55 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
    - Verify with `lsof -ti:8000,3000` that ports are free
    - Preserve database servers and persistent services
 
-### TodoWrite Workflow Coordination
-**CRITICAL**: When using TodoWrite checklists with planned subagent tasks, avoid manual task overlap:
+### TodoWrite Workflow Coordination - STRICT ENFORCEMENT
+**MANDATORY**: When using TodoWrite checklists with planned subagent tasks, manual task overlap is STRICTLY PROHIBITED:
 
 **✅ Correct Approach:**
 - Plan subagents in TodoWrite (e.g., "Run pre-commit-quality-guard")  
 - Let subagents handle their specialized tasks completely
 - Avoid running individual commands manually when subagents will run them
 
-**❌ Incorrect Approach:**
-- Running `npm run typecheck` manually during implementation
-- Then later running `pre-commit-quality-guard` (which also runs typecheck)
-- Creates redundancy and bypasses comprehensive subagent quality checks
+**❌ Prohibited Actions:**
+- Running ANY manual quality commands (`npm run typecheck`, `cargo test`, `npm run lint`, etc.) during development
+- Executing git commands manually (`git add`, `git commit`, `git push`) when git-workflow-manager is available
+- Creating commit messages manually when commit-message-specialist is available
+- Running individual test commands when test-coverage-enforcer is available
+- ANY manual execution of tasks that specialized subagents are designed to handle
 
 **Implementation Examples:**
-- ✅ Plan "Run pre-commit-quality-guard" → Let it handle all quality checks
-- ❌ Run `npm test` manually → Then run `test-coverage-enforcer` later
+- ✅ Plan "Run pre-commit-quality-guard" → Let it handle ALL quality checks
+- ❌ PROHIBITED: Run `npm test` manually then run `test-coverage-enforcer` later
 - ✅ Plan "Run commit-message-specialist" → Let it generate the message
-- ❌ Draft commit message manually → Then run `commit-message-specialist`
+- ❌ PROHIBITED: Draft commit message manually then run `commit-message-specialist`
+- ❌ PROHIBITED: Run `git add .` manually when git-workflow-manager is planned
+- ❌ PROHIBITED: Run `cargo clippy` manually when pre-commit-quality-guard is planned
+
+**WORKFLOW BLOCKING REQUIREMENT**: Task completion is BLOCKED until ALL planned subagents have been executed successfully. Manual completion of individual steps that subagents handle is a workflow violation.
+
+### MANDATORY: Subagent Workflow Verification
+**PRE-EXECUTION CHECKLIST**: Before starting ANY task involving code changes, the agent MUST:
+
+1. **Identify Required Subagents**: Determine which subagents are needed based on the task scope
+2. **Verify Availability**: Attempt to contact each required subagent to confirm availability
+3. **Document Status**: Record subagent availability status in TodoWrite
+4. **Halt if Unavailable**: If ANY required subagent is unavailable, STOP task execution immediately
+5. **Get User Authorization**: Inform user of unavailability and wait for explicit authorization to proceed with manual fallback
+
+**PROHIBITED SHORTCUTS**: The following actions are NEVER permitted when subagents are available:
+- Running `cargo test`, `cargo clippy`, `cargo fmt` manually during development
+- Running `npm run lint`, `npm run test`, `npm run typecheck` manually during development  
+- Executing `git add`, `git commit`, `git push` manually when git-workflow-manager is available
+- Creating commit messages manually when commit-message-specialist is available
+- Running any individual command that a specialized subagent is designed to handle
+
+**ENFORCEMENT**: Any violation of these requirements constitutes a critical workflow breach that must be immediately corrected.
 
 ### Emergency Procedures
 - **If quality checks fail**: Do not commit until all issues are resolved
-- **If subagents are unavailable**: Document the limitation and proceed with manual validation
+- **If subagents are unavailable**: HALT task execution, document the unavailability, and wait for user authorization before proceeding with manual fallback
 - **If git operations fail**: Investigate authentication, network, or repository issues before retrying
 - **If development servers won't stop**: Use `kill -9 <pid>` or `sudo lsof -ti:<port> | xargs kill -9` as last resort
+- **If workflow violations occur**: Immediately revert changes and restart using proper subagent workflow
 
 ## Workflow Validation and Slash Command Policy - CRITICAL ENFORCEMENT
 
@@ -188,10 +219,18 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 ### CRITICAL: Slash Command Restriction
 **The general-purpose agent must NEVER attempt to execute custom slash commands (`/mr-code`, `/mr-policy`).** These commands have specialized TodoWrite orchestration that only works when invoked by the user directly.
 
-## Specialized Subagent Usage Policy - CRITICAL ENFORCEMENT
-**VERY IMPORTANT**: Always use specialized subagents for their designated tasks - they exist to ensure quality and consistency. The main Claude agent should STRONGLY PREFER delegating to subagents rather than performing specialized tasks directly.
+## Specialized Subagent Usage Policy - MANDATORY ENFORCEMENT
+**CRITICAL REQUIREMENT**: The main Claude agent MUST USE specialized subagents for their designated tasks - they exist to ensure quality and consistency. Manual execution of subagent tasks is STRICTLY PROHIBITED.
 
-**Exception Handling**: Only bypass subagents if they are unavailable, malfunctioning, or would create excessive overhead for trivial operations.
+**ZERO EXCEPTIONS**: Subagents must be used regardless of perceived overhead, complexity, or convenience. There are no circumstances where bypassing subagents is permitted.
+
+**SUBAGENT AVAILABILITY VERIFICATION**: Before starting ANY task involving code changes, the agent MUST verify that required subagents are available. If subagents are unavailable, the task MUST be blocked until they become available or the user explicitly acknowledges the limitation and authorizes manual fallback.
+
+**WORKFLOW VIOLATION RESPONSE**: If the agent bypasses mandatory subagent usage:
+- IMMEDIATELY halt task execution
+- Document the violation in TodoWrite
+- Revert any changes made outside the subagent workflow
+- Restart the task using proper subagent delegation
 
 ### MANDATORY Subagent Usage:
 - **code-implementation-specialist**: For writing, editing, or creating code files for the Moodring project - handles all code implementation tasks including new features, modifications, database migrations, React Native components, and Rust backend code (does NOT handle testing, linting, or git operations)
@@ -204,6 +243,31 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **workflow-automation-analyst**: For repetitive manual tasks - evaluates workflow improvements
 
 **Note**: Subagent usage is automatically handled by `/mr-code` and `/mr-policy` slash commands. Manual subagent calls are only needed for direct implementation tasks.
+
+### CRITICAL: Task Execution Blocking Requirements
+**MANDATORY WORKFLOW GATES**: The following requirements MUST be met before task completion:
+
+1. **Pre-Task Verification**:
+   - Verify all required subagents are available before starting any code changes
+   - If subagents are unavailable, HALT execution and inform user
+   - Document subagent availability status in TodoWrite
+
+2. **During Development**:
+   - NO manual execution of quality commands (npm test, cargo clippy, etc.)
+   - NO manual git operations (git add, git commit, git push)
+   - NO manual creation of commit messages
+   - ALL individual commands must be delegated to appropriate subagents
+
+3. **Task Completion Blocking**:
+   - Task is NOT considered complete until ALL planned subagents have executed
+   - Manual shortcuts that bypass subagent workflows are workflow violations
+   - If a subagent fails, fix the underlying issue rather than bypassing with manual commands
+
+4. **Violation Recovery Protocol**:
+   - If manual commands are executed when subagents are available: HALT immediately
+   - Revert any changes made outside the subagent workflow
+   - Restart the task using proper subagent delegation
+   - Document the violation and recovery steps in TodoWrite
 
 ## CLAUDE.md Change Evaluation
 - **Before making ANY changes to CLAUDE.md**: Use `claude-md-policy-analyst` subagent to evaluate the proposed change for:
