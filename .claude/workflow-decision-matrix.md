@@ -125,13 +125,33 @@ Is this a development task that will modify files?
 - **Direct implementation** relies on CLAUDE.md fallback enforcement
 - **All file changes** must follow quality standards regardless of approach used
 
-## IMPORTANT: Agent Behavior
+## IMPORTANT: Agent Behavior - Context-Aware Slash Command Handling
 
-**The general-purpose agent should NEVER attempt to execute custom slash commands (`/mr-code`, `/mr-policy`).** Instead, when the decision matrix indicates a slash command should be used, the agent must:
+**The general-purpose agent should NEVER attempt to execute custom slash commands directly.** However, the agent's response must be context-aware:
 
+### When User is NOT Using a Slash Command:
+If the user requests a task that requires a slash command but didn't use one:
 1. **Stop execution** of the requested task
 2. **Inform the user** which slash command should be used
-3. **Explain why** that approach is recommended
+3. **Explain why** that approach is recommended  
 4. **Wait for the user** to execute the appropriate slash command
 
-This ensures proper workflow orchestration and prevents the agent from bypassing the specialized command systems.
+### When User IS Using the Correct Slash Command:
+If the user's request begins with the appropriate slash command (e.g., "/mr-code fix this bug"):
+1. **Proceed with the task** as requested
+2. **Do NOT interrupt** or suggest using the same command they already used
+3. **Cannot execute slash commands directly**, but should acknowledge the request appropriately
+
+### When User IS Using the Wrong Slash Command:
+If the user uses an inappropriate slash command for their task:
+1. **Stop execution** of the requested task
+2. **Inform the user** of the correct slash command to use instead
+3. **Explain why** the different approach is more appropriate
+4. **Wait for the user** to execute the correct slash command
+
+### Example Behaviors:
+- ❌ **"Fix this bug"** → Interrupt: "Please use /mr-bug for systematic debugging"
+- ✅ **"/mr-bug fix this bug"** → Proceed: "I'll help with systematic debugging of this issue"  
+- ❌ **"/mr-policy fix this bug"** → Redirect: "For bug fixing, please use /mr-bug instead of /mr-policy"
+
+This ensures proper workflow orchestration while preventing harmful interruption of users who already use the correct slash commands.
