@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { Dashboard } from '../Dashboard';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack } from '../../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../../types';
 
 // Mock the TrackCard component to avoid AuthContext dependency
 jest.mock('../../tracks/TrackCard', () => ({
-  TrackCard: ({ track }: { track: RecentTrack | TopTrack }) => {
+  TrackCard: ({ track }: { track: RecentTrack | TopTrack | SavedTrack }) => {
     const React = require('react');
     const { Text } = require('react-native');
     return React.createElement(Text, { testID: `track-card-${track.name}` }, `${track.name} by ${track.artist}`);
@@ -63,19 +63,34 @@ const mockTopTracks: TopTrack[] = [
   },
 ];
 
+const mockSavedTracks: SavedTrack[] = [
+  {
+    name: 'Saved Song 1',
+    artist: 'Saved Artist 1',
+    album: 'Saved Album 1',
+    album_image_url: 'https://example.com/saved1.jpg',
+    song_id: 'saved-song-1',
+    added_at: new Date().toISOString(),
+  },
+];
+
 const defaultProps = {
   user: mockUser,
   currentlyPlaying: mockCurrentlyPlaying,
   recentTracks: mockRecentTracks,
   topTracks: mockTopTracks,
+  savedTracks: mockSavedTracks,
   isRefreshing: false,
   isLoadingMore: false,
   isLoadingMoreTopTracks: false,
+  isLoadingMoreSavedTracks: false,
   hasMoreTracks: false,
   hasMoreTopTracks: false,
+  hasMoreSavedTracks: false,
   onRefresh: jest.fn(),
   onLoadMoreTracks: jest.fn(),
   onLoadMoreTopTracks: jest.fn(),
+  onLoadMoreSavedTracks: jest.fn(),
   onLogout: jest.fn(),
   onCreatePlaylist: jest.fn(),
   onBrowseTags: jest.fn(),
@@ -165,6 +180,22 @@ describe('Dashboard', () => {
     expect(screen.getByTestId('track-card-Top Song 1')).toBeTruthy();
   });
 
+  it('renders SavedTracksList with saved tracks', () => {
+    render(<Dashboard {...defaultProps} />);
+
+    // Verify the Saved Tracks section is rendered with the heading and content
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+    expect(screen.getByTestId('track-card-Saved Song 1')).toBeTruthy();
+  });
+
+  it('does not render SavedTracksList when savedTracks array is empty', () => {
+    render(<Dashboard {...defaultProps} savedTracks={[]} />);
+
+    // SavedTracksList should not be rendered when no saved tracks
+    expect(screen.queryByText('SAVED TRACKS')).toBeNull();
+    expect(screen.queryByTestId('track-card-Saved Song 1')).toBeNull();
+  });
+
   it('handles null currentlyPlaying', () => {
     render(<Dashboard {...defaultProps} currentlyPlaying={null} />);
 
@@ -177,6 +208,33 @@ describe('Dashboard', () => {
 
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('Recent Song 1')).toBeNull();
+  });
+
+  it('passes savedTracks loading props to SavedTracksList', () => {
+    render(
+      <Dashboard 
+        {...defaultProps} 
+        isLoadingMoreSavedTracks={true}
+        hasMoreSavedTracks={true}
+      />
+    );
+
+    // SavedTracksList should be rendered with saved tracks
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+  });
+
+  it('passes onLoadMoreSavedTracks callback to SavedTracksList', () => {
+    const mockOnLoadMoreSavedTracks = jest.fn();
+    
+    render(
+      <Dashboard 
+        {...defaultProps} 
+        onLoadMoreSavedTracks={mockOnLoadMoreSavedTracks}
+        hasMoreSavedTracks={true}
+      />
+    );
+
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
   });
 
   it('passes optional callback props when provided', () => {

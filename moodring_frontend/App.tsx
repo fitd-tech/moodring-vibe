@@ -31,11 +31,12 @@ const SCOPES = [
   'user-read-recently-played',
   'user-read-currently-playing',
   'user-top-read',
+  'user-library-read',
 ];
 
 const AppContent: React.FC = () => {
   const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
-  const { currentlyPlaying, recentTracks, topTracks, isRefreshing, isLoadingMore, isLoadingMoreTopTracks, hasMoreTracks, hasMoreTopTracks, refresh, loadActivity, loadMoreTracks, loadMoreTopTracks, resetToFreshState } =
+  const { currentlyPlaying, recentTracks, topTracks, savedTracks, isRefreshing, isLoadingMore, isLoadingMoreTopTracks, isLoadingMoreSavedTracks, hasMoreTracks, hasMoreTopTracks, hasMoreSavedTracks, refresh, loadActivity, loadMoreTracks, loadMoreTopTracks, loadMoreSavedTracks, resetToFreshState } =
     useSpotifyActivity();
   const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
 
@@ -133,14 +134,18 @@ const AppContent: React.FC = () => {
         currentlyPlaying={currentlyPlaying}
         recentTracks={recentTracks}
         topTracks={topTracks}
+        savedTracks={savedTracks}
         isRefreshing={isRefreshing}
         isLoadingMore={isLoadingMore}
         isLoadingMoreTopTracks={isLoadingMoreTopTracks}
+        isLoadingMoreSavedTracks={isLoadingMoreSavedTracks}
         hasMoreTracks={hasMoreTracks}
         hasMoreTopTracks={hasMoreTopTracks}
+        hasMoreSavedTracks={hasMoreSavedTracks}
         onRefresh={refresh}
         onLoadMoreTracks={loadMoreTracks}
         onLoadMoreTopTracks={loadMoreTopTracks}
+        onLoadMoreSavedTracks={loadMoreSavedTracks}
         onLogout={logout}
         onCreatePlaylist={handleCreatePlaylist}
         onBrowseTags={handleBrowseTags}

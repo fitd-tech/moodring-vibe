@@ -34,6 +34,15 @@ export interface TopTrack {
   popularity: number;
 }
 
+export interface SavedTrack {
+  name: string;
+  artist: string;
+  album: string;
+  album_image_url?: string;
+  song_id?: string;
+  added_at: string;
+}
+
 export interface CurrentlyPlaying {
   name: string;
   artist: string;
@@ -74,6 +83,20 @@ export interface SpotifyRecentTracksResponse {
 
 export interface SpotifyTopTracksResponse {
   items: SpotifyTrack[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface SpotifySavedTrackItem {
+  track: SpotifyTrack;
+  added_at: string;
+}
+
+export interface SpotifySavedTracksResponse {
+  items: SpotifySavedTrackItem[];
   total: number;
   limit: number;
   offset: number;

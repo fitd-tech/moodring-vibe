@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack } from '../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../types';
 import { ProfileMenu } from './ProfileMenu';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';
 import { TopTracksList } from '../tracks/TopTracksList';
+import { SavedTracksList } from '../tracks/SavedTracksList';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { theme } from '../../styles/theme';
 
@@ -15,14 +16,18 @@ interface DashboardProps {
   currentlyPlaying: CurrentlyPlaying | null;
   recentTracks: RecentTrack[];
   topTracks: TopTrack[];
+  savedTracks: SavedTrack[];
   isRefreshing: boolean;
   isLoadingMore?: boolean;
   isLoadingMoreTopTracks?: boolean;
+  isLoadingMoreSavedTracks?: boolean;
   hasMoreTracks?: boolean;
   hasMoreTopTracks?: boolean;
+  hasMoreSavedTracks?: boolean;
   onRefresh: () => void;
   onLoadMoreTracks?: () => Promise<void>;
   onLoadMoreTopTracks?: () => Promise<void>;
+  onLoadMoreSavedTracks?: () => Promise<void>;
   onLogout: () => void;
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
@@ -34,14 +39,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentlyPlaying,
   recentTracks,
   topTracks,
+  savedTracks,
   isRefreshing,
   isLoadingMore = false,
   isLoadingMoreTopTracks = false,
+  isLoadingMoreSavedTracks = false,
   hasMoreTracks = false,
   hasMoreTopTracks = false,
+  hasMoreSavedTracks = false,
   onRefresh,
   onLoadMoreTracks,
   onLoadMoreTopTracks,
+  onLoadMoreSavedTracks,
   onLogout,
   onCreatePlaylist,
   onBrowseTags,
@@ -94,6 +103,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onLoadMore={onLoadMoreTopTracks}
               hasMoreTracks={hasMoreTopTracks}
               isLoadingMore={isLoadingMoreTopTracks}
+            />
+          )}
+
+          {savedTracks.length > 0 && (
+            <SavedTracksList 
+              tracks={savedTracks} 
+              onLoadMore={onLoadMoreSavedTracks}
+              hasMoreTracks={hasMoreSavedTracks}
+              isLoadingMore={isLoadingMoreSavedTracks}
             />
           )}
         </View>

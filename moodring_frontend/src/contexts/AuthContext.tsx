@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { BackendUser } from '../types';
 import { authService } from '../services/authService';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: BackendUser | null;
   authToken: string | null;
   isLoading: boolean;

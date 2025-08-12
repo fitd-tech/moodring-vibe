@@ -2,9 +2,11 @@ import {
   SpotifyCurrentlyPlayingResponse,
   SpotifyRecentTracksResponse,
   SpotifyTopTracksResponse,
+  SpotifySavedTracksResponse,
   CurrentlyPlaying,
   RecentTrack,
   TopTrack,
+  SavedTrack,
 } from '../types';
 
 export class SpotifyApiService {
@@ -195,6 +197,81 @@ export class SpotifyApiService {
       }
       if (__DEV__) {
         console.warn('More top tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getSavedTracks(token: string, limit: number = 10): Promise<SavedTrack[]> {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifySavedTracksResponse;
+        return data.items.map(item => ({
+          name: item.track.name,
+          artist: item.track.artists[0]?.name || 'Unknown Artist',
+          album: item.track.album.name,
+          album_image_url: this.getImageUrl(item.track.album.images),
+          song_id: item.track.id,
+          added_at: item.added_at,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('Saved tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getMoreSavedTracks(token: string, offset: number): Promise<SavedTrack[]> {
+    try {
+      // Load 10 additional tracks at a time with offset
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?limit=10&offset=${offset}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifySavedTracksResponse;
+        return data.items.map(item => ({
+          name: item.track.name,
+          artist: item.track.artists[0]?.name || 'Unknown Artist',
+          album: item.track.album.name,
+          album_image_url: this.getImageUrl(item.track.album.images),
+          song_id: item.track.id,
+          added_at: item.added_at,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('More saved tracks fetch error:', error);
       }
       return [];
     }
