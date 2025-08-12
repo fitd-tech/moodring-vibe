@@ -51,9 +51,13 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ currentlyPlaying }) => {
         <TouchableOpacity style={styles.header} onPress={toggleExpansion}>
           <View style={styles.albumArt}>
             {currentlyPlaying.album_image_url ? (
-              <Image source={{ uri: currentlyPlaying.album_image_url }} style={styles.albumImage} />
+              <Image
+                source={{ uri: currentlyPlaying.album_image_url }}
+                style={styles.albumImage}
+                testID="album-image"
+              />
             ) : (
-              <View style={styles.albumPlaceholder} />
+              <View style={styles.albumPlaceholder} testID="album-placeholder" />
             )}
           </View>
           <View style={styles.trackInfo}>
@@ -64,6 +68,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ currentlyPlaying }) => {
           <View style={styles.actions}>
             <View
               style={[styles.playingIndicator, currentlyPlaying.is_playing && styles.playing]}
+              testID="playing-indicator"
             />
             <TouchableOpacity style={styles.menuButton}>
               <Animated.Text

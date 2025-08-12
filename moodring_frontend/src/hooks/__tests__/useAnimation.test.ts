@@ -92,7 +92,11 @@ describe('useAnimation', () => {
     const { result } = renderHook(() => useAnimation());
     const animatedValues = result.current.createAnimatedValues();
 
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
     expect(mockedAnimated.Value).toHaveBeenCalledTimes(4);
     expect(mockedAnimated.Value).toHaveBeenNthCalledWith(1, 0); // height
     expect(mockedAnimated.Value).toHaveBeenNthCalledWith(2, 0); // opacity
@@ -107,7 +111,11 @@ describe('useAnimation', () => {
 
   it('animates expansion when isExpanded is true', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),
@@ -148,7 +156,11 @@ describe('useAnimation', () => {
 
   it('animates collapse when isExpanded is false', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),
@@ -189,7 +201,11 @@ describe('useAnimation', () => {
 
   it('starts parallel animation', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),
@@ -213,7 +229,11 @@ describe('useAnimation', () => {
 
   it('handles animation completion callback', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),
@@ -237,7 +257,11 @@ describe('useAnimation', () => {
 
   it('maintains consistent animation duration base', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),
@@ -258,7 +282,11 @@ describe('useAnimation', () => {
 
   it('uses correct native driver settings', () => {
     const { result } = renderHook(() => useAnimation());
-    const mockedAnimated = Animated as typeof Animated & { timing: jest.Mock; spring: jest.Mock; parallel: jest.Mock; };
+    const mockedAnimated = Animated as typeof Animated & {
+      timing: jest.Mock;
+      spring: jest.Mock;
+      parallel: jest.Mock;
+    };
 
     const mockAnimatedValues: AnimatedValues = {
       scale: createMockAnimatedValue(),

@@ -10,25 +10,36 @@ const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
 
 // Mock TaggingInterface component
 jest.mock('../TaggingInterface', () => ({
-  TaggingInterface: ({ tags, onTagsChanged }: { 
-    tags: Array<{ id: number; name: string }>; 
+  TaggingInterface: ({
+    tags,
+    onTagsChanged,
+  }: {
+    tags: Array<{ id: number; name: string }>;
     onTagsChanged: (_tags: Array<{ id: number; name: string }>) => void;
   }) => {
     const React = require('react');
     const { View, Text, TouchableOpacity } = require('react-native');
-    return React.createElement(View, { testID: 'tagging-interface' },
+    return React.createElement(
+      View,
+      { testID: 'tagging-interface' },
       React.createElement(Text, null, 'Tags'),
-      React.createElement(View, null, 
-        tags?.map((tag: { id: number; name: string }) => 
+      React.createElement(
+        View,
+        null,
+        tags?.map((tag: { id: number; name: string }) =>
           React.createElement(Text, { key: tag.id }, tag.name)
         )
       ),
-      React.createElement(TouchableOpacity, { 
-        testID: 'add-tag-button',
-        onPress: () => onTagsChanged && onTagsChanged([...tags, { id: 99, name: 'new-tag' }])
-      }, React.createElement(Text, null, '+ Add'))
+      React.createElement(
+        TouchableOpacity,
+        {
+          testID: 'add-tag-button',
+          onPress: () => onTagsChanged && onTagsChanged([...tags, { id: 99, name: 'new-tag' }]),
+        },
+        React.createElement(Text, null, '+ Add')
+      )
     );
-  }
+  },
 }));
 
 // Mock the AuthContext hook
@@ -237,12 +248,12 @@ describe('TrackCard', () => {
   it('renders TaggingInterface in expanded state', async () => {
     // Mock the service to return tags immediately
     mockTaggingService.getSongTags.mockResolvedValueOnce(mockTags);
-    
+
     render(<TrackCard {...defaultProps} isExpanded={true} />);
 
     // Should start by showing loading
     expect(screen.getByText('Loading tags...')).toBeTruthy();
-    
+
     // Verify the service gets called
     await waitFor(() => {
       expect(mockTaggingService.getSongTags).toHaveBeenCalled();

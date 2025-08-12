@@ -76,21 +76,17 @@ export const TagCard: React.FC<TagCardProps> = ({
   const handleRemoveTag = async (songId: string) => {
     if (!user) return;
 
-    Alert.alert(
-      'Remove Tag',
-      `Remove "${tag.name}" tag from "${formatSongId(songId)}"?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => removeTagFromSong(songId),
-        },
-      ],
-    );
+    Alert.alert('Remove Tag', `Remove "${tag.name}" tag from "${formatSongId(songId)}"?`, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => removeTagFromSong(songId),
+      },
+    ]);
   };
 
   const removeTagFromSong = async (songId: string) => {
@@ -100,21 +96,17 @@ export const TagCard: React.FC<TagCardProps> = ({
 
     try {
       await taggingService.removeTagFromSong(songId, user.id, tag.id);
-      
+
       // Update local state by removing the song from the list
       setSongs(prevSongs => prevSongs.filter(id => id !== songId));
-      
+
       // Notify parent component if callback provided
       if (onTagRemoved) {
         onTagRemoved(tag.id, songId);
       }
     } catch (error) {
       console.error('Failed to remove tag from song:', error);
-      Alert.alert(
-        'Error',
-        'Failed to remove tag from song. Please try again.',
-        [{ text: 'OK' }],
-      );
+      Alert.alert('Error', 'Failed to remove tag from song. Please try again.', [{ text: 'OK' }]);
     } finally {
       setRemovingSongs(prev => {
         const newSet = new Set(prev);
@@ -181,9 +173,9 @@ export const TagCard: React.FC<TagCardProps> = ({
                           <View style={styles.songContent}>
                             <Text style={styles.songText}>{formatSongId(songId)}</Text>
                             {isRemoving ? (
-                              <ActivityIndicator 
-                                size="small" 
-                                color={theme.colors.accent.pink} 
+                              <ActivityIndicator
+                                size="small"
+                                color={theme.colors.accent.pink}
                                 style={styles.removeLoader}
                               />
                             ) : (

@@ -8,8 +8,12 @@ jest.mock('../../tracks/TrackCard', () => ({
   TrackCard: ({ track }: { track: RecentTrack | TopTrack | SavedTrack }) => {
     const React = require('react');
     const { Text } = require('react-native');
-    return React.createElement(Text, { testID: `track-card-${track.name}` }, `${track.name} by ${track.artist}`);
-  }
+    return React.createElement(
+      Text,
+      { testID: `track-card-${track.name}` },
+      `${track.name} by ${track.artist}`
+    );
+  },
 }));
 
 // Mock NowPlaying component
@@ -17,8 +21,14 @@ jest.mock('../../tracks/NowPlaying', () => ({
   NowPlaying: ({ currentlyPlaying }: { currentlyPlaying: CurrentlyPlaying | null }) => {
     const React = require('react');
     const { Text } = require('react-native');
-    return currentlyPlaying ? React.createElement(Text, { testID: 'now-playing' }, `Now Playing: ${currentlyPlaying.name}`) : null;
-  }
+    return currentlyPlaying
+      ? React.createElement(
+          Text,
+          { testID: 'now-playing' },
+          `Now Playing: ${currentlyPlaying.name}`
+        )
+      : null;
+  },
 }));
 
 const mockUser: BackendUser = {
@@ -212,11 +222,7 @@ describe('Dashboard', () => {
 
   it('passes savedTracks loading props to SavedTracksList', () => {
     render(
-      <Dashboard 
-        {...defaultProps} 
-        isLoadingMoreSavedTracks={true}
-        hasMoreSavedTracks={true}
-      />
+      <Dashboard {...defaultProps} isLoadingMoreSavedTracks={true} hasMoreSavedTracks={true} />
     );
 
     // SavedTracksList should be rendered with saved tracks
@@ -225,10 +231,10 @@ describe('Dashboard', () => {
 
   it('passes onLoadMoreSavedTracks callback to SavedTracksList', () => {
     const mockOnLoadMoreSavedTracks = jest.fn();
-    
+
     render(
-      <Dashboard 
-        {...defaultProps} 
+      <Dashboard
+        {...defaultProps}
         onLoadMoreSavedTracks={mockOnLoadMoreSavedTracks}
         hasMoreSavedTracks={true}
       />

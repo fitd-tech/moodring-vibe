@@ -36,8 +36,25 @@ const SCOPES = [
 
 const AppContent: React.FC = () => {
   const { user, authToken, isLoading, error, setUser, setAuthToken, setError, logout } = useAuth();
-  const { currentlyPlaying, recentTracks, topTracks, savedTracks, isRefreshing, isLoadingMore, isLoadingMoreTopTracks, isLoadingMoreSavedTracks, hasMoreTracks, hasMoreTopTracks, hasMoreSavedTracks, refresh, loadActivity, loadMoreTracks, loadMoreTopTracks, loadMoreSavedTracks, resetToFreshState } =
-    useSpotifyActivity();
+  const {
+    currentlyPlaying,
+    recentTracks,
+    topTracks,
+    savedTracks,
+    isRefreshing,
+    isLoadingMore,
+    isLoadingMoreTopTracks,
+    isLoadingMoreSavedTracks,
+    hasMoreTracks,
+    hasMoreTopTracks,
+    hasMoreSavedTracks,
+    refresh,
+    loadActivity,
+    loadMoreTracks,
+    loadMoreTopTracks,
+    loadMoreSavedTracks,
+    resetToFreshState,
+  } = useSpotifyActivity();
   const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
 
   const redirectUri = 'moodring://auth';

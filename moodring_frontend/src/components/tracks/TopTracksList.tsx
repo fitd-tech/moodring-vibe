@@ -11,35 +11,35 @@ interface TopTracksListProps {
   isLoadingMore?: boolean;
 }
 
-export const TopTracksList: React.FC<TopTracksListProps> = ({ 
-  tracks, 
-  onLoadMore, 
-  hasMoreTracks = false, 
-  isLoadingMore = false 
+export const TopTracksList: React.FC<TopTracksListProps> = ({
+  tracks,
+  onLoadMore,
+  hasMoreTracks = false,
+  isLoadingMore = false,
 }) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
   const prevTracksRef = useRef<TopTrack[]>([]);
-  
+
   const INITIAL_DISPLAY_COUNT = 10;
 
   // Reset showAll when tracks change due to refresh
   useEffect(() => {
     const prevTracks = prevTracksRef.current;
     const currentTracks = tracks;
-    
+
     // Check if this looks like a refresh (tracks replaced rather than appended)
     if (prevTracks.length > 0 && currentTracks.length > 0) {
       // If the first track changed, it's likely a refresh
       const firstTrackChanged = prevTracks[0]?.song_id !== currentTracks[0]?.song_id;
       // Or if we have fewer tracks than before (but more than 0)
       const tracksDecreased = currentTracks.length < prevTracks.length;
-      
+
       if (firstTrackChanged || tracksDecreased) {
         setShowAll(false);
       }
     }
-    
+
     // Update the ref with current tracks
     prevTracksRef.current = currentTracks;
   }, [tracks]);
@@ -61,7 +61,8 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
   };
 
   const displayedTracks = showAll ? tracks : tracks.slice(0, INITIAL_DISPLAY_COUNT);
-  const shouldShowSeeMoreButton = (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
+  const shouldShowSeeMoreButton =
+    (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
 
   if (tracks.length === 0) {
     return (
@@ -92,7 +93,7 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
       ))}
       {shouldShowSeeMoreButton && (
         <View style={styles.seeMoreContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.seeMoreButton}
             onPress={handleSeeMore}
             disabled={isLoadingMore}
@@ -103,9 +104,7 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
                 <Text style={styles.seeMoreText}>Loading...</Text>
               </View>
             ) : (
-              <Text style={styles.seeMoreText}>
-                See More
-              </Text>
+              <Text style={styles.seeMoreText}>See More</Text>
             )}
           </TouchableOpacity>
         </View>

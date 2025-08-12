@@ -60,7 +60,7 @@ describe('TaggingService', () => {
       // This is more reliable than testing dynamic environment variable changes
       const service = new TaggingService();
       const backendUrl = (service as unknown as { getBackendUrl(): string }).getBackendUrl();
-      
+
       // Should return the default value since we cleared env vars in beforeEach
       expect(backendUrl).toBe('http://localhost:8000');
     });
@@ -441,7 +441,7 @@ describe('TaggingService', () => {
       });
 
       const result = await taggingService.getSongsWithTag(1, 2);
-      
+
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/users/1/tags/2/songs', {
         headers: {
           'Content-Type': 'application/json',
@@ -469,7 +469,7 @@ describe('TaggingService', () => {
       });
 
       const result = await taggingService.getSongsWithTag(1, 1);
-      
+
       expect(result).toEqual([]);
     });
   });

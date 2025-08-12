@@ -12,18 +12,26 @@ const mockTaggingService = taggingService as jest.Mocked<typeof taggingService>;
 jest.mock('../../../styles/theme', () => ({
   theme: {
     colors: {
-      ui: { tag: '#ff6b9d', overlay: 'rgba(255, 255, 255, 0.1)', tagRemove: 'rgba(255, 255, 255, 0.2)' },
-      text: { primary: '#ffffff', muted: 'rgba(255, 255, 255, 0.6)', secondary: 'rgba(255, 255, 255, 0.8)' },
+      ui: {
+        tag: '#ff6b9d',
+        overlay: 'rgba(255, 255, 255, 0.1)',
+        tagRemove: 'rgba(255, 255, 255, 0.2)',
+      },
+      text: {
+        primary: '#ffffff',
+        muted: 'rgba(255, 255, 255, 0.6)',
+        secondary: 'rgba(255, 255, 255, 0.8)',
+      },
       background: { primary: '#1a0a1a' },
-      accent: { purple: '#8a2be2' }
+      accent: { purple: '#8a2be2' },
     },
     spacing: { xs: 4, sm: 8, lg: 16, xl: 20 },
     borderRadius: { lg: 12 },
     typography: {
       fontSize: { sm: 14, md: 16 },
-      fontWeight: { medium: '500', semibold: '600', bold: '700' }
-    }
-  }
+      fontWeight: { medium: '500', semibold: '600', bold: '700' },
+    },
+  },
 }));
 
 // Mock the AuthContext hook

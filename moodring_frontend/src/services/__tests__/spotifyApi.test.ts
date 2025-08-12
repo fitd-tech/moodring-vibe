@@ -618,14 +618,11 @@ describe('spotifyApi', () => {
         },
       ]);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.spotify.com/v1/me/tracks?limit=10',
-        {
-          headers: {
-            Authorization: `Bearer ${mockToken}`,
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/tracks?limit=10', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+        },
+      });
     });
 
     it('uses custom limit parameter', async () => {
@@ -639,14 +636,11 @@ describe('spotifyApi', () => {
 
       await spotifyApi.getSavedTracks(mockToken, 20);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.spotify.com/v1/me/tracks?limit=20',
-        {
-          headers: {
-            Authorization: `Bearer ${mockToken}`,
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/tracks?limit=20', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+        },
+      });
     });
 
     it('returns empty array when no saved tracks', async () => {
@@ -755,6 +749,104 @@ describe('spotifyApi', () => {
 
       const result = await spotifyApi.getSavedTracks(mockToken);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getMoreRecentTracks', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns more recent tracks with before parameter', async () => {
+      const mockResponse = {
+        items: [
+          {
+            track: {
+              name: 'More Recent Song 1',
+              artists: [{ name: 'More Recent Artist 1' }],
+              album: {
+                name: 'More Recent Album 1',
+                images: [{ url: 'https://example.com/more-recent1.jpg' }],
+              },
+            },
+            played_at: '2025-08-07T23:00:00Z',
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreRecentTracks(mockToken, '1691449200000');
+
+      expect(result).toEqual([
+        {
+          name: 'More Recent Song 1',
+          artist: 'More Recent Artist 1',
+          album: 'More Recent Album 1',
+          album_image_url: 'https://example.com/more-recent1.jpg',
+          played_at: '2025-08-07T23:00:00Z',
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/player/recently-played?limit=10&before=1691449200000',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('returns more recent tracks without before parameter', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      await spotifyApi.getMoreRecentTracks(mockToken);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/player/recently-played?limit=10',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('handles API errors gracefully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getMoreRecentTracks(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles network errors gracefully', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await spotifyApi.getMoreRecentTracks(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('throws TOKEN_EXPIRED on 401 response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getMoreRecentTracks(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
     });
   });
 

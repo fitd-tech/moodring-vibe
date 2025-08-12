@@ -144,7 +144,9 @@ describe('TagsDashboard', () => {
 
       await waitFor(() => {
         expect(getByText('No tags yet')).toBeTruthy();
-        expect(getByText('Start tagging your favorite songs to organize your music collection')).toBeTruthy();
+        expect(
+          getByText('Start tagging your favorite songs to organize your music collection')
+        ).toBeTruthy();
       });
     });
   });

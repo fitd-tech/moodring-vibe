@@ -90,16 +90,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <NowPlaying currentlyPlaying={currentlyPlaying} />
 
-          <RecentTracksList 
-            tracks={recentTracks} 
+          <RecentTracksList
+            tracks={recentTracks}
             onLoadMore={onLoadMoreTracks}
             hasMoreTracks={hasMoreTracks}
             isLoadingMore={isLoadingMore}
           />
 
           {topTracks.length > 0 && (
-            <TopTracksList 
-              tracks={topTracks} 
+            <TopTracksList
+              tracks={topTracks}
               onLoadMore={onLoadMoreTopTracks}
               hasMoreTracks={hasMoreTopTracks}
               isLoadingMore={isLoadingMoreTopTracks}
@@ -107,8 +107,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           )}
 
           {savedTracks.length > 0 && (
-            <SavedTracksList 
-              tracks={savedTracks} 
+            <SavedTracksList
+              tracks={savedTracks}
               onLoadMore={onLoadMoreSavedTracks}
               hasMoreTracks={hasMoreSavedTracks}
               isLoadingMore={isLoadingMoreSavedTracks}

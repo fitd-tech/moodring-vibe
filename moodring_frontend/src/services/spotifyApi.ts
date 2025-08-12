@@ -92,10 +92,10 @@ export class SpotifyApiService {
   async getMoreRecentTracks(token: string, before?: string): Promise<RecentTrack[]> {
     try {
       // Load 10 additional tracks at a time
-      const url = before 
+      const url = before
         ? `https://api.spotify.com/v1/me/player/recently-played?limit=10&before=${before}`
         : `https://api.spotify.com/v1/me/player/recently-played?limit=10`;
-      
+
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -127,7 +127,11 @@ export class SpotifyApiService {
     }
   }
 
-  async getTopTracks(token: string, timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term', limit: number = 10): Promise<TopTrack[]> {
+  async getTopTracks(
+    token: string,
+    timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term',
+    limit: number = 10
+  ): Promise<TopTrack[]> {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
@@ -164,7 +168,11 @@ export class SpotifyApiService {
     }
   }
 
-  async getMoreTopTracks(token: string, offset: number, timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term'): Promise<TopTrack[]> {
+  async getMoreTopTracks(
+    token: string,
+    offset: number,
+    timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term'
+  ): Promise<TopTrack[]> {
     try {
       // Load 10 additional tracks at a time with offset
       const response = await fetch(
@@ -204,14 +212,11 @@ export class SpotifyApiService {
 
   async getSavedTracks(token: string, limit: number = 10): Promise<SavedTrack[]> {
     try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/tracks?limit=${limit}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = (await response.json()) as SpotifySavedTracksResponse;
