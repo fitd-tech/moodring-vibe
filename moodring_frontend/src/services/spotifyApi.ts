@@ -212,15 +212,38 @@ export class SpotifyApiService {
 
   async getSavedTracks(token: string, limit: number = 10): Promise<SavedTrack[]> {
     try {
+      if (__DEV__) {
+        console.log('[SpotifyApi] Fetching saved tracks with limit:', limit);
+      }
+
       const response = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      if (__DEV__) {
+        console.log('[SpotifyApi] Saved tracks response status:', response.status);
+        console.log('[SpotifyApi] Saved tracks response headers:', response.headers);
+      }
+
       if (response.ok) {
         const data = (await response.json()) as SpotifySavedTracksResponse;
-        return data.items.map(item => ({
+        
+        if (__DEV__) {
+          console.log('[SpotifyApi] Saved tracks raw response data:', {
+            total: data.total,
+            itemsCount: data.items?.length || 0,
+            hasNext: data.next !== null,
+            sampleItem: data.items?.[0] ? {
+              trackName: data.items[0].track.name,
+              trackId: data.items[0].track.id,
+              addedAt: data.items[0].added_at,
+            } : null,
+          });
+        }
+
+        const mappedTracks = data.items.map(item => ({
           name: item.track.name,
           artist: item.track.artists[0]?.name || 'Unknown Artist',
           album: item.track.album.name,
@@ -228,17 +251,43 @@ export class SpotifyApiService {
           song_id: item.track.id,
           added_at: item.added_at,
         }));
+
+        if (__DEV__) {
+          console.log('[SpotifyApi] Mapped saved tracks count:', mappedTracks.length);
+        }
+
+        return mappedTracks;
       } else if (response.status === 401) {
+        if (__DEV__) {
+          console.warn('[SpotifyApi] Token expired for saved tracks');
+        }
         throw new Error('TOKEN_EXPIRED');
+      } else if (response.status === 403) {
+        if (__DEV__) {
+          console.error('[SpotifyApi] Permission denied for saved tracks - scope may be missing');
+        }
+        throw new Error('PERMISSION_DENIED');
+      } else {
+        if (__DEV__) {
+          const errorText = await response.text();
+          console.error('[SpotifyApi] Saved tracks fetch failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorBody: errorText,
+          });
+        }
       }
 
       return [];
     } catch (error) {
-      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+      if (error instanceof Error && (error.message === 'TOKEN_EXPIRED' || error.message === 'PERMISSION_DENIED')) {
         throw error;
       }
       if (__DEV__) {
-        console.warn('Saved tracks fetch error:', error);
+        console.error('[SpotifyApi] Saved tracks fetch error:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
       return [];
     }

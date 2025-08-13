@@ -64,50 +64,56 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   const shouldShowSeeMoreButton =
     (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
 
-  if (tracks.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No saved tracks found</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SAVED TRACKS</Text>
-      {displayedTracks.map((track, index) => (
-        <TrackCard
-          key={`${track.song_id || track.name}-${track.added_at}-${index}`}
-          track={{
-            name: track.name,
-            artist: track.artist,
-            album: track.album,
-            album_image_url: track.album_image_url,
-            played_at: track.added_at, // Use added_at for saved tracks
-            song_id: track.song_id,
-          }}
-          _index={index}
-          isExpanded={expandedTrack === index}
-          onToggleExpansion={handleToggleExpansion}
-        />
-      ))}
-      {shouldShowSeeMoreButton && (
-        <View style={styles.seeMoreContainer}>
-          <TouchableOpacity
-            style={styles.seeMoreButton}
-            onPress={handleSeeMore}
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={theme.colors.text.primary} />
-                <Text style={styles.seeMoreText}>Loading...</Text>
-              </View>
-            ) : (
-              <Text style={styles.seeMoreText}>See More</Text>
-            )}
-          </TouchableOpacity>
+      {tracks.length === 0 ? (
+        <View style={styles.emptyStateContainer}>
+          <Text style={styles.emptyStateTitle}>No liked songs found</Text>
+          <Text style={styles.emptyStateDescription}>
+            Like songs in Spotify to see them here. Hearts you tap in Spotify will appear in this section.
+          </Text>
+          <Text style={styles.emptyStateHint}>
+            Try pulling down to refresh after liking songs in Spotify.
+          </Text>
         </View>
+      ) : (
+        <>
+          {displayedTracks.map((track, index) => (
+            <TrackCard
+              key={`${track.song_id || track.name}-${track.added_at}-${index}`}
+              track={{
+                name: track.name,
+                artist: track.artist,
+                album: track.album,
+                album_image_url: track.album_image_url,
+                played_at: track.added_at, // Use added_at for saved tracks
+                song_id: track.song_id,
+              }}
+              _index={index}
+              isExpanded={expandedTrack === index}
+              onToggleExpansion={handleToggleExpansion}
+            />
+          ))}
+          {shouldShowSeeMoreButton && (
+            <View style={styles.seeMoreContainer}>
+              <TouchableOpacity
+                style={styles.seeMoreButton}
+                onPress={handleSeeMore}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={theme.colors.text.primary} />
+                    <Text style={styles.seeMoreText}>Loading...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.seeMoreText}>See More</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -133,6 +139,35 @@ const styles = StyleSheet.create({
   emptyText: {
     color: theme.colors.text.muted,
     fontSize: theme.typography.fontSize.md,
+    fontStyle: 'italic',
+  },
+  emptyStateContainer: {
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.lg,
+    marginVertical: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.ui.border,
+  },
+  emptyStateTitle: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.md,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+    lineHeight: 20,
+  },
+  emptyStateHint: {
+    color: theme.colors.text.muted,
+    fontSize: theme.typography.fontSize.sm,
+    textAlign: 'center',
     fontStyle: 'italic',
   },
   seeMoreContainer: {

@@ -106,14 +106,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             />
           )}
 
-          {savedTracks.length > 0 && (
-            <SavedTracksList
-              tracks={savedTracks}
-              onLoadMore={onLoadMoreSavedTracks}
-              hasMoreTracks={hasMoreSavedTracks}
-              isLoadingMore={isLoadingMoreSavedTracks}
-            />
-          )}
+          <SavedTracksList
+            tracks={savedTracks}
+            onLoadMore={onLoadMoreSavedTracks}
+            hasMoreTracks={hasMoreSavedTracks}
+            isLoadingMore={isLoadingMoreSavedTracks}
+          />
         </View>
       </ScrollView>
 
