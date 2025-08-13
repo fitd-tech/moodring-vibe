@@ -23,16 +23,13 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
 
   const INITIAL_DISPLAY_COUNT = 10;
 
-  // Reset showAll when tracks change due to refresh
+  // Reset showAll when tracks change due to refresh (simplified logic)
   useEffect(() => {
     const prevTracks = prevTracksRef.current;
     const currentTracks = tracks;
 
-    // Check if this looks like a refresh (tracks replaced rather than appended)
     if (prevTracks.length > 0 && currentTracks.length > 0) {
-      // If the first track changed, it's likely a refresh
       const firstTrackChanged = prevTracks[0]?.played_at !== currentTracks[0]?.played_at;
-      // Or if we have fewer tracks than before (but more than 0)
       const tracksDecreased = currentTracks.length < prevTracks.length;
 
       if (firstTrackChanged || tracksDecreased) {
@@ -40,7 +37,6 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
       }
     }
 
-    // Update the ref with current tracks
     prevTracksRef.current = currentTracks;
   }, [tracks]);
 
@@ -50,12 +46,9 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
 
   const handleSeeMore = async () => {
     if (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) {
-      // If we have more than 10 tracks locally and not showing all, expand them
       setShowAll(true);
     } else if (onLoadMore && hasMoreTracks) {
-      // Otherwise, load more tracks from API
       await onLoadMore();
-      // After loading new tracks, show all available tracks
       setShowAll(true);
     }
   };

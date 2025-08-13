@@ -8,7 +8,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { RecentTrack, Tag } from '../../types';
+import { Track, Tag } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
 import { TaggingInterface } from './TaggingInterface';
 import { useAnimation } from '../../hooks/useAnimation';
@@ -17,7 +17,7 @@ import { taggingService } from '../../services/taggingService';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface TrackCardProps {
-  track: RecentTrack;
+  track: Track;
   _index: number;
   isExpanded: boolean;
   onToggleExpansion: (_index: number) => void;
@@ -95,7 +95,14 @@ export const TrackCard: React.FC<TrackCardProps> = ({
             {track.album && <Text style={styles.trackAlbum}>Album: {track.album}</Text>}
           </View>
           <View style={styles.actions}>
-            <Text style={styles.trackTime}>{formatTime(track.played_at)}</Text>
+            <Text style={styles.trackTime}>
+              {'played_at' in track 
+                ? formatTime(track.played_at) 
+                : 'added_at' in track 
+                  ? formatTime(track.added_at)
+                  : ''
+              }
+            </Text>
           </View>
         </TouchableOpacity>
 

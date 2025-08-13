@@ -50,6 +50,8 @@ export interface CurrentlyPlaying {
   album_image_url?: string;
   is_playing: boolean;
   song_id?: string;
+  progress_ms?: number;
+  duration_ms?: number;
 }
 
 export interface SpotifyTrack {
@@ -146,3 +148,6 @@ export interface AnimatedValues {
   scale: import('react-native').Animated.Value;
   rotation: import('react-native').Animated.Value;
 }
+
+// Union type for tracks that can be displayed in TracksList
+export type Track = RecentTrack | TopTrack | SavedTrack;

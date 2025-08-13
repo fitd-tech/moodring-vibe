@@ -37,26 +37,27 @@ export const TagCard: React.FC<TagCardProps> = ({
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
   const [removingSongs, setRemovingSongs] = useState<Set<string>>(new Set());
 
+  const loadTaggedSongs = React.useCallback(async () => {
+    if (!user) return;
+
+    setIsLoadingSongs(true);
+    
+    try {
+      const taggedSongs = await taggingService.getSongsWithTag(user.id, tag.id);
+      setSongs(taggedSongs);
+      setIsLoadingSongs(false);
+    } catch (error) {
+      console.error('Failed to load tagged songs:', error);
+      setSongs([]);
+      setIsLoadingSongs(false);
+    }
+  }, [user, tag.id]);
+
   useEffect(() => {
     if (isExpanded && user) {
       loadTaggedSongs();
     }
-  }, [isExpanded, user]);
-
-  const loadTaggedSongs = async () => {
-    if (!user) return;
-
-    setIsLoadingSongs(true);
-    try {
-      const taggedSongs = await taggingService.getSongsWithTag(user.id, tag.id);
-      setSongs(taggedSongs);
-    } catch (error) {
-      console.error('Failed to load tagged songs:', error);
-      setSongs([]);
-    } finally {
-      setIsLoadingSongs(false);
-    }
-  };
+  }, [isExpanded, user, loadTaggedSongs]);
 
   React.useEffect(() => {
     animateExpansion(animatedValues, isExpanded);

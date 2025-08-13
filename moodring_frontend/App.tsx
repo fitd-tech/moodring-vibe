@@ -62,7 +62,6 @@ const AppContent: React.FC = () => {
   // Navigation handlers
   const handleCreatePlaylist = () => {
     // TODO: Implement create playlist functionality
-    console.log('Create playlist pressed');
   };
 
   const handleBrowseTags = () => {
@@ -77,7 +76,6 @@ const AppContent: React.FC = () => {
 
   const handleSettings = () => {
     // TODO: Implement settings functionality
-    console.log('Settings pressed');
   };
 
   const [request, response, promptAsync] = useAuthRequest(

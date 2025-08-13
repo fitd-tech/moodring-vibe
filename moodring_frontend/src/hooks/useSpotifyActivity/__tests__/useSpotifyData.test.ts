@@ -1,0 +1,556 @@
+import { renderHook, act } from '@testing-library/react-native';
+import { useSpotifyData } from '../useSpotifyData';
+import { spotifyApi } from '../../../services/spotifyApi';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../../types';
+
+// Mock the modules
+jest.mock('../../../services/spotifyApi');
+jest.mock('../useSpotifyTokenManagement');
+
+const mockSpotifyApi = spotifyApi as jest.Mocked<typeof spotifyApi>;
+
+// Mock useSpotifyTokenManagement
+const mockUseSpotifyTokenManagement = jest.fn();
+jest.mock('../useSpotifyTokenManagement', () => ({
+  useSpotifyTokenManagement: () => mockUseSpotifyTokenManagement(),
+}));
+
+// Define mock user type with fixed timestamp to avoid timing issues
+const FIXED_TIMESTAMP = '2025-08-13T05:29:58.479Z';
+
+const createMockUser = (id: number): BackendUser => ({
+  id,
+  spotify_id: `spotify_${id}`,
+  email: `user${id}@example.com`,
+  display_name: `User ${id}`,
+  spotify_access_token: 'mock_access_token',
+  spotify_refresh_token: 'mock_refresh_token',
+  token_expires_at: FIXED_TIMESTAMP,
+  profile_image_url: null,
+  created_at: FIXED_TIMESTAMP,
+  updated_at: FIXED_TIMESTAMP,
+});
+
+const mockCurrentlyPlaying: CurrentlyPlaying = {
+  name: 'Test Song',
+  artist: 'Test Artist',
+  album: 'Test Album',
+  album_image_url: 'https://example.com/album.jpg',
+  is_playing: true,
+  progress_ms: 60000,
+  duration_ms: 240000,
+};
+
+const mockRecentTracks: RecentTrack[] = [
+  {
+    name: 'Recent Track 1',
+    artist: 'Recent Artist 1',
+    album: 'Recent Album 1',
+    album_image_url: 'https://example.com/recent1.jpg',
+    played_at: '2023-01-01T12:00:00Z',
+  },
+  {
+    name: 'Recent Track 2',
+    artist: 'Recent Artist 2',
+    album: 'Recent Album 2',
+    album_image_url: 'https://example.com/recent2.jpg',
+    played_at: '2023-01-01T11:00:00Z',
+  },
+];
+
+const mockTopTracks: TopTrack[] = [
+  {
+    song_id: 'top1',
+    name: 'Top Track 1',
+    artist: 'Top Artist 1',
+    album: 'Top Album 1',
+    album_image_url: 'https://example.com/top1.jpg',
+    popularity: 95,
+  },
+  {
+    song_id: 'top2',
+    name: 'Top Track 2',
+    artist: 'Top Artist 2',
+    album: 'Top Album 2',
+    album_image_url: 'https://example.com/top2.jpg',
+    popularity: 90,
+  },
+];
+
+const mockSavedTracks: SavedTrack[] = [
+  {
+    song_id: 'saved1',
+    name: 'Saved Track 1',
+    artist: 'Saved Artist 1',
+    album: 'Saved Album 1',
+    album_image_url: 'https://example.com/saved1.jpg',
+    added_at: '2023-01-01T12:00:00Z',
+  },
+  {
+    song_id: 'saved2',
+    name: 'Saved Track 2',
+    artist: 'Saved Artist 2',
+    album: 'Saved Album 2',
+    album_image_url: 'https://example.com/saved2.jpg',
+    added_at: '2023-01-01T11:00:00Z',
+  },
+];
+
+describe('useSpotifyData', () => {
+  const mockRefreshUserToken = jest.fn();
+  const mockGetValidToken = jest.fn();
+  const mockHandleTokenExpiredError = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Set up mock return values
+    mockUseSpotifyTokenManagement.mockReturnValue({
+      getValidToken: mockGetValidToken,
+      handleTokenExpiredError: mockHandleTokenExpiredError,
+    });
+
+    mockGetValidToken.mockResolvedValue({
+      token: 'valid_token',
+      user: createMockUser(1),
+    });
+
+    mockHandleTokenExpiredError.mockImplementation((error, user, apiCall) => {
+      if (error.message === 'TOKEN_EXPIRED') {
+        return apiCall('refreshed_token');
+      }
+      return null;
+    });
+
+    // Set default mock return values
+    mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(mockCurrentlyPlaying);
+    mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
+    mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
+    mockSpotifyApi.getSavedTracks.mockResolvedValue(mockSavedTracks);
+  });
+
+  describe('fetchCurrentlyPlaying', () => {
+    it('successfully fetches currently playing data', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const currentlyPlaying = await act(async () => {
+        return await result.current.fetchCurrentlyPlaying('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledWith('test_token');
+      expect(currentlyPlaying).toEqual(mockCurrentlyPlaying);
+    });
+
+    it('handles TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getCurrentlyPlaying
+        .mockRejectedValueOnce(tokenExpiredError)
+        .mockResolvedValueOnce(mockCurrentlyPlaying);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const currentlyPlaying = await act(async () => {
+        return await result.current.fetchCurrentlyPlaying('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(currentlyPlaying).toEqual(mockCurrentlyPlaying);
+    });
+
+    it('handles other errors', async () => {
+      const testUser = createMockUser(1);
+      const networkError = new Error('Network Error');
+      
+      mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(networkError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const currentlyPlaying = await act(async () => {
+        return await result.current.fetchCurrentlyPlaying('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        networkError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(currentlyPlaying).toBeNull();
+    });
+  });
+
+  describe('fetchRecentTracks', () => {
+    it('successfully fetches recent tracks with default limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const recentTracks = await act(async () => {
+        return await result.current.fetchRecentTracks('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('test_token', 10);
+      expect(recentTracks).toEqual(mockRecentTracks);
+    });
+
+    it('successfully fetches recent tracks with custom limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const recentTracks = await act(async () => {
+        return await result.current.fetchRecentTracks('test_token', testUser, 20);
+      });
+
+      expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('test_token', 20);
+      expect(recentTracks).toEqual(mockRecentTracks);
+    });
+
+    it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getRecentTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const recentTracks = await act(async () => {
+        return await result.current.fetchRecentTracks('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(recentTracks).toEqual([]);
+    });
+
+    it('successfully recovers from TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getRecentTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(mockRecentTracks);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const recentTracks = await act(async () => {
+        return await result.current.fetchRecentTracks('test_token', testUser);
+      });
+
+      expect(recentTracks).toEqual(mockRecentTracks);
+    });
+  });
+
+  describe('fetchTopTracks', () => {
+    it('successfully fetches top tracks with default parameters', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const topTracks = await act(async () => {
+        return await result.current.fetchTopTracks('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('test_token', 'medium_term', 10);
+      expect(topTracks).toEqual(mockTopTracks);
+    });
+
+    it('successfully fetches top tracks with custom parameters', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const topTracks = await act(async () => {
+        return await result.current.fetchTopTracks('test_token', testUser, 'short_term', 20);
+      });
+
+      expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('test_token', 'short_term', 20);
+      expect(topTracks).toEqual(mockTopTracks);
+    });
+
+    it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getTopTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const topTracks = await act(async () => {
+        return await result.current.fetchTopTracks('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(topTracks).toEqual([]);
+    });
+
+    it('successfully recovers from TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getTopTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(mockTopTracks);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const topTracks = await act(async () => {
+        return await result.current.fetchTopTracks('test_token', testUser, 'long_term', 15);
+      });
+
+      expect(topTracks).toEqual(mockTopTracks);
+    });
+  });
+
+  describe('fetchSavedTracks', () => {
+    it('successfully fetches saved tracks with default limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 10);
+      expect(savedTracks).toEqual(mockSavedTracks);
+    });
+
+    it('successfully fetches saved tracks with custom limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser, 25);
+      });
+
+      expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 25);
+      expect(savedTracks).toEqual(mockSavedTracks);
+    });
+
+    it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getSavedTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedTracks).toEqual([]);
+    });
+
+    it('successfully recovers from TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+      
+      mockSpotifyApi.getSavedTracks.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(mockSavedTracks);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      expect(savedTracks).toEqual(mockSavedTracks);
+    });
+  });
+
+  describe('fetchAllInitialData', () => {
+    it('successfully fetches all initial data', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const allData = await act(async () => {
+        return await result.current.fetchAllInitialData('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('test_token', 10);
+      expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('test_token', 'medium_term', 10);
+      expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 10);
+
+      expect(allData).toEqual({
+        currentlyPlayingData: mockCurrentlyPlaying,
+        recentTracksData: mockRecentTracks,
+        topTracksData: mockTopTracks,
+        savedTracksData: mockSavedTracks,
+      });
+    });
+
+    it('handles mixed success and failure scenarios', async () => {
+      const testUser = createMockUser(1);
+      
+      // Mock some API calls to fail
+      mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('API_ERROR'));
+      mockHandleTokenExpiredError.mockImplementation((error, user, apiCall) => {
+        // Return null for getCurrentlyPlaying, success for others
+        if (apiCall === mockSpotifyApi.getCurrentlyPlaying) {
+          return Promise.resolve(null);
+        }
+        return apiCall('refreshed_token');
+      });
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const allData = await act(async () => {
+        return await result.current.fetchAllInitialData('test_token', testUser);
+      });
+
+      expect(allData.currentlyPlayingData).toBeNull();
+      expect(allData.recentTracksData).toEqual(mockRecentTracks);
+      expect(allData.topTracksData).toEqual(mockTopTracks);
+      expect(allData.savedTracksData).toEqual(mockSavedTracks);
+    });
+
+    it('executes all API calls in parallel', async () => {
+      const testUser = createMockUser(1);
+      
+      // Track call order
+      const callOrder: string[] = [];
+      
+      mockSpotifyApi.getCurrentlyPlaying.mockImplementation(async () => {
+        callOrder.push('currently-playing-start');
+        await new Promise(resolve => setTimeout(resolve, 10));
+        callOrder.push('currently-playing-end');
+        return mockCurrentlyPlaying;
+      });
+      
+      mockSpotifyApi.getRecentTracks.mockImplementation(async () => {
+        callOrder.push('recent-tracks-start');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        callOrder.push('recent-tracks-end');
+        return mockRecentTracks;
+      });
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      await act(async () => {
+        await result.current.fetchAllInitialData('test_token', testUser);
+      });
+
+      // All API calls should start before any end
+      expect(callOrder.indexOf('currently-playing-start')).toBeLessThan(callOrder.indexOf('currently-playing-end'));
+      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(callOrder.indexOf('recent-tracks-end'));
+      
+      // Recent tracks should start before currently playing ends (proving parallelism)
+      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(callOrder.indexOf('currently-playing-end'));
+    });
+  });
+
+  describe('getValidToken integration', () => {
+    it('uses getValidToken for consistent token management', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      // The hook should expose getValidToken
+      expect(result.current.getValidToken).toBeDefined();
+      expect(typeof result.current.getValidToken).toBe('function');
+
+      // Test that it's accessible
+      const tokenResult = await act(async () => {
+        return await result.current.getValidToken();
+      });
+
+      expect(mockGetValidToken).toHaveBeenCalled();
+      expect(tokenResult).toEqual({
+        token: 'valid_token',
+        user: createMockUser(1),
+      });
+    });
+  });
+
+  describe('Error handling edge cases', () => {
+    it('handles null responses from token management', async () => {
+      const testUser = createMockUser(1);
+      
+      mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('TOKEN_EXPIRED'));
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const currentlyPlaying = await act(async () => {
+        return await result.current.fetchCurrentlyPlaying('test_token', testUser);
+      });
+
+      expect(currentlyPlaying).toBeNull();
+    });
+
+    it('propagates non-TOKEN_EXPIRED errors', async () => {
+      const testUser = createMockUser(1);
+      const networkError = new Error('Network failure');
+      
+      mockSpotifyApi.getRecentTracks.mockRejectedValue(networkError);
+      mockHandleTokenExpiredError.mockRejectedValue(networkError);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      await act(async () => {
+        await expect(
+          result.current.fetchRecentTracks('test_token', testUser)
+        ).rejects.toThrow('Network failure');
+      });
+    });
+  });
+});

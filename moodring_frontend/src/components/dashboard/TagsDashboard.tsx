@@ -70,7 +70,6 @@ export const TagsDashboard: React.FC<TagsDashboardProps> = ({
   const handleTagRemoved = (_tagId: number, _songId: string) => {
     // This callback is called when a tag is removed from a song
     // We can use this to trigger any necessary refreshes or updates
-    console.log(`Tag ${_tagId} removed from song ${_songId}`);
     // Optionally refresh tags if needed to update counts, etc.
     // loadTags(true);
   };
