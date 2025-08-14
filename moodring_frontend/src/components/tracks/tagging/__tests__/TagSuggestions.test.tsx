@@ -208,7 +208,7 @@ describe('TagSuggestions', () => {
       );
 
       const toggleButton = screen.getByText('Show Available Tags (5)');
-      
+
       fireEvent.press(toggleButton);
       fireEvent.press(toggleButton);
       fireEvent.press(toggleButton);
@@ -289,7 +289,7 @@ describe('TagSuggestions', () => {
       );
 
       const rockTag = screen.getByText('rock');
-      
+
       fireEvent.press(rockTag);
       fireEvent.press(rockTag);
 
@@ -313,7 +313,7 @@ describe('TagSuggestions', () => {
       const touchableOpacities = UNSAFE_getAllByType(require('react-native').TouchableOpacity);
       // First TouchableOpacity is the toggle button, rest are tag buttons
       const tagButtons = touchableOpacities.slice(1);
-      
+
       expect(tagButtons[0].props.disabled).toBe(true);
       expect(tagButtons[1].props.disabled).toBe(true);
     });
@@ -470,7 +470,7 @@ describe('TagSuggestions', () => {
         {
           id: 2,
           user_id: 1,
-          name: '90\'s music',
+          name: "90's music",
           color: '#00ff00',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
@@ -496,7 +496,7 @@ describe('TagSuggestions', () => {
       );
 
       expect(screen.getByText('rock & roll')).toBeTruthy();
-      expect(screen.getByText('90\'s music')).toBeTruthy();
+      expect(screen.getByText("90's music")).toBeTruthy();
       expect(screen.getByText('música latina')).toBeTruthy();
 
       fireEvent.press(screen.getByText('rock & roll'));
@@ -525,9 +525,13 @@ describe('TagSuggestions', () => {
         />
       );
 
-      expect(screen.getByText('this is an extremely long tag name that might cause display issues')).toBeTruthy();
+      expect(
+        screen.getByText('this is an extremely long tag name that might cause display issues')
+      ).toBeTruthy();
 
-      fireEvent.press(screen.getByText('this is an extremely long tag name that might cause display issues'));
+      fireEvent.press(
+        screen.getByText('this is an extremely long tag name that might cause display issues')
+      );
       expect(mockOnAddTag).toHaveBeenCalledWith(longNameTags[0]);
     });
 
@@ -667,7 +671,7 @@ describe('TagSuggestions', () => {
 
       // Toggle button should be accessible
       expect(screen.getByText('Hide Available Tags (5)')).toBeTruthy();
-      
+
       // All tag buttons should be accessible
       expect(screen.getByText('rock')).toBeTruthy();
       expect(screen.getByText('jazz')).toBeTruthy();

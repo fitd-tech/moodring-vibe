@@ -39,7 +39,9 @@ export const useSpotifyActivity = () => {
       return newTracks;
     } else {
       const newTrackIds = new Set(newTracks.map(getId));
-      const additionalTracks = existingTracks.slice(10).filter(track => !newTrackIds.has(getId(track)));
+      const additionalTracks = existingTracks
+        .slice(10)
+        .filter(track => !newTrackIds.has(getId(track)));
       return [...newTracks, ...additionalTracks];
     }
   };
@@ -92,11 +94,7 @@ export const useSpotifyActivity = () => {
       );
 
       // Update pagination flags
-      updateHasMoreFlags(
-        recentTracksData.length,
-        topTracksData.length,
-        savedTracksData.length
-      );
+      updateHasMoreFlags(recentTracksData.length, topTracksData.length, savedTracksData.length);
     } catch (error) {
       if (__DEV__) {
         console.warn('Error loading Spotify activity:', error);

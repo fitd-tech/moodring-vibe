@@ -16,7 +16,7 @@ const createMockUser = (id: number, hasExpiredToken = false): BackendUser => ({
   display_name: `User ${id}`,
   spotify_access_token: hasExpiredToken ? 'expired_token' : 'valid_token',
   spotify_refresh_token: 'refresh_token',
-  token_expires_at: hasExpiredToken 
+  token_expires_at: hasExpiredToken
     ? new Date(Date.now() - 3600000).toISOString() // 1 hour ago
     : new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
   profile_image_url: null,
@@ -246,11 +246,7 @@ describe('useSpotifyTokenManagement', () => {
       );
 
       const apiResult = await act(async () => {
-        return await result.current.handleTokenExpiredError(
-          otherError,
-          testUser,
-          mockApiCall
-        );
+        return await result.current.handleTokenExpiredError(otherError, testUser, mockApiCall);
       });
 
       expect(mockRefreshUserToken).not.toHaveBeenCalled();
@@ -299,11 +295,7 @@ describe('useSpotifyTokenManagement', () => {
 
       await act(async () => {
         await expect(
-          result.current.handleTokenExpiredError(
-            tokenExpiredError,
-            testUser,
-            mockApiCall
-          )
+          result.current.handleTokenExpiredError(tokenExpiredError, testUser, mockApiCall)
         ).rejects.toThrow('API_FAILED');
       });
 
@@ -343,11 +335,7 @@ describe('useSpotifyTokenManagement', () => {
       const error = new Error('TOKEN_EXPIRED');
 
       const errorResult = await act(async () => {
-        return await result.current.handleTokenExpiredError(
-          error,
-          refreshedUser,
-          mockApiCall
-        );
+        return await result.current.handleTokenExpiredError(error, refreshedUser, mockApiCall);
       });
 
       expect(errorResult).toBe('success');

@@ -85,7 +85,7 @@ describe('useTagging', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up default mock return values
     mockUseAuth.mockReturnValue({
       user: testUser,
@@ -225,7 +225,11 @@ describe('useTagging', () => {
         await result.current.handleRemoveTag(1);
       });
 
-      expect(mockTaggingService.removeTagFromSong).toHaveBeenCalledWith('test_song', testUser.id, 1);
+      expect(mockTaggingService.removeTagFromSong).toHaveBeenCalledWith(
+        'test_song',
+        testUser.id,
+        1
+      );
       expect(mockOnTagsChanged).toHaveBeenCalledTimes(1);
       expect(result.current.isLoading).toBe(false);
     });
@@ -328,7 +332,11 @@ describe('useTagging', () => {
       };
 
       expect(mockTaggingService.createTag).toHaveBeenCalledWith(testUser.id, expectedTagData);
-      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith('test_song', testUser.id, mockTags[0].id);
+      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith(
+        'test_song',
+        testUser.id,
+        mockTags[0].id
+      );
       expect(result.current.newTagName).toBe('');
       expect(result.current.showAvailableTags).toBe(false);
       expect(mockOnTagsChanged).toHaveBeenCalledTimes(1);
@@ -519,7 +527,11 @@ describe('useTagging', () => {
         await result.current.handleAddExistingTag(tagToAdd);
       });
 
-      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith('test_song', testUser.id, tagToAdd.id);
+      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith(
+        'test_song',
+        testUser.id,
+        tagToAdd.id
+      );
       expect(result.current.showAvailableTags).toBe(false);
       expect(mockOnTagsChanged).toHaveBeenCalledTimes(1);
     });
@@ -540,7 +552,10 @@ describe('useTagging', () => {
         await result.current.handleAddExistingTag(duplicateTag);
       });
 
-      expect(mockAlert).toHaveBeenCalledWith('Tag Already Added', 'This tag is already applied to this song.');
+      expect(mockAlert).toHaveBeenCalledWith(
+        'Tag Already Added',
+        'This tag is already applied to this song.'
+      );
       expect(mockTaggingService.addTagToSong).not.toHaveBeenCalled();
       expect(mockOnTagsChanged).not.toHaveBeenCalled();
     });
@@ -614,7 +629,7 @@ describe('useTagging', () => {
       });
 
       const unusedTags = result.current.getUnusedTags();
-      
+
       // Should only include rock and jazz, not pop and favorite
       expect(unusedTags).toHaveLength(2);
       expect(unusedTags.map(tag => tag.name)).toEqual(['rock', 'jazz']);
@@ -655,16 +670,13 @@ describe('useTagging', () => {
     });
 
     it('updates when available tags change', async () => {
-      const { result, rerender } = renderHook((props) =>
-        useTagging(props),
-        {
-          initialProps: {
-            tags: mockTags,
-            songId: 'test_song',
-            onTagsChanged: mockOnTagsChanged,
-          }
-        }
-      );
+      const { result, rerender } = renderHook(props => useTagging(props), {
+        initialProps: {
+          tags: mockTags,
+          songId: 'test_song',
+          onTagsChanged: mockOnTagsChanged,
+        },
+      });
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -784,7 +796,7 @@ describe('useTagging', () => {
   describe('User changes', () => {
     it('reloads available tags when user changes', async () => {
       const newUser = createMockUser(2);
-      
+
       const { rerender } = renderHook(() =>
         useTagging({
           tags: mockTags,

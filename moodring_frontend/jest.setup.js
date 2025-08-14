@@ -111,6 +111,7 @@ global.__fbBatchedBridgeConfig = {
 // Silence console during tests
 global.console = {
   ...console,
+  log: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
 };

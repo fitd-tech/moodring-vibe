@@ -83,7 +83,7 @@ export const TracksList: React.FC<TracksListProps> = ({
   return (
     <View style={styles.container}>
       {title && <Text style={styles.title}>{title}</Text>}
-      
+
       {displayedTracks.map((track, index) => (
         <TrackCard
           key={getTrackId(track)}
@@ -95,10 +95,7 @@ export const TracksList: React.FC<TracksListProps> = ({
       ))}
 
       {showSeeMore && (
-        <TouchableOpacity
-          style={styles.seeMoreButton}
-          onPress={() => setShowAll(true)}
-        >
+        <TouchableOpacity style={styles.seeMoreButton} onPress={() => setShowAll(true)}>
           <Text style={styles.seeMoreText}>
             See More ({tracks.length - INITIAL_DISPLAY_COUNT} more)
           </Text>
@@ -106,19 +103,13 @@ export const TracksList: React.FC<TracksListProps> = ({
       )}
 
       {showAll && !showLoadMore && tracks.length > INITIAL_DISPLAY_COUNT && (
-        <TouchableOpacity
-          style={styles.seeMoreButton}
-          onPress={() => setShowAll(false)}
-        >
+        <TouchableOpacity style={styles.seeMoreButton} onPress={() => setShowAll(false)}>
           <Text style={styles.seeMoreText}>Show Less</Text>
         </TouchableOpacity>
       )}
 
       {showLoadMore && (
-        <TouchableOpacity
-          style={styles.loadMoreButton}
-          onPress={onLoadMore}
-        >
+        <TouchableOpacity style={styles.loadMoreButton} onPress={onLoadMore}>
           <Text style={styles.loadMoreText}>Load More</Text>
         </TouchableOpacity>
       )}

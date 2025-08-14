@@ -103,7 +103,7 @@ describe('useSpotifyData', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up mock return values
     mockUseSpotifyTokenManagement.mockReturnValue({
       getValidToken: mockGetValidToken,
@@ -127,6 +127,7 @@ describe('useSpotifyData', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
     mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
     mockSpotifyApi.getSavedTracks.mockResolvedValue(mockSavedTracks);
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
   });
 
   describe('fetchCurrentlyPlaying', () => {
@@ -147,7 +148,7 @@ describe('useSpotifyData', () => {
     it('handles TOKEN_EXPIRED error', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
       mockSpotifyApi.getCurrentlyPlaying
         .mockRejectedValueOnce(tokenExpiredError)
         .mockResolvedValueOnce(mockCurrentlyPlaying);
@@ -171,7 +172,7 @@ describe('useSpotifyData', () => {
     it('handles other errors', async () => {
       const testUser = createMockUser(1);
       const networkError = new Error('Network Error');
-      
+
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(networkError);
       mockHandleTokenExpiredError.mockResolvedValue(null);
 
@@ -224,7 +225,7 @@ describe('useSpotifyData', () => {
     it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
       mockSpotifyApi.getRecentTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(null);
 
@@ -247,7 +248,7 @@ describe('useSpotifyData', () => {
     it('successfully recovers from TOKEN_EXPIRED error', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
       mockSpotifyApi.getRecentTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(mockRecentTracks);
 
@@ -295,7 +296,7 @@ describe('useSpotifyData', () => {
     it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
       mockSpotifyApi.getTopTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(null);
 
@@ -318,7 +319,7 @@ describe('useSpotifyData', () => {
     it('successfully recovers from TOKEN_EXPIRED error', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
       mockSpotifyApi.getTopTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(mockTopTracks);
 
@@ -345,6 +346,7 @@ describe('useSpotifyData', () => {
         return await result.current.fetchSavedTracks('test_token', testUser);
       });
 
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
       expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 10);
       expect(savedTracks).toEqual(mockSavedTracks);
     });
@@ -359,6 +361,7 @@ describe('useSpotifyData', () => {
         return await result.current.fetchSavedTracks('test_token', testUser, 25);
       });
 
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
       expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 25);
       expect(savedTracks).toEqual(mockSavedTracks);
     });
@@ -366,7 +369,9 @@ describe('useSpotifyData', () => {
     it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
+      // Make verifyTokenScopes succeed but getSavedTracks fail
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
       mockSpotifyApi.getSavedTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(null);
 
@@ -386,10 +391,31 @@ describe('useSpotifyData', () => {
       expect(savedTracks).toEqual([]);
     });
 
+    it('returns empty array when token missing user-library-read scope', async () => {
+      const testUser = createMockUser(1);
+      
+      // Mock token without user-library-read scope
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
+      
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedTracks).not.toHaveBeenCalled();
+      expect(savedTracks).toEqual([]);
+    });
+
     it('successfully recovers from TOKEN_EXPIRED error', async () => {
       const testUser = createMockUser(1);
       const tokenExpiredError = new Error('TOKEN_EXPIRED');
-      
+
+      // Make verifyTokenScopes succeed but getSavedTracks fail
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
       mockSpotifyApi.getSavedTracks.mockRejectedValue(tokenExpiredError);
       mockHandleTokenExpiredError.mockResolvedValue(mockSavedTracks);
 
@@ -419,6 +445,7 @@ describe('useSpotifyData', () => {
       expect(mockSpotifyApi.getCurrentlyPlaying).toHaveBeenCalledWith('test_token');
       expect(mockSpotifyApi.getRecentTracks).toHaveBeenCalledWith('test_token', 10);
       expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('test_token', 'medium_term', 10);
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
       expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 10);
 
       expect(allData).toEqual({
@@ -431,7 +458,7 @@ describe('useSpotifyData', () => {
 
     it('handles mixed success and failure scenarios', async () => {
       const testUser = createMockUser(1);
-      
+
       // Mock some API calls to fail
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('API_ERROR'));
       mockHandleTokenExpiredError.mockImplementation((error, user, apiCall) => {
@@ -458,17 +485,17 @@ describe('useSpotifyData', () => {
 
     it('executes all API calls in parallel', async () => {
       const testUser = createMockUser(1);
-      
+
       // Track call order
       const callOrder: string[] = [];
-      
+
       mockSpotifyApi.getCurrentlyPlaying.mockImplementation(async () => {
         callOrder.push('currently-playing-start');
         await new Promise(resolve => setTimeout(resolve, 10));
         callOrder.push('currently-playing-end');
         return mockCurrentlyPlaying;
       });
-      
+
       mockSpotifyApi.getRecentTracks.mockImplementation(async () => {
         callOrder.push('recent-tracks-start');
         await new Promise(resolve => setTimeout(resolve, 5));
@@ -485,11 +512,17 @@ describe('useSpotifyData', () => {
       });
 
       // All API calls should start before any end
-      expect(callOrder.indexOf('currently-playing-start')).toBeLessThan(callOrder.indexOf('currently-playing-end'));
-      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(callOrder.indexOf('recent-tracks-end'));
-      
+      expect(callOrder.indexOf('currently-playing-start')).toBeLessThan(
+        callOrder.indexOf('currently-playing-end')
+      );
+      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(
+        callOrder.indexOf('recent-tracks-end')
+      );
+
       // Recent tracks should start before currently playing ends (proving parallelism)
-      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(callOrder.indexOf('currently-playing-end'));
+      expect(callOrder.indexOf('recent-tracks-start')).toBeLessThan(
+        callOrder.indexOf('currently-playing-end')
+      );
     });
   });
 
@@ -520,7 +553,7 @@ describe('useSpotifyData', () => {
   describe('Error handling edge cases', () => {
     it('handles null responses from token management', async () => {
       const testUser = createMockUser(1);
-      
+
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('TOKEN_EXPIRED'));
       mockHandleTokenExpiredError.mockResolvedValue(null);
 
@@ -538,7 +571,7 @@ describe('useSpotifyData', () => {
     it('propagates non-TOKEN_EXPIRED errors', async () => {
       const testUser = createMockUser(1);
       const networkError = new Error('Network failure');
-      
+
       mockSpotifyApi.getRecentTracks.mockRejectedValue(networkError);
       mockHandleTokenExpiredError.mockRejectedValue(networkError);
 
@@ -547,9 +580,9 @@ describe('useSpotifyData', () => {
       );
 
       await act(async () => {
-        await expect(
-          result.current.fetchRecentTracks('test_token', testUser)
-        ).rejects.toThrow('Network failure');
+        await expect(result.current.fetchRecentTracks('test_token', testUser)).rejects.toThrow(
+          'Network failure'
+        );
       });
     });
   });

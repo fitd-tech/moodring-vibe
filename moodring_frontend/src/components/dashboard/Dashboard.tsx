@@ -32,6 +32,7 @@ interface DashboardProps {
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
   onSettings?: () => void;
+  onReauthorize?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -55,6 +56,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onCreatePlaylist,
   onBrowseTags,
   onSettings,
+  onReauthorize,
 }) => {
   const insets = useSafeAreaInsets();
   return (
@@ -111,6 +113,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onLoadMore={onLoadMoreSavedTracks}
             hasMoreTracks={hasMoreSavedTracks}
             isLoadingMore={isLoadingMoreSavedTracks}
+            onReauthorize={onReauthorize}
           />
         </View>
       </ScrollView>

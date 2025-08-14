@@ -104,12 +104,7 @@ describe('TracksList', () => {
     });
 
     it('renders with title when provided', () => {
-      render(
-        <TracksList
-          tracks={mockRecentTracks.slice(0, 5)}
-          title="Recent Tracks"
-        />
-      );
+      render(<TracksList tracks={mockRecentTracks.slice(0, 5)} title="Recent Tracks" />);
 
       expect(screen.getByText('Recent Tracks')).toBeTruthy();
     });
@@ -121,12 +116,7 @@ describe('TracksList', () => {
     });
 
     it('renders custom empty message', () => {
-      render(
-        <TracksList
-          tracks={[]}
-          emptyMessage="No recent tracks found"
-        />
-      );
+      render(<TracksList tracks={[]} emptyMessage="No recent tracks found" />);
 
       expect(screen.getByText('No recent tracks found')).toBeTruthy();
     });
@@ -147,7 +137,7 @@ describe('TracksList', () => {
       render(<TracksList tracks={mockRecentTracks.slice(0, 3)} />);
 
       const trackHeader = screen.getByTestId('track-card-header-0');
-      
+
       // Expand
       fireEvent.press(trackHeader);
       expect(screen.getByTestId('track-expanded-0')).toBeTruthy();
@@ -221,11 +211,7 @@ describe('TracksList', () => {
   describe('Load More Functionality', () => {
     it('shows "Load More" button when expanded and has more tracks', () => {
       render(
-        <TracksList
-          tracks={mockRecentTracks}
-          onLoadMore={mockOnLoadMore}
-          hasMoreTracks={true}
-        />
+        <TracksList tracks={mockRecentTracks} onLoadMore={mockOnLoadMore} hasMoreTracks={true} />
       );
 
       // Expand to show all
@@ -236,16 +222,12 @@ describe('TracksList', () => {
 
     it('calls onLoadMore when "Load More" is pressed', () => {
       render(
-        <TracksList
-          tracks={mockRecentTracks}
-          onLoadMore={mockOnLoadMore}
-          hasMoreTracks={true}
-        />
+        <TracksList tracks={mockRecentTracks} onLoadMore={mockOnLoadMore} hasMoreTracks={true} />
       );
 
       // Expand first
       fireEvent.press(screen.getByText('See More (5 more)'));
-      
+
       // Press load more
       fireEvent.press(screen.getByText('Load More'));
 
@@ -254,11 +236,7 @@ describe('TracksList', () => {
 
     it('does not show "Load More" when not expanded', () => {
       render(
-        <TracksList
-          tracks={mockRecentTracks}
-          onLoadMore={mockOnLoadMore}
-          hasMoreTracks={true}
-        />
+        <TracksList tracks={mockRecentTracks} onLoadMore={mockOnLoadMore} hasMoreTracks={true} />
       );
 
       expect(screen.queryByText('Load More')).toBeNull();
@@ -266,11 +244,7 @@ describe('TracksList', () => {
 
     it('does not show "Load More" when hasMoreTracks is false', () => {
       render(
-        <TracksList
-          tracks={mockRecentTracks}
-          onLoadMore={mockOnLoadMore}
-          hasMoreTracks={false}
-        />
+        <TracksList tracks={mockRecentTracks} onLoadMore={mockOnLoadMore} hasMoreTracks={false} />
       );
 
       // Expand first
@@ -280,12 +254,7 @@ describe('TracksList', () => {
     });
 
     it('does not show "Load More" when onLoadMore is not provided', () => {
-      render(
-        <TracksList
-          tracks={mockRecentTracks}
-          hasMoreTracks={true}
-        />
-      );
+      render(<TracksList tracks={mockRecentTracks} hasMoreTracks={true} />);
 
       // Expand first
       fireEvent.press(screen.getByText('See More (5 more)'));
@@ -296,23 +265,13 @@ describe('TracksList', () => {
 
   describe('Loading States', () => {
     it('shows loading indicator when isLoadingMore is true', () => {
-      render(
-        <TracksList
-          tracks={mockRecentTracks.slice(0, 5)}
-          isLoadingMore={true}
-        />
-      );
+      render(<TracksList tracks={mockRecentTracks.slice(0, 5)} isLoadingMore={true} />);
 
       expect(screen.getByText('Loading more tracks...')).toBeTruthy();
     });
 
     it('does not show "See More" when loading', () => {
-      render(
-        <TracksList
-          tracks={mockRecentTracks}
-          isLoadingMore={true}
-        />
-      );
+      render(<TracksList tracks={mockRecentTracks} isLoadingMore={true} />);
 
       expect(screen.queryByText(/See More/)).toBeNull();
     });
@@ -377,11 +336,7 @@ describe('TracksList', () => {
     });
 
     it('handles mixed track types correctly', () => {
-      const mixedTracks = [
-        mockRecentTracks[0],
-        mockTopTracks[0],
-        mockSavedTracks[0],
-      ];
+      const mixedTracks = [mockRecentTracks[0], mockTopTracks[0], mockSavedTracks[0]];
 
       render(<TracksList tracks={mixedTracks} />);
 
@@ -527,13 +482,7 @@ describe('TracksList', () => {
     });
 
     it('handles boolean prop edge cases', () => {
-      render(
-        <TracksList
-          tracks={[]}
-          hasMoreTracks={false}
-          isLoadingMore={false}
-        />
-      );
+      render(<TracksList tracks={[]} hasMoreTracks={false} isLoadingMore={false} />);
 
       expect(screen.getByText('No tracks available')).toBeTruthy();
     });

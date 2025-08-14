@@ -147,7 +147,7 @@ describe('TagInput', () => {
       );
 
       const textInput = screen.getByPlaceholderText('Add tag...');
-      
+
       fireEvent.changeText(textInput, 'p');
       fireEvent.changeText(textInput, 'po');
       fireEvent.changeText(textInput, 'pop');
@@ -169,7 +169,7 @@ describe('TagInput', () => {
       );
 
       const textInput = screen.getByDisplayValue('pop');
-      
+
       fireEvent.changeText(textInput, 'po');
       fireEvent.changeText(textInput, 'p');
       fireEvent.changeText(textInput, '');
@@ -435,8 +435,9 @@ describe('TagInput', () => {
     });
 
     it('handles very long text input', () => {
-      const longText = 'this is a very long tag name that might exceed normal expectations for tag length but should still be handled gracefully';
-      
+      const longText =
+        'this is a very long tag name that might exceed normal expectations for tag length but should still be handled gracefully';
+
       render(
         <TagInput
           newTagName=""
@@ -465,7 +466,7 @@ describe('TagInput', () => {
       );
 
       const addButton = screen.getByText('+ Add');
-      
+
       // Rapid presses
       fireEvent.press(addButton);
       fireEvent.press(addButton);
@@ -568,7 +569,7 @@ describe('TagInput', () => {
       );
 
       const textInput = screen.getByPlaceholderText('Add tag...');
-      
+
       // Input should be focusable and editable
       fireEvent.changeText(textInput, 'focus test');
       expect(mockOnChangeText).toHaveBeenCalledWith('focus test');

@@ -68,7 +68,7 @@ describe('useSpotifyPagination', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up mock return values
     mockUseSpotifyTokenManagement.mockReturnValue({
       getValidToken: mockGetValidToken,
@@ -176,9 +176,10 @@ describe('useSpotifyPagination', () => {
 
       // Make getValidToken take some time to simulate async loading
       mockGetValidToken.mockImplementation(
-        () => new Promise(resolve => 
-          setTimeout(() => resolve({ token: 'valid_token', user: testUser }), 50)
-        )
+        () =>
+          new Promise(resolve =>
+            setTimeout(() => resolve({ token: 'valid_token', user: testUser }), 50)
+          )
       );
 
       const { result } = renderHook(() =>
@@ -280,7 +281,7 @@ describe('useSpotifyPagination', () => {
       // Check that the setter function was called with a function that filters duplicates
       const setterFunction = mockSetRecentTracks.mock.calls[0][0];
       const newTracks = setterFunction(initialTracks);
-      
+
       // Should have original 5 + 5 new (no duplicates)
       expect(newTracks.length).toBe(10);
     });
@@ -420,7 +421,7 @@ describe('useSpotifyPagination', () => {
 
       const setterFunction = mockSetTopTracks.mock.calls[0][0];
       const newTracks = setterFunction(initialTracks);
-      
+
       // Should filter out the duplicate
       expect(newTracks.length).toBe(10);
     });
@@ -494,7 +495,7 @@ describe('useSpotifyPagination', () => {
 
       const setterFunction = mockSetSavedTracks.mock.calls[0][0];
       const newTracks = setterFunction(initialTracks);
-      
+
       expect(newTracks.length).toBe(10);
     });
 

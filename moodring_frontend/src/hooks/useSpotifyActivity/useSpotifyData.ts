@@ -25,10 +25,8 @@ export const useSpotifyData = (
     try {
       return await spotifyApi.getRecentTracks(token, limit);
     } catch (error) {
-      const result = await handleTokenExpiredError(
-        error,
-        activeUser,
-        (refreshedToken) => spotifyApi.getRecentTracks(refreshedToken, limit)
+      const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
+        spotifyApi.getRecentTracks(refreshedToken, limit)
       );
       return result || [];
     }
@@ -43,10 +41,8 @@ export const useSpotifyData = (
     try {
       return await spotifyApi.getTopTracks(token, timeRange, limit);
     } catch (error) {
-      const result = await handleTokenExpiredError(
-        error,
-        activeUser,
-        (refreshedToken) => spotifyApi.getTopTracks(refreshedToken, timeRange, limit)
+      const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
+        spotifyApi.getTopTracks(refreshedToken, timeRange, limit)
       );
       return result || [];
     }
@@ -54,12 +50,23 @@ export const useSpotifyData = (
 
   const fetchSavedTracks = async (token: string, activeUser: BackendUser, limit: number = 10) => {
     try {
-      return await spotifyApi.getSavedTracks(token, limit);
+      // Verify token has required scope before attempting fetch
+      const scopes = await spotifyApi.verifyTokenScopes(token);
+      if (!scopes.includes('user-library-read')) {
+        // Return empty array instead of throwing error to prevent app crashes
+        return [];
+      }
+      
+      const tracks = await spotifyApi.getSavedTracks(token, limit);
+      return tracks;
     } catch (error) {
-      const result = await handleTokenExpiredError(
-        error,
-        activeUser,
-        (refreshedToken) => spotifyApi.getSavedTracks(refreshedToken, limit)
+      // Handle specific error types
+      if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
+        return [];
+      }
+      
+      const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
+        spotifyApi.getSavedTracks(refreshedToken, limit)
       );
       return result || [];
     }

@@ -9,6 +9,7 @@ interface SavedTracksListProps {
   onLoadMore?: () => Promise<void>;
   hasMoreTracks?: boolean;
   isLoadingMore?: boolean;
+  onReauthorize?: () => void;
 }
 
 export const SavedTracksList: React.FC<SavedTracksListProps> = ({
@@ -16,6 +17,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   onLoadMore,
   hasMoreTracks = false,
   isLoadingMore = false,
+  onReauthorize,
 }) => {
   const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -71,11 +73,28 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
         <View style={styles.emptyStateContainer}>
           <Text style={styles.emptyStateTitle}>No liked songs found</Text>
           <Text style={styles.emptyStateDescription}>
-            Like songs in Spotify to see them here. Hearts you tap in Spotify will appear in this section.
+            Like songs in Spotify to see them here. Hearts you tap in Spotify will appear in this
+            section.
           </Text>
           <Text style={styles.emptyStateHint}>
             Try pulling down to refresh after liking songs in Spotify.
           </Text>
+          <Text style={styles.emptyStateTroubleshooting}>
+            If you have liked songs but they're not showing:
+            {'\n'}• Check that you're logged into the same Spotify account
+            {'\n'}• Make sure you've given permission to access your library
+            {'\n'}• Try logging out and back in to refresh permissions
+          </Text>
+          {onReauthorize && (
+            <TouchableOpacity
+              style={styles.reauthorizeButton}
+              onPress={onReauthorize}
+            >
+              <Text style={styles.reauthorizeButtonText}>
+                Refresh Permissions
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <>
@@ -169,6 +188,27 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  emptyStateTroubleshooting: {
+    color: theme.colors.text.muted,
+    fontSize: theme.typography.fontSize.xs,
+    textAlign: 'left',
+    marginTop: theme.spacing.md,
+    lineHeight: 16,
+  },
+  reauthorizeButton: {
+    backgroundColor: theme.colors.accent.cyan,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.md,
+    alignSelf: 'center',
+  },
+  reauthorizeButtonText: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    textAlign: 'center',
   },
   seeMoreContainer: {
     marginTop: theme.spacing.lg,

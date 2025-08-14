@@ -41,7 +41,7 @@ export const TagCard: React.FC<TagCardProps> = ({
     if (!user) return;
 
     setIsLoadingSongs(true);
-    
+
     try {
       const taggedSongs = await taggingService.getSongsWithTag(user.id, tag.id);
       setSongs(taggedSongs);

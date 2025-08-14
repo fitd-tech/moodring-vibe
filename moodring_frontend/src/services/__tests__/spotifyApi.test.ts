@@ -621,6 +621,7 @@ describe('spotifyApi', () => {
       expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/tracks?limit=10', {
         headers: {
           Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
         },
       });
     });
@@ -639,6 +640,7 @@ describe('spotifyApi', () => {
       expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/tracks?limit=20', {
         headers: {
           Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
         },
       });
     });

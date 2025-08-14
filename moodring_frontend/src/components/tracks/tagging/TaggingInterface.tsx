@@ -34,11 +34,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
     <View style={styles.container}>
       <Text style={styles.label}>Tags</Text>
 
-      <CurrentTags
-        tags={tags}
-        onRemoveTag={handleRemoveTag}
-        isLoading={isLoading}
-      />
+      <CurrentTags tags={tags} onRemoveTag={handleRemoveTag} isLoading={isLoading} />
 
       <TagInput
         newTagName={newTagName}

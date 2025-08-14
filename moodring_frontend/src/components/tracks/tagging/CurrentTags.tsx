@@ -9,11 +9,7 @@ interface CurrentTagsProps {
   isLoading: boolean;
 }
 
-export const CurrentTags: React.FC<CurrentTagsProps> = ({
-  tags,
-  onRemoveTag,
-  isLoading,
-}) => {
+export const CurrentTags: React.FC<CurrentTagsProps> = ({ tags, onRemoveTag, isLoading }) => {
   return (
     <View style={styles.tagsContainer}>
       {tags.map(tag => (

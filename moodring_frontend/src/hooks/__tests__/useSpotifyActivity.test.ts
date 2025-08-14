@@ -60,6 +60,7 @@ describe('useSpotifyActivity - Core Tests', () => {
     mockSpotifyApi.getTopTracks.mockResolvedValue([]);
     mockSpotifyApi.getSavedTracks.mockResolvedValue([]);
     mockSpotifyApi.getMoreSavedTracks.mockResolvedValue([]);
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
   });
 
   afterEach(() => {
@@ -722,7 +723,7 @@ describe('useSpotifyActivity - Core Tests', () => {
       mockSpotifyApi.getRecentTracks.mockClear();
       mockSpotifyApi.getTopTracks.mockClear();
       mockSpotifyApi.getSavedTracks.mockClear();
-      
+
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('Polling Error'));
       mockSpotifyApi.getRecentTracks.mockRejectedValue(new Error('Polling Error'));
       mockSpotifyApi.getTopTracks.mockRejectedValue(new Error('Polling Error'));
@@ -819,13 +820,13 @@ describe('useSpotifyActivity - Core Tests', () => {
       }));
 
       mockSpotifyApi.getRecentTracks
-        .mockResolvedValueOnce(existingTracks)   // First call
-        .mockResolvedValueOnce(freshTracks)      // Second call  
-        .mockResolvedValueOnce(freshTracks);     // Third call (in case useEffect calls again)
+        .mockResolvedValueOnce(existingTracks) // First call
+        .mockResolvedValueOnce(freshTracks) // Second call
+        .mockResolvedValueOnce(freshTracks); // Third call (in case useEffect calls again)
       mockSpotifyApi.getCurrentlyPlaying.mockResolvedValue(null);
       mockSpotifyApi.getTopTracks.mockResolvedValue([]);
       mockSpotifyApi.getSavedTracks.mockResolvedValue([]);
-      
+
       mockUseAuth.mockReturnValue({
         user: testUser,
         authToken: 'test-token',
@@ -853,37 +854,43 @@ describe('useSpotifyActivity - Core Tests', () => {
       });
 
       // Clean up debug logs for final version
-      
+
       // Should only have fresh tracks (10)
       expect(result.current.recentTracks.length).toBe(10);
-      expect(result.current.recentTracks.every(track => track.song_id?.startsWith('fresh_track_'))).toBe(true);
-      
+      expect(
+        result.current.recentTracks.every(track => track.song_id?.startsWith('fresh_track_'))
+      ).toBe(true);
+
       // Now test with preserveAdditionalTracks = true
       // Need to reload the initial 15 tracks first, then load fresh tracks with preservation
       mockSpotifyApi.getRecentTracks
-        .mockResolvedValueOnce(existingTracks)   // Reload existing
-        .mockResolvedValueOnce(freshTracks);     // Load fresh with preservation
-      
+        .mockResolvedValueOnce(existingTracks) // Reload existing
+        .mockResolvedValueOnce(freshTracks); // Load fresh with preservation
+
       // First reload the existing tracks
       await act(async () => {
         await result.current.loadActivity('test-token', testUser, false);
       });
-      
+
       expect(result.current.recentTracks.length).toBe(15);
-      
+
       // Now load fresh tracks with preservation
       await act(async () => {
         await result.current.loadActivity('test-token', testUser, true);
       });
-      
+
       // Clean up debug logs for final version
-      
+
       // Should have fresh tracks (10) + additional preserved tracks (5) = 15
       expect(result.current.recentTracks.length).toBe(15);
-      
+
       // Should contain both fresh tracks and some existing tracks
-      const hasFreshTracks = result.current.recentTracks.some(track => track.song_id?.startsWith('fresh_track_'));
-      const hasExistingTracks = result.current.recentTracks.some(track => track.song_id?.startsWith('existing_track_'));
+      const hasFreshTracks = result.current.recentTracks.some(track =>
+        track.song_id?.startsWith('fresh_track_')
+      );
+      const hasExistingTracks = result.current.recentTracks.some(track =>
+        track.song_id?.startsWith('existing_track_')
+      );
       expect(hasFreshTracks).toBe(true);
       expect(hasExistingTracks).toBe(true);
     });

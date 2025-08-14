@@ -96,12 +96,11 @@ export const TrackCard: React.FC<TrackCardProps> = ({
           </View>
           <View style={styles.actions}>
             <Text style={styles.trackTime}>
-              {'played_at' in track 
-                ? formatTime(track.played_at) 
-                : 'added_at' in track 
+              {'played_at' in track
+                ? formatTime(track.played_at)
+                : 'added_at' in track
                   ? formatTime(track.added_at)
-                  : ''
-              }
+                  : ''}
             </Text>
           </View>
         </TouchableOpacity>

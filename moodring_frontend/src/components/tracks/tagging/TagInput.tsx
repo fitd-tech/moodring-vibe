@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Text,
+} from 'react-native';
 import { theme } from '../../../styles/theme';
 
 interface TagInputProps {

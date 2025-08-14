@@ -28,7 +28,15 @@ jest.mock('../../../hooks/useAnimation', () => ({
 
 // Mock TaggingInterface component
 jest.mock('../TaggingInterface', () => ({
-  TaggingInterface: ({ tags, songId, onTagsChanged }: { tags: unknown[], songId: string, onTagsChanged: unknown }) => {
+  TaggingInterface: ({
+    tags,
+    songId,
+    onTagsChanged,
+  }: {
+    tags: unknown[];
+    songId: string;
+    onTagsChanged: unknown;
+  }) => {
     const React = require('react');
     const { View, Text } = require('react-native');
     return React.createElement(
@@ -98,7 +106,9 @@ describe('NowPlaying', () => {
     });
 
     it('renders with undefined currentlyPlaying', () => {
-      const { queryByText } = render(<NowPlaying currentlyPlaying={undefined as unknown as CurrentlyPlaying} />);
+      const { queryByText } = render(
+        <NowPlaying currentlyPlaying={undefined as unknown as CurrentlyPlaying} />
+      );
 
       expect(queryByText('NOW PLAYING')).toBeNull();
     });
@@ -291,9 +301,7 @@ describe('NowPlaying', () => {
         song_id: undefined,
       };
 
-      const { getByText } = render(
-        <NowPlaying currentlyPlaying={trackWithMissingInfo} />
-      );
+      const { getByText } = render(<NowPlaying currentlyPlaying={trackWithMissingInfo} />);
 
       // Expand to show TaggingInterface
       fireEvent.press(getByText('Test Album')); // Click album since name might be empty
@@ -312,9 +320,7 @@ describe('NowPlaying', () => {
         song_id: undefined,
       };
 
-      const { getByText } = render(
-        <NowPlaying currentlyPlaying={trackWithNullInfo} />
-      );
+      const { getByText } = render(<NowPlaying currentlyPlaying={trackWithNullInfo} />);
 
       // Expand to show TaggingInterface
       fireEvent.press(getByText('Test Album'));
@@ -324,9 +330,7 @@ describe('NowPlaying', () => {
     });
 
     it('provides empty onTagsChanged callback', () => {
-      const { getByText } = render(
-        <NowPlaying currentlyPlaying={mockCurrentlyPlaying} />
-      );
+      const { getByText } = render(<NowPlaying currentlyPlaying={mockCurrentlyPlaying} />);
 
       // Expand to show TaggingInterface
       fireEvent.press(getByText('Bohemian Rhapsody'));

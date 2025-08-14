@@ -13,8 +13,10 @@ jest.mock('../../../styles/theme', () => ({
       letterSpacing: { sm: '0.1px' },
     },
     colors: {
-      text: { primary: '#ffffff', muted: '#888888' },
+      text: { primary: '#ffffff', secondary: 'rgba(255,255,255,0.8)', muted: '#888888' },
       accent: { purple: '#9b59b6' },
+      background: { card: '#2a0a2a' },
+      ui: { border: 'rgba(255,255,255,0.1)' },
     },
     borderRadius: { lg: 8 },
   },
@@ -89,7 +91,7 @@ describe('SavedTracksList', () => {
   describe('basic functionality', () => {
     it('renders empty state when no tracks provided', () => {
       const { getByText } = render(<SavedTracksList tracks={[]} />);
-      expect(getByText('No saved tracks found')).toBeTruthy();
+      expect(getByText('No liked songs found')).toBeTruthy();
     });
 
     it('renders saved tracks title', () => {

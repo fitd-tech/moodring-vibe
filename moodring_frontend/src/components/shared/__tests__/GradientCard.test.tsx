@@ -9,7 +9,16 @@ jest.mock('expo-linear-gradient', () => {
   const { View } = require('react-native');
 
   return {
-    LinearGradient: ({ colors, style, children, ...props }: { colors: string[], style: unknown, children: React.ReactNode }) => {
+    LinearGradient: ({
+      colors,
+      style,
+      children,
+      ...props
+    }: {
+      colors: string[];
+      style: unknown;
+      children: React.ReactNode;
+    }) => {
       return React.createElement(
         View,
         {
@@ -385,7 +394,10 @@ describe('GradientCard', () => {
       const { getByTestId } = render(
         <GradientCard
           colors={defaultColors}
-          {...({ testID: 'custom-test-id', accessibilityLabel: 'Gradient Card' } as Record<string, unknown>)}
+          {...({ testID: 'custom-test-id', accessibilityLabel: 'Gradient Card' } as Record<
+            string,
+            unknown
+          >)}
         >
           <Text>Props Test</Text>
         </GradientCard>

@@ -78,6 +78,11 @@ const AppContent: React.FC = () => {
     // TODO: Implement settings functionality
   };
 
+  const handleReauthorize = () => {
+    // Log out and restart auth flow to refresh permissions
+    logout();
+  };
+
   const [request, response, promptAsync] = useAuthRequest(
     {
       responseType: ResponseType.Code,
@@ -165,6 +170,7 @@ const AppContent: React.FC = () => {
         onCreatePlaylist={handleCreatePlaylist}
         onBrowseTags={handleBrowseTags}
         onSettings={handleSettings}
+        onReauthorize={handleReauthorize}
       />
     );
   }

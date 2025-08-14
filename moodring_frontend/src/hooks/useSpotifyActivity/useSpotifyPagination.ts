@@ -39,21 +39,21 @@ export const useSpotifyPagination = (
 
       const moreTracksData = await spotifyApi
         .getMoreRecentTracks(tokenResult.token, before)
-        .catch(async (error) => {
-          const result = await handleTokenExpiredError(
-            error,
-            tokenResult.user,
-            (refreshedToken) => spotifyApi.getMoreRecentTracks(refreshedToken, before)
+        .catch(async error => {
+          const result = await handleTokenExpiredError(error, tokenResult.user, refreshedToken =>
+            spotifyApi.getMoreRecentTracks(refreshedToken, before)
           );
           return result || [];
         });
 
       if (moreTracksData.length > 0) {
-        const existingPlayedAt = new Set(recentTracks.map((track) => track.played_at));
-        const newTracks = moreTracksData.filter((track: RecentTrack) => !existingPlayedAt.has(track.played_at));
+        const existingPlayedAt = new Set(recentTracks.map(track => track.played_at));
+        const newTracks = moreTracksData.filter(
+          (track: RecentTrack) => !existingPlayedAt.has(track.played_at)
+        );
 
         if (newTracks.length > 0) {
-          setRecentTracks((prevTracks) => [...prevTracks, ...newTracks]);
+          setRecentTracks(prevTracks => [...prevTracks, ...newTracks]);
         } else {
           setHasMoreTracks(false);
         }
@@ -89,31 +89,26 @@ export const useSpotifyPagination = (
 
       const moreTopTracksData = await spotifyApi
         .getMoreTopTracks(tokenResult.token, offset, 'medium_term')
-        .catch(async (error) => {
-          const result = await handleTokenExpiredError(
-            error,
-            tokenResult.user,
-            (refreshedToken) => spotifyApi.getMoreTopTracks(refreshedToken, offset, 'medium_term')
+        .catch(async error => {
+          const result = await handleTokenExpiredError(error, tokenResult.user, refreshedToken =>
+            spotifyApi.getMoreTopTracks(refreshedToken, offset, 'medium_term')
           );
           return result || [];
         });
 
       if (moreTopTracksData.length > 0) {
-        const existingSongIds = new Set(topTracks.map((track) => track.song_id));
+        const existingSongIds = new Set(topTracks.map(track => track.song_id));
         const newTopTracks = moreTopTracksData.filter(
           (track: TopTrack) => !existingSongIds.has(track.song_id)
         );
 
         if (newTopTracks.length > 0) {
-          setTopTracks((prevTracks) => [...prevTracks, ...newTopTracks]);
+          setTopTracks(prevTracks => [...prevTracks, ...newTopTracks]);
         } else {
           setHasMoreTopTracks(false);
         }
 
-        if (
-          moreTopTracksData.length < 10 ||
-          topTracks.length + moreTopTracksData.length >= 50
-        ) {
+        if (moreTopTracksData.length < 10 || topTracks.length + moreTopTracksData.length >= 50) {
           setHasMoreTopTracks(false);
         }
       } else {
@@ -144,23 +139,21 @@ export const useSpotifyPagination = (
 
       const moreSavedTracksData = await spotifyApi
         .getMoreSavedTracks(tokenResult.token, offset)
-        .catch(async (error) => {
-          const result = await handleTokenExpiredError(
-            error,
-            tokenResult.user,
-            (refreshedToken) => spotifyApi.getMoreSavedTracks(refreshedToken, offset)
+        .catch(async error => {
+          const result = await handleTokenExpiredError(error, tokenResult.user, refreshedToken =>
+            spotifyApi.getMoreSavedTracks(refreshedToken, offset)
           );
           return result || [];
         });
 
       if (moreSavedTracksData.length > 0) {
-        const existingSongIds = new Set(savedTracks.map((track) => track.song_id));
+        const existingSongIds = new Set(savedTracks.map(track => track.song_id));
         const newSavedTracks = moreSavedTracksData.filter(
           (track: SavedTrack) => !existingSongIds.has(track.song_id)
         );
 
         if (newSavedTracks.length > 0) {
-          setSavedTracks((prevTracks) => [...prevTracks, ...newSavedTracks]);
+          setSavedTracks(prevTracks => [...prevTracks, ...newSavedTracks]);
         } else {
           setHasMoreSavedTracks(false);
         }

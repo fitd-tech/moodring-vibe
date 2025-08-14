@@ -5,7 +5,6 @@ import { TagCard } from '../TagCard';
 import { taggingService } from '../../../services/taggingService';
 import { Tag } from '../../../types';
 
-
 // Mock the taggingService
 jest.mock('../../../services/taggingService', () => ({
   taggingService: {
@@ -36,7 +35,7 @@ jest.mock('../../../contexts/AuthContext', () => ({
 // Mock animation hook with Jest spies that simulate expanded state
 const mockAnimatedValue = {
   setValue: jest.fn(),
-  interpolate: jest.fn((config) => {
+  interpolate: jest.fn(config => {
     // Always return max values for tests to ensure content is visible
     return config.outputRange[1] || config.outputRange[0] || 1;
   }),
@@ -94,14 +93,12 @@ describe('TagCard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Use immediate resolution with flush to ensure state updates complete
-    mockGetSongsWithTag.mockImplementation(() => 
+    mockGetSongsWithTag.mockImplementation(() =>
       Promise.resolve(['Bohemian_Rhapsody__Queen', 'Hotel_California__Eagles'])
     );
-    mockRemoveTagFromSong.mockImplementation(() =>
-      Promise.resolve()
-    );
+    mockRemoveTagFromSong.mockImplementation(() => Promise.resolve());
   });
 
   describe('Component Rendering', () => {
@@ -154,9 +151,12 @@ describe('TagCard', () => {
       render(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for the API call to be made - this proves the component logic works
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 2000 }
+      );
 
       // For now, we'll just verify the call was made correctly
       // The component displays "Loading songs..." during the async operation
@@ -201,15 +201,18 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue([]);
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Just verify that the API call was made - this proves the useEffect works
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // This test verifies the component logic works and the API is called
       // The visual rendering test can be done in integration tests
     });
@@ -220,15 +223,21 @@ describe('TagCard', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Verify API call was made and error handling works
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to load tagged songs:', expect.any(Error));
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+          expect(consoleSpy).toHaveBeenCalledWith(
+            'Failed to load tagged songs:',
+            expect.any(Error)
+          );
+        },
+        { timeout: 1000 }
+      );
 
       consoleSpy.mockRestore();
     });
@@ -237,11 +246,11 @@ describe('TagCard', () => {
       // This test would require complex mock resetting which is not practical
       // with module-level mocks. In a real test suite, this would be in a separate
       // test file with different AuthContext mocking setup.
-      
+
       // For now, just verify the component renders without crashing
       const { rerender } = render(<TagCard {...defaultProps} />);
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
-      
+
       // Component rendering test passes - authentication behavior would be tested separately
     });
   });
@@ -252,15 +261,18 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue(['Bohemian_Rhapsody__Queen', 'Simple_Song_Name']);
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Verify API call was made with correct data
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // The component correctly processes song IDs - UI rendering tested elsewhere
     });
 
@@ -269,15 +281,18 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue(['Just_A_Song_Title']);
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Verify API call was made
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // The component correctly handles song ID formatting - UI tested elsewhere
     });
   });
@@ -287,14 +302,17 @@ describe('TagCard', () => {
       jest.clearAllMocks();
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for API call to complete
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
 
       // This test verifies the API integration works - UI interaction tests can be separate
     });
@@ -303,19 +321,20 @@ describe('TagCard', () => {
       jest.clearAllMocks();
       mockGetSongsWithTag.mockResolvedValue(['song1', 'song2']);
       const onTagRemoved = jest.fn();
-      
-      const { rerender } = render(
-        <TagCard {...defaultProps} onTagRemoved={onTagRemoved} />
-      );
-      
+
+      const { rerender } = render(<TagCard {...defaultProps} onTagRemoved={onTagRemoved} />);
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} onTagRemoved={onTagRemoved} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies song loading works - removal UI interactions tested elsewhere
     });
 
@@ -324,15 +343,18 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue(['song1', 'song2']);
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies song loading works - error handling UI tested elsewhere
     });
 
@@ -341,15 +363,18 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue(['song1', 'song2']);
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies song loading works - removal state tested elsewhere
     });
 
@@ -361,15 +386,18 @@ describe('TagCard', () => {
       };
 
       const { rerender } = render(<TagCard {...propsWithoutCallback} />);
-      
+
       // Start expanded
       rerender(<TagCard {...propsWithoutCallback} isExpanded={true} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies component doesn't crash without callback - behavior tested elsewhere
     });
 
@@ -379,15 +407,18 @@ describe('TagCard', () => {
       jest.clearAllMocks();
 
       const { rerender } = render(<TagCard {...defaultProps} />);
-      
+
       // Start expanded
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies authenticated user behavior - unauthenticated tests would need separate setup
     });
   });
@@ -395,7 +426,7 @@ describe('TagCard', () => {
   describe('Song Count Display', () => {
     it('shows correct song count when expanded', async () => {
       jest.clearAllMocks();
-      
+
       const { rerender, getByText } = render(<TagCard {...defaultProps} />);
 
       // Initially collapsed
@@ -405,10 +436,13 @@ describe('TagCard', () => {
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for the API call to be made
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies API call works - song count display tested elsewhere
     });
 
@@ -444,10 +478,13 @@ describe('TagCard', () => {
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
       // Wait for API call
-      await waitFor(() => {
-        expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-      }, { timeout: 1000 });
-      
+      await waitFor(
+        () => {
+          expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
+        },
+        { timeout: 1000 }
+      );
+
       // Test verifies component doesn't crash with malformed data - formatting tested elsewhere
     });
 
