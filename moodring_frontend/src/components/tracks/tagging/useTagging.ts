@@ -29,8 +29,8 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
     try {
       const userTags = await taggingService.getUserTags(user.id);
       setAvailableTags(userTags);
-    } catch (error) {
-      console.error('Failed to load available tags:', error);
+    } catch {
+      // Silently fail for available tags loading
     }
   };
 
@@ -41,9 +41,8 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
     try {
       await taggingService.removeTagFromSong(songId, user.id, tagId);
       onTagsChanged();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to remove tag from song');
-      console.error('Failed to remove tag:', error);
     } finally {
       setIsLoading(false);
     }
@@ -69,9 +68,8 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
       setShowAvailableTags(false);
       await loadAvailableTags(); // Refresh available tags
       onTagsChanged();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to create and add tag');
-      console.error('Failed to create tag:', error);
     } finally {
       setIsLoading(false);
     }
@@ -92,9 +90,8 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
       await taggingService.addTagToSong(songId, user.id, tag.id);
       setShowAvailableTags(false);
       onTagsChanged();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to add tag to song');
-      console.error('Failed to add existing tag:', error);
     } finally {
       setIsLoading(false);
     }

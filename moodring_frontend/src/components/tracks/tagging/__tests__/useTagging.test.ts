@@ -191,7 +191,6 @@ describe('useTagging', () => {
     });
 
     it('handles errors when loading available tags', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockTaggingService.getUserTags.mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() =>
@@ -207,7 +206,6 @@ describe('useTagging', () => {
       });
 
       expect(result.current.availableTags).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to load available tags:', expect.any(Error));
     });
   });
 
@@ -257,7 +255,6 @@ describe('useTagging', () => {
 
     it('handles errors during tag removal', async () => {
       mockTaggingService.removeTagFromSong.mockRejectedValue(new Error('Remove failed'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { result } = renderHook(() =>
         useTagging({
@@ -272,7 +269,6 @@ describe('useTagging', () => {
       });
 
       expect(mockAlert).toHaveBeenCalledWith('Error', 'Failed to remove tag from song');
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to remove tag:', expect.any(Error));
       expect(mockOnTagsChanged).not.toHaveBeenCalled();
       expect(result.current.isLoading).toBe(false);
     });
@@ -428,7 +424,6 @@ describe('useTagging', () => {
 
     it('handles errors during tag creation', async () => {
       mockTaggingService.createTag.mockRejectedValue(new Error('Create failed'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { result } = renderHook(() =>
         useTagging({
@@ -447,14 +442,12 @@ describe('useTagging', () => {
       });
 
       expect(mockAlert).toHaveBeenCalledWith('Error', 'Failed to create and add tag');
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to create tag:', expect.any(Error));
       expect(mockOnTagsChanged).not.toHaveBeenCalled();
       expect(result.current.newTagName).toBe('new tag'); // Should not clear on error
     });
 
     it('handles errors during tag addition after successful creation', async () => {
       mockTaggingService.addTagToSong.mockRejectedValue(new Error('Add failed'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { result } = renderHook(() =>
         useTagging({
@@ -475,7 +468,6 @@ describe('useTagging', () => {
       expect(mockTaggingService.createTag).toHaveBeenCalled();
       expect(mockTaggingService.addTagToSong).toHaveBeenCalled();
       expect(mockAlert).toHaveBeenCalledWith('Error', 'Failed to create and add tag');
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to create tag:', expect.any(Error));
     });
 
     it('does not create tag when user is null', async () => {
@@ -562,7 +554,6 @@ describe('useTagging', () => {
 
     it('handles errors during tag addition', async () => {
       mockTaggingService.addTagToSong.mockRejectedValue(new Error('Add failed'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { result } = renderHook(() =>
         useTagging({
@@ -579,7 +570,6 @@ describe('useTagging', () => {
       });
 
       expect(mockAlert).toHaveBeenCalledWith('Error', 'Failed to add tag to song');
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to add existing tag:', expect.any(Error));
       expect(mockOnTagsChanged).not.toHaveBeenCalled();
     });
 

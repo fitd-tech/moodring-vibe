@@ -220,7 +220,6 @@ describe('TagCard', () => {
     it('handles API errors gracefully', async () => {
       jest.clearAllMocks();
       mockGetSongsWithTag.mockRejectedValue(new Error('API Error'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const { rerender } = render(<TagCard {...defaultProps} />);
 
@@ -231,15 +230,9 @@ describe('TagCard', () => {
       await waitFor(
         () => {
           expect(mockGetSongsWithTag).toHaveBeenCalledWith(1, 1);
-          expect(consoleSpy).toHaveBeenCalledWith(
-            'Failed to load tagged songs:',
-            expect.any(Error)
-          );
         },
         { timeout: 1000 }
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('does not load songs when user is not authenticated', () => {

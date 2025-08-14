@@ -46,8 +46,7 @@ export const TagCard: React.FC<TagCardProps> = ({
       const taggedSongs = await taggingService.getSongsWithTag(user.id, tag.id);
       setSongs(taggedSongs);
       setIsLoadingSongs(false);
-    } catch (error) {
-      console.error('Failed to load tagged songs:', error);
+    } catch {
       setSongs([]);
       setIsLoadingSongs(false);
     }
@@ -105,8 +104,7 @@ export const TagCard: React.FC<TagCardProps> = ({
       if (onTagRemoved) {
         onTagRemoved(tag.id, songId);
       }
-    } catch (error) {
-      console.error('Failed to remove tag from song:', error);
+    } catch {
       Alert.alert('Error', 'Failed to remove tag from song. Please try again.', [{ text: 'OK' }]);
     } finally {
       setRemovingSongs(prev => {

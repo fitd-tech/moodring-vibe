@@ -46,8 +46,7 @@ export const TagsDashboard: React.FC<TagsDashboardProps> = ({
     try {
       const userTags = await taggingService.getUserTags(user.id);
       setTags(userTags);
-    } catch (err) {
-      console.error('Failed to load tags:', err);
+    } catch {
       setError('Failed to load tags. Please try again.');
       setTags([]);
     } finally {

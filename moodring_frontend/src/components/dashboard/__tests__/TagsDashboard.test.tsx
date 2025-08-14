@@ -153,17 +153,13 @@ describe('TagsDashboard', () => {
 
   describe('error handling', () => {
     it('handles API errors when loading tags', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       mockGetUserTags.mockRejectedValue(new Error('API Error'));
 
       const { getByText } = render(<TagsDashboard {...defaultProps} />);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to load tags:', expect.any(Error));
         expect(getByText('Failed to load tags. Please try again.')).toBeTruthy();
       });
-
-      consoleSpy.mockRestore();
     });
   });
 

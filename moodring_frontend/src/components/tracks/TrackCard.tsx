@@ -55,8 +55,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
     try {
       const songTags = await taggingService.getSongTags(songId, user.id);
       setTags(songTags);
-    } catch (error) {
-      console.error('Failed to load song tags:', error);
+    } catch {
       setTags([]);
     } finally {
       setIsLoadingTags(false);
