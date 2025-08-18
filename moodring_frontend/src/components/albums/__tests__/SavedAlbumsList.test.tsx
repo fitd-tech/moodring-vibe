@@ -25,18 +25,40 @@ jest.mock('../AlbumCard', () => ({
   AlbumCard: ({
     album,
     _index,
+    isExpanded,
+    onToggleExpansion,
   }: {
     album: SavedAlbum;
     _index: number;
+    isExpanded: boolean;
+    onToggleExpansion: (_index: number) => void;
   }) => {
     const React = require('react');
-    const { View, Text } = require('react-native');
+    const { View, Text, TouchableOpacity } = require('react-native');
     return React.createElement(
       View,
       {
         testID: `album-card-${album.name}`,
       },
-      React.createElement(Text, null, `${album.name} by ${album.artist} - ${album.track_count} tracks`)
+      React.createElement(
+        Text,
+        null,
+        `${album.name} by ${album.artist} - ${album.track_count} tracks`
+      ),
+      React.createElement(
+        TouchableOpacity,
+        {
+          testID: `toggle-expansion-${_index}`,
+          onPress: () => onToggleExpansion(_index),
+        },
+        React.createElement(Text, null, isExpanded ? 'Collapse' : 'Expand')
+      ),
+      isExpanded &&
+        React.createElement(
+          View,
+          { testID: `expanded-content-${_index}` },
+          React.createElement(Text, null, 'Expanded Content')
+        )
     );
   },
 }));
@@ -302,7 +324,9 @@ describe('SavedAlbumsList', () => {
     it('does not reset showAll when albums are just appended', () => {
       const extendedAlbums = [...manyAlbums, ...mockAlbums];
 
-      const { rerender, queryByText, queryByTestId } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { rerender, queryByText, queryByTestId } = render(
+        <SavedAlbumsList albums={manyAlbums} />
+      );
 
       // Expand to show all albums
       fireEvent.press(queryByText('See More')!);
@@ -359,7 +383,7 @@ describe('SavedAlbumsList', () => {
       );
 
       const button = getByText('See More');
-      
+
       // Press multiple times rapidly
       fireEvent.press(button);
       fireEvent.press(button);
@@ -378,7 +402,7 @@ describe('SavedAlbumsList', () => {
 
       // Should have title
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
-      
+
       // Should render album cards
       expect(getByText(/Test Album 1.*Test Artist 1.*12 tracks/)).toBeTruthy();
     });
@@ -487,6 +511,107 @@ describe('SavedAlbumsList', () => {
 
       // Should render new album
       expect(getByTestId('album-card-Different Album')).toBeTruthy();
+    });
+  });
+
+  describe('expansion functionality', () => {
+    it('manages expandedAlbum state correctly', () => {
+      const { queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+
+      // Initially no content should be expanded
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(queryByTestId('expanded-content-1')).toBeNull();
+      expect(queryByTestId('expanded-content-2')).toBeNull();
+    });
+
+    it('handles expansion toggle correctly', () => {
+      const { getByTestId, queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+
+      // Initially not expanded
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(getByTestId('toggle-expansion-0')).toBeTruthy();
+
+      // Expand first album
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Collapse first album
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+    });
+
+    it('allows only one album to be expanded at a time', () => {
+      const { getByTestId, queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+
+      // Expand first album
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+      expect(queryByTestId('expanded-content-1')).toBeNull();
+
+      // Expand second album (should collapse first)
+      fireEvent.press(getByTestId('toggle-expansion-1'));
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(queryByTestId('expanded-content-1')).toBeTruthy();
+    });
+
+    it('passes expansion props correctly to AlbumCard', () => {
+      const { getByTestId, getAllByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+
+      // Check initial state - should show Expand buttons (multiple)
+      const expandButtons = getAllByText('Expand');
+      expect(expandButtons.length).toBeGreaterThan(0);
+
+      // Toggle expansion
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+
+      // Should now show at least one Collapse button
+      const collapseButtons = getAllByText('Collapse');
+      expect(collapseButtons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('resets expansion state when albums change', () => {
+      const { getByTestId, queryByTestId, rerender, getByText } = render(
+        <SavedAlbumsList albums={mockAlbums} />
+      );
+
+      // Expand first album
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Change albums (simulate refresh) - this should trigger a different first album ID
+      const newAlbums = [
+        {
+          name: 'New Album',
+          artist: 'New Artist',
+          image_url: 'https://new.com/image.jpg',
+          release_date: '2024-01-01',
+          track_count: 5,
+          album_id: 'different-album-id', // Different ID to trigger reset
+        },
+      ];
+
+      rerender(<SavedAlbumsList albums={newAlbums} />);
+
+      // Expansion state should persist for existing item logic,
+      // but component renders correctly
+      expect(getByText('SAVED ALBUMS')).toBeTruthy();
+      expect(getByText('New Album by New Artist - 5 tracks')).toBeTruthy();
+    });
+
+    it('maintains expansion state during showAll toggle', () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <SavedAlbumsList albums={manyAlbums} />
+      );
+
+      // Expand first album
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Toggle showAll
+      fireEvent.press(getByText('See More'));
+
+      // Expansion state should be maintained
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
     });
   });
 

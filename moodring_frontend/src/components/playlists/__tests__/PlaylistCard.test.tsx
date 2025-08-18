@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { PlaylistCard } from '../PlaylistCard';
 import { SavedPlaylist } from '../../../types';
 
@@ -37,7 +37,9 @@ jest.mock('../../tracks/TaggingInterface', () => ({
   TaggingInterface: () => {
     const React = require('react');
     const { View, Text } = require('react-native');
-    return React.createElement(View, { testID: 'tagging-interface' }, 
+    return React.createElement(
+      View,
+      { testID: 'tagging-interface' },
       React.createElement(Text, null, 'TaggingInterface')
     );
   },
@@ -99,7 +101,8 @@ const mockPlaylistWithoutDescription: SavedPlaylist = {
 
 const mockPlaylistWithLongDescription: SavedPlaylist = {
   name: 'Long Description Playlist',
-  description: 'This is a very long description that should be truncated because it exceeds the maximum length limit that we have set for playlist descriptions in the UI to maintain clean formatting',
+  description:
+    'This is a very long description that should be truncated because it exceeds the maximum length limit that we have set for playlist descriptions in the UI to maintain clean formatting',
   image_url: 'https://example.com/playlist3.jpg',
   track_count: 50,
   created_at: '2024-01-01T00:00:00Z',
@@ -113,7 +116,14 @@ describe('PlaylistCard', () => {
 
   describe('basic rendering', () => {
     it('renders playlist information correctly', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Test Playlist')).toBeTruthy();
       expect(getByText('This is a test playlist description')).toBeTruthy();
@@ -121,13 +131,27 @@ describe('PlaylistCard', () => {
     });
 
     it('renders with correct testID', () => {
-      const { getByTestId } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={5} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={5}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('playlist-card-5')).toBeTruthy();
     });
 
     it('renders playlist without image (shows placeholder)', () => {
-      const { getByText, queryByRole } = render(<PlaylistCard playlist={mockPlaylistWithoutImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText, queryByRole } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithoutImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('No Image Playlist')).toBeTruthy();
       expect(getByText('This playlist has no image')).toBeTruthy();
@@ -136,7 +160,14 @@ describe('PlaylistCard', () => {
     });
 
     it('renders playlist image when provided', () => {
-      const { UNSAFE_getByType } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { UNSAFE_getByType } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       const image = UNSAFE_getByType(require('react-native').Image);
       expect(image.props.source.uri).toBe('https://example.com/playlist.jpg');
@@ -145,13 +176,27 @@ describe('PlaylistCard', () => {
 
   describe('track count formatting', () => {
     it('formats singular track count correctly', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithoutImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithoutImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('1 track')).toBeTruthy();
     });
 
     it('formats plural track count correctly', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('25 tracks')).toBeTruthy();
     });
@@ -162,13 +207,27 @@ describe('PlaylistCard', () => {
         track_count: 0,
       };
 
-      const { getByText } = render(<PlaylistCard playlist={zeroTracksPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={zeroTracksPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('0 tracks')).toBeTruthy();
     });
 
     it('formats large track count correctly', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithLongDescription} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithLongDescription}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('50 tracks')).toBeTruthy();
     });
@@ -176,7 +235,14 @@ describe('PlaylistCard', () => {
 
   describe('description handling', () => {
     it('shows "No description" when description is undefined', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithoutDescription} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithoutDescription}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('No description')).toBeTruthy();
     });
@@ -187,24 +253,47 @@ describe('PlaylistCard', () => {
         description: '',
       };
 
-      const { getByText } = render(<PlaylistCard playlist={emptyDescPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={emptyDescPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('No description')).toBeTruthy();
     });
 
     it('truncates long descriptions properly', () => {
-      const { getByText, queryByText } = render(<PlaylistCard playlist={mockPlaylistWithLongDescription} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText, queryByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithLongDescription}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       // Should show truncated version with ellipsis
-      const truncatedText = getByText(/This is a very long description that should be truncated because it exceeds the maximum length.../);
+      const truncatedText = getByText(
+        /This is a very long description that should be truncated because it exceeds the maximum length.../
+      );
       expect(truncatedText).toBeTruthy();
-      
+
       // Should not show the full original text
       expect(queryByText(mockPlaylistWithLongDescription.description!)).toBeNull();
     });
 
     it('does not truncate short descriptions', () => {
-      const { getByText } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('This is a test playlist description')).toBeTruthy();
     });
@@ -215,7 +304,14 @@ describe('PlaylistCard', () => {
         description: 'A'.repeat(100),
       };
 
-      const { getByText } = render(<PlaylistCard playlist={exactLengthPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={exactLengthPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('A'.repeat(100))).toBeTruthy();
     });
@@ -226,7 +322,14 @@ describe('PlaylistCard', () => {
         description: 'A'.repeat(101),
       };
 
-      const { getByText } = render(<PlaylistCard playlist={longPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={longPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('A'.repeat(100) + '...')).toBeTruthy();
     });
@@ -234,13 +337,27 @@ describe('PlaylistCard', () => {
 
   describe('component structure', () => {
     it('renders within GradientCard', () => {
-      const { getByTestId } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('gradient-card')).toBeTruthy();
     });
 
     it('handles all required props correctly', () => {
-      const { getByText, getByTestId } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={3} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText, getByTestId } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={3}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('playlist-card-3')).toBeTruthy();
       expect(getByText('Test Playlist')).toBeTruthy();
@@ -256,7 +373,14 @@ describe('PlaylistCard', () => {
         playlist_id: 'minimal-id',
       };
 
-      const { getByText } = render(<PlaylistCard playlist={minimalPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={minimalPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Minimal')).toBeTruthy();
       expect(getByText('No description')).toBeTruthy();
@@ -266,17 +390,200 @@ describe('PlaylistCard', () => {
 
   describe('accessibility', () => {
     it('includes testID for testing accessibility', () => {
-      const { getByTestId } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={7} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={7}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('playlist-card-7')).toBeTruthy();
     });
 
     it('handles different index values correctly', () => {
-      const { getByTestId } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
       expect(getByTestId('playlist-card-0')).toBeTruthy();
 
-      const { getByTestId: getByTestId2 } = render(<PlaylistCard playlist={mockPlaylistWithImage} _index={99} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId: getByTestId2 } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={99}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
       expect(getByTestId2('playlist-card-99')).toBeTruthy();
+    });
+  });
+
+  describe('expansion functionality', () => {
+    it('handles isExpanded prop correctly', () => {
+      const mockToggle = jest.fn();
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={mockToggle}
+        />
+      );
+
+      // Should render basic playlist information regardless of expansion state
+      expect(getByText('Test Playlist')).toBeTruthy();
+      expect(getByText('This is a test playlist description')).toBeTruthy();
+      expect(getByText('25 tracks')).toBeTruthy();
+    });
+
+    it('calls onToggleExpansion with correct index when header is pressed', () => {
+      const mockToggle = jest.fn();
+      const { UNSAFE_getAllByType } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={3}
+          isExpanded={false}
+          onToggleExpansion={mockToggle}
+        />
+      );
+
+      // Find and press the TouchableOpacity (header)
+      const touchableOpacities = UNSAFE_getAllByType(require('react-native').TouchableOpacity);
+      const header = touchableOpacities[0]; // First TouchableOpacity is the header
+      fireEvent.press(header);
+
+      expect(mockToggle).toHaveBeenCalledWith(3);
+      expect(mockToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('generates playlist ID correctly for tagging', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(mockTaggingService.taggingService.generatePlaylistId).toHaveBeenCalledWith(
+        'Test Playlist',
+        'test-playlist-id'
+      );
+    });
+
+    it('loads tags when expanded with user and playlistTagId', async () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockResolvedValue([]);
+
+      render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(mockTaggingService.taggingService.getSongTags).toHaveBeenCalledWith(
+          'playlist_test-playlist-id_test playlist',
+          'test-user-id'
+        );
+      });
+    });
+
+    it('shows loading state while fetching tags', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      // Mock a delayed response
+      mockTaggingService.taggingService.getSongTags.mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve([]), 100))
+      );
+
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(getByText('Loading tags...')).toBeTruthy();
+    });
+
+    it('handles tag loading errors gracefully', async () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockRejectedValue(new Error('API Error'));
+
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should handle error and still show the UI
+      expect(getByText('Test Playlist')).toBeTruthy();
+    });
+
+    it('renders with animation hooks', () => {
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should render the component successfully with animation hooks
+      expect(getByText('Test Playlist')).toBeTruthy();
+    });
+
+    it('does not load tags when not expanded', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockClear();
+
+      render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(mockTaggingService.taggingService.getSongTags).not.toHaveBeenCalled();
+    });
+
+    it('integrates with tagging service when expanded', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+
+      render(
+        <PlaylistCard
+          playlist={mockPlaylistWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should call generatePlaylistId with correct parameters
+      expect(mockTaggingService.taggingService.generatePlaylistId).toHaveBeenCalledWith(
+        'Test Playlist',
+        'test-playlist-id'
+      );
     });
   });
 
@@ -287,7 +594,14 @@ describe('PlaylistCard', () => {
         name: 'Test & Special "Characters" [2024]',
       };
 
-      const { getByText } = render(<PlaylistCard playlist={specialCharPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={specialCharPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Test & Special "Characters" [2024]')).toBeTruthy();
     });
@@ -298,9 +612,18 @@ describe('PlaylistCard', () => {
         name: 'This is a very long playlist name that might cause layout issues in some cases',
       };
 
-      const { getByText } = render(<PlaylistCard playlist={longNamePlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={longNamePlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
-      expect(getByText('This is a very long playlist name that might cause layout issues in some cases')).toBeTruthy();
+      expect(
+        getByText('This is a very long playlist name that might cause layout issues in some cases')
+      ).toBeTruthy();
     });
 
     it('handles negative track count gracefully', () => {
@@ -309,7 +632,14 @@ describe('PlaylistCard', () => {
         track_count: -1,
       };
 
-      const { getByText } = render(<PlaylistCard playlist={negativeTracksPlaylist} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <PlaylistCard
+          playlist={negativeTracksPlaylist}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('-1 tracks')).toBeTruthy();
     });

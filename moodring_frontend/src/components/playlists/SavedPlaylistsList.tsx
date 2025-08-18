@@ -29,7 +29,8 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
     const currentPlaylists = playlists;
 
     if (prevPlaylists.length > 0 && currentPlaylists.length > 0) {
-      const firstPlaylistChanged = prevPlaylists[0]?.playlist_id !== currentPlaylists[0]?.playlist_id;
+      const firstPlaylistChanged =
+        prevPlaylists[0]?.playlist_id !== currentPlaylists[0]?.playlist_id;
       const playlistsDecreased = currentPlaylists.length < prevPlaylists.length;
 
       if (firstPlaylistChanged || playlistsDecreased) {

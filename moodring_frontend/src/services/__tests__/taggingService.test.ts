@@ -401,6 +401,136 @@ describe('TaggingService', () => {
     });
   });
 
+  describe('generatePlaylistId', () => {
+    it('generates consistent playlist ID from playlist name and ID', () => {
+      const playlistId1 = taggingService.generatePlaylistId('My Playlist', 'spotify-playlist-123');
+      const playlistId2 = taggingService.generatePlaylistId('My Playlist', 'spotify-playlist-123');
+
+      expect(playlistId1).toBe(playlistId2);
+      expect(playlistId1).toBe('playlist_spotify_playlist_123_my_playlist');
+    });
+
+    it('handles special characters in playlist name', () => {
+      const playlistId = taggingService.generatePlaylistId(
+        'Playlist: "Best Songs" & More!',
+        'pl-456'
+      );
+      expect(playlistId).toBe('playlist_pl_456_playlist___best_songs____more_');
+    });
+
+    it('handles extra whitespace in playlist name', () => {
+      const playlistId = taggingService.generatePlaylistId('  Spaced Playlist  ', 'pl-789');
+      expect(playlistId).toBe('playlist_pl_789_spaced_playlist');
+    });
+
+    it('handles empty playlist name', () => {
+      const playlistId = taggingService.generatePlaylistId('', 'empty-pl-1');
+      expect(playlistId).toBe('playlist_empty_pl_1_');
+    });
+
+    it('converts playlist name to lowercase consistently', () => {
+      const playlistId1 = taggingService.generatePlaylistId('UPPERCASE PLAYLIST', 'pl-upper');
+      const playlistId2 = taggingService.generatePlaylistId('uppercase playlist', 'pl-upper');
+
+      expect(playlistId1).toBe(playlistId2);
+      expect(playlistId1).toBe('playlist_pl_upper_uppercase_playlist');
+    });
+
+    it('handles numbers and valid characters in playlist name', () => {
+      const playlistId = taggingService.generatePlaylistId('Playlist 2024', 'pl-2024');
+      expect(playlistId).toBe('playlist_pl_2024_playlist_2024');
+    });
+
+    it('handles different Spotify playlist ID formats', () => {
+      const playlistId1 = taggingService.generatePlaylistId('Test', '37i9dQZF1DXcBWIGoYBM5M');
+      const playlistId2 = taggingService.generatePlaylistId(
+        'Test',
+        'spotify:playlist:37i9dQZF1DXcBWIGoYBM5M'
+      );
+
+      expect(playlistId1).toBe('playlist_37i9d___1__c____o___5__test');
+      expect(playlistId2).toBe('playlist_spotify_playlist_37i9d___1__c____o___5__test');
+    });
+
+    it('maintains uniqueness for different playlists with same name', () => {
+      const playlistId1 = taggingService.generatePlaylistId('My Favorites', 'user1-fav');
+      const playlistId2 = taggingService.generatePlaylistId('My Favorites', 'user2-fav');
+
+      expect(playlistId1).not.toBe(playlistId2);
+      expect(playlistId1).toBe('playlist_user1_fav_my_favorites');
+      expect(playlistId2).toBe('playlist_user2_fav_my_favorites');
+    });
+  });
+
+  describe('generateAlbumId', () => {
+    it('generates consistent album ID from album name and ID', () => {
+      const albumId1 = taggingService.generateAlbumId('Test Album', 'spotify-album-123');
+      const albumId2 = taggingService.generateAlbumId('Test Album', 'spotify-album-123');
+
+      expect(albumId1).toBe(albumId2);
+      expect(albumId1).toBe('album_spotify_album_123_test_album');
+    });
+
+    it('handles special characters in album name', () => {
+      const albumId = taggingService.generateAlbumId('Album: "Greatest Hits" & More!', 'al-456');
+      expect(albumId).toBe('album_al_456_album___greatest_hits____more_');
+    });
+
+    it('handles extra whitespace in album name', () => {
+      const albumId = taggingService.generateAlbumId('  Spaced Album  ', 'al-789');
+      expect(albumId).toBe('album_al_789_spaced_album');
+    });
+
+    it('handles empty album name', () => {
+      const albumId = taggingService.generateAlbumId('', 'empty-al-1');
+      expect(albumId).toBe('album_empty_al_1_');
+    });
+
+    it('converts album name to lowercase consistently', () => {
+      const albumId1 = taggingService.generateAlbumId('UPPERCASE ALBUM', 'al-upper');
+      const albumId2 = taggingService.generateAlbumId('uppercase album', 'al-upper');
+
+      expect(albumId1).toBe(albumId2);
+      expect(albumId1).toBe('album_al_upper_uppercase_album');
+    });
+
+    it('handles numbers and valid characters in album name', () => {
+      const albumId = taggingService.generateAlbumId('Album 2024', 'al-2024');
+      expect(albumId).toBe('album_al_2024_album_2024');
+    });
+
+    it('handles different Spotify album ID formats', () => {
+      const albumId1 = taggingService.generateAlbumId('Test Album', '1DFixLWuPkv3KT3TnV35m3');
+      const albumId2 = taggingService.generateAlbumId(
+        'Test Album',
+        'spotify:album:1DFixLWuPkv3KT3TnV35m3'
+      );
+
+      expect(albumId1).toBe('album_1__ix__u_kv3__3_n_35m3_test_album');
+      expect(albumId2).toBe('album_spotify_album_1__ix__u_kv3__3_n_35m3_test_album');
+    });
+
+    it('maintains uniqueness for different albums with same name', () => {
+      const albumId1 = taggingService.generateAlbumId('Greatest Hits', 'artist1-hits');
+      const albumId2 = taggingService.generateAlbumId('Greatest Hits', 'artist2-hits');
+
+      expect(albumId1).not.toBe(albumId2);
+      expect(albumId1).toBe('album_artist1_hits_greatest_hits');
+      expect(albumId2).toBe('album_artist2_hits_greatest_hits');
+    });
+
+    it('handles very long album names', () => {
+      const longAlbumName =
+        'This is a very long album name that might exceed normal limits but should still be processed correctly';
+      const albumId = taggingService.generateAlbumId(longAlbumName, 'long-album-id');
+
+      expect(albumId).toBe(
+        'album_long_album_id_this_is_a_very_long_album_name_that_might_exceed_normal_limits_but_should_still_be_processed_correctly'
+      );
+      expect(albumId.startsWith('album_long_album_id_')).toBe(true);
+    });
+  });
+
   describe('error handling', () => {
     it('handles JSON parsing errors', async () => {
       mockFetch.mockResolvedValueOnce({

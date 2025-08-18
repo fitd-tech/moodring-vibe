@@ -38,7 +38,10 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
 
   useEffect(() => {
     // Generate a consistent playlist ID from playlist information
-    const generatedPlaylistId = taggingService.generatePlaylistId(playlist.name, playlist.playlist_id);
+    const generatedPlaylistId = taggingService.generatePlaylistId(
+      playlist.name,
+      playlist.playlist_id
+    );
     setPlaylistTagId(generatedPlaylistId);
   }, [playlist.name, playlist.playlist_id]);
 
@@ -105,9 +108,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
             <Text style={styles.trackCount}>{formatTrackCount(playlist.track_count)}</Text>
           </View>
           <View style={styles.actions}>
-            <Text style={styles.playlistDate}>
-              {formatDate(playlist.created_at)}
-            </Text>
+            <Text style={styles.playlistDate}>{formatDate(playlist.created_at)}</Text>
           </View>
         </TouchableOpacity>
 
@@ -130,7 +131,11 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
                 <Text style={styles.loadingText}>Loading tags...</Text>
               </View>
             ) : (
-              <TaggingInterface tags={tags} songId={playlistTagId} onTagsChanged={loadPlaylistTags} />
+              <TaggingInterface
+                tags={tags}
+                songId={playlistTagId}
+                onTagsChanged={loadPlaylistTags}
+              />
             )}
           </Animated.View>
         )}

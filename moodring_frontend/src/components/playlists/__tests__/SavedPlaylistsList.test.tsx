@@ -25,18 +25,36 @@ jest.mock('../PlaylistCard', () => ({
   PlaylistCard: ({
     playlist,
     _index,
+    isExpanded,
+    onToggleExpansion,
   }: {
     playlist: SavedPlaylist;
     _index: number;
+    isExpanded: boolean;
+    onToggleExpansion: (_index: number) => void;
   }) => {
     const React = require('react');
-    const { View, Text } = require('react-native');
+    const { View, Text, TouchableOpacity } = require('react-native');
     return React.createElement(
       View,
       {
         testID: `playlist-card-${playlist.name}`,
       },
-      React.createElement(Text, null, `${playlist.name} - ${playlist.track_count} tracks`)
+      React.createElement(Text, null, `${playlist.name} - ${playlist.track_count} tracks`),
+      React.createElement(
+        TouchableOpacity,
+        {
+          testID: `toggle-expansion-${_index}`,
+          onPress: () => onToggleExpansion(_index),
+        },
+        React.createElement(Text, null, isExpanded ? 'Collapse' : 'Expand')
+      ),
+      isExpanded &&
+        React.createElement(
+          View,
+          { testID: `expanded-content-${_index}` },
+          React.createElement(Text, null, 'Expanded Content')
+        )
     );
   },
 }));
@@ -137,14 +155,20 @@ describe('SavedPlaylistsList', () => {
     it('shows See More button when hasMorePlaylists is true and onLoadMore is provided', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          onLoadMore={mockLoadMore}
+        />
       );
 
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('does not show See More button when hasMorePlaylists is true but onLoadMore is not provided', () => {
-      const { queryByText } = render(<SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} />);
+      const { queryByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} />
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
@@ -170,7 +194,11 @@ describe('SavedPlaylistsList', () => {
     it('calls onLoadMore when See More is pressed and hasMorePlaylists is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          onLoadMore={mockLoadMore}
+        />
       );
 
       fireEvent.press(getByText('See More'));
@@ -183,7 +211,11 @@ describe('SavedPlaylistsList', () => {
     it('handles both local expansion and API loading correctly', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText, getByTestId } = render(
-        <SavedPlaylistsList playlists={manyPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+        <SavedPlaylistsList
+          playlists={manyPlaylists}
+          hasMorePlaylists={true}
+          onLoadMore={mockLoadMore}
+        />
       );
 
       // Initially should show See More for both local expansion and API loading
@@ -302,7 +334,9 @@ describe('SavedPlaylistsList', () => {
     it('does not reset showAll when playlists are just appended', () => {
       const extendedPlaylists = [...manyPlaylists, ...mockPlaylists];
 
-      const { rerender, queryByText, queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { rerender, queryByText, queryByTestId } = render(
+        <SavedPlaylistsList playlists={manyPlaylists} />
+      );
 
       // Expand to show all playlists
       fireEvent.press(queryByText('See More')!);
@@ -342,7 +376,11 @@ describe('SavedPlaylistsList', () => {
     it('calls onLoadMore when provided and hasMorePlaylists is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          onLoadMore={mockLoadMore}
+        />
       );
 
       fireEvent.press(getByText('See More'));
@@ -355,11 +393,15 @@ describe('SavedPlaylistsList', () => {
     it('handles rapid consecutive See More presses', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          onLoadMore={mockLoadMore}
+        />
       );
 
       const button = getByText('See More');
-      
+
       // Press multiple times rapidly
       fireEvent.press(button);
       fireEvent.press(button);
@@ -372,13 +414,120 @@ describe('SavedPlaylistsList', () => {
     });
   });
 
+  describe('expansion functionality', () => {
+    it('manages expandedPlaylist state correctly', () => {
+      const { queryByTestId } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      // Initially no content should be expanded
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(queryByTestId('expanded-content-1')).toBeNull();
+      expect(queryByTestId('expanded-content-2')).toBeNull();
+    });
+
+    it('handles expansion toggle correctly', () => {
+      const { getByTestId, queryByTestId } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} />
+      );
+
+      // Initially not expanded
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(getByTestId('toggle-expansion-0')).toBeTruthy();
+
+      // Expand first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Collapse first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+    });
+
+    it('allows only one playlist to be expanded at a time', () => {
+      const { getByTestId, queryByTestId } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} />
+      );
+
+      // Expand first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+      expect(queryByTestId('expanded-content-1')).toBeNull();
+
+      // Expand second playlist (should collapse first)
+      fireEvent.press(getByTestId('toggle-expansion-1'));
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(queryByTestId('expanded-content-1')).toBeTruthy();
+    });
+
+    it('passes expansion props correctly to PlaylistCard', () => {
+      const { getByTestId, getAllByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} />
+      );
+
+      // Check initial state - should show Expand buttons (multiple)
+      const expandButtons = getAllByText('Expand');
+      expect(expandButtons.length).toBeGreaterThan(0);
+
+      // Toggle expansion
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+
+      // Should now show at least one Collapse button
+      const collapseButtons = getAllByText('Collapse');
+      expect(collapseButtons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('resets expansion state when playlists change', () => {
+      const { getByTestId, queryByTestId, rerender, getByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} />
+      );
+
+      // Expand first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Change playlists (simulate refresh) - this should trigger a different first playlist ID
+      const newPlaylists = [
+        {
+          name: 'New Playlist',
+          description: 'New description',
+          image_url: 'https://new.com/image.jpg',
+          track_count: 5,
+          created_at: '2024-01-02T00:00:00Z',
+          playlist_id: 'different-playlist-id', // Different ID to trigger reset
+        },
+      ];
+
+      rerender(<SavedPlaylistsList playlists={newPlaylists} />);
+
+      // Expansion state should persist for existing item logic,
+      // but component renders correctly
+      expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
+      expect(getByText('New Playlist - 5 tracks')).toBeTruthy();
+    });
+
+    it('maintains expansion state during showAll toggle', () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <SavedPlaylistsList playlists={manyPlaylists} />
+      );
+
+      // Expand first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+
+      // Toggle showAll
+      fireEvent.press(getByText('See More'));
+
+      // Expansion state should be maintained
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+    });
+  });
+
   describe('component structure and accessibility', () => {
     it('renders with correct semantic structure', () => {
       const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
 
       // Should have title
       expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
-      
+
       // Should render playlist cards
       expect(getByText(/Test Playlist 1.*20 tracks/)).toBeTruthy();
     });

@@ -104,10 +104,7 @@ export class TaggingService {
   // Utility method to generate an album ID from album information
   generateAlbumId(albumName: string, albumId: string): string {
     // Create a consistent identifier from album name and Spotify album ID
-    return `album_${albumId}_${albumName.toLowerCase().trim()}`.replace(
-      /[^a-z0-9_]/g,
-      '_'
-    );
+    return `album_${albumId}_${albumName.toLowerCase().trim()}`.replace(/[^a-z0-9_]/g, '_');
   }
 }
 

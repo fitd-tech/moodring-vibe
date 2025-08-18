@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AlbumCard } from '../AlbumCard';
 import { SavedAlbum } from '../../../types';
 
@@ -37,7 +37,9 @@ jest.mock('../../tracks/TaggingInterface', () => ({
   TaggingInterface: () => {
     const React = require('react');
     const { View, Text } = require('react-native');
-    return React.createElement(View, { testID: 'tagging-interface' }, 
+    return React.createElement(
+      View,
+      { testID: 'tagging-interface' },
       React.createElement(Text, null, 'TaggingInterface')
     );
   },
@@ -113,7 +115,14 @@ describe('AlbumCard', () => {
 
   describe('basic rendering', () => {
     it('renders album information correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Test Album')).toBeTruthy();
       expect(getByText('Test Artist')).toBeTruthy();
@@ -122,13 +131,27 @@ describe('AlbumCard', () => {
     });
 
     it('renders with correct testID', () => {
-      const { getByTestId } = render(<AlbumCard album={mockAlbumWithImage} _index={3} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={3}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('album-card-3')).toBeTruthy();
     });
 
     it('renders album without image (shows placeholder)', () => {
-      const { getByText, queryByRole } = render(<AlbumCard album={mockAlbumWithoutImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText, queryByRole } = render(
+        <AlbumCard
+          album={mockAlbumWithoutImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('No Image Album')).toBeTruthy();
       expect(getByText('Another Artist')).toBeTruthy();
@@ -137,7 +160,14 @@ describe('AlbumCard', () => {
     });
 
     it('renders album image when provided', () => {
-      const { UNSAFE_getByType } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { UNSAFE_getByType } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       const image = UNSAFE_getByType(require('react-native').Image);
       expect(image.props.source.uri).toBe('https://example.com/album.jpg');
@@ -146,13 +176,27 @@ describe('AlbumCard', () => {
 
   describe('track count formatting', () => {
     it('formats singular track count correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithoutImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithoutImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('1 track')).toBeTruthy();
     });
 
     it('formats plural track count correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('12 tracks')).toBeTruthy();
     });
@@ -163,7 +207,14 @@ describe('AlbumCard', () => {
         track_count: 0,
       };
 
-      const { getByText } = render(<AlbumCard album={zeroTracksAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={zeroTracksAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('0 tracks')).toBeTruthy();
     });
@@ -174,7 +225,14 @@ describe('AlbumCard', () => {
         track_count: 50,
       };
 
-      const { getByText } = render(<AlbumCard album={largeTrackAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={largeTrackAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('50 tracks')).toBeTruthy();
     });
@@ -182,19 +240,40 @@ describe('AlbumCard', () => {
 
   describe('release date formatting', () => {
     it('formats release date to year correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('2023')).toBeTruthy();
     });
 
     it('formats old release date correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumOldDate} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumOldDate}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('1999')).toBeTruthy();
     });
 
     it('formats recent release date with timestamp correctly', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumRecentDate} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumRecentDate}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('2024')).toBeTruthy();
     });
@@ -205,7 +284,14 @@ describe('AlbumCard', () => {
         release_date: '2020-05-20T00:00:00.000Z',
       };
 
-      const { getByText } = render(<AlbumCard album={differentDateAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={differentDateAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('2020')).toBeTruthy();
     });
@@ -216,7 +302,14 @@ describe('AlbumCard', () => {
         release_date: '2021-11-15T15:30:45.123Z',
       };
 
-      const { getByText } = render(<AlbumCard album={isoDateAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={isoDateAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('2021')).toBeTruthy();
     });
@@ -224,19 +317,40 @@ describe('AlbumCard', () => {
 
   describe('component structure', () => {
     it('renders within GradientCard', () => {
-      const { getByTestId } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('gradient-card')).toBeTruthy();
     });
 
     it('displays separator between release date and track count', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText(' • ')).toBeTruthy();
     });
 
     it('handles all required props correctly', () => {
-      const { getByText, getByTestId } = render(<AlbumCard album={mockAlbumWithImage} _index={5} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText, getByTestId } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={5}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('album-card-5')).toBeTruthy();
       expect(getByText('Test Album')).toBeTruthy();
@@ -253,7 +367,14 @@ describe('AlbumCard', () => {
         album_id: 'minimal-id',
       };
 
-      const { getByText } = render(<AlbumCard album={minimalAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={minimalAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Minimal')).toBeTruthy();
       expect(getByText('Artist')).toBeTruthy();
@@ -264,17 +385,201 @@ describe('AlbumCard', () => {
 
   describe('accessibility', () => {
     it('includes testID for testing accessibility', () => {
-      const { getByTestId } = render(<AlbumCard album={mockAlbumWithImage} _index={7} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={7}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByTestId('album-card-7')).toBeTruthy();
     });
 
     it('handles different index values correctly', () => {
-      const { getByTestId } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
       expect(getByTestId('album-card-0')).toBeTruthy();
 
-      const { getByTestId: getByTestId2 } = render(<AlbumCard album={mockAlbumWithImage} _index={99} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId: getByTestId2 } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={99}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
       expect(getByTestId2('album-card-99')).toBeTruthy();
+    });
+  });
+
+  describe('expansion functionality', () => {
+    it('handles isExpanded prop correctly', () => {
+      const mockToggle = jest.fn();
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={mockToggle}
+        />
+      );
+
+      // Should render basic album information regardless of expansion state
+      expect(getByText('Test Album')).toBeTruthy();
+      expect(getByText('Test Artist')).toBeTruthy();
+      expect(getByText('2023')).toBeTruthy();
+      expect(getByText('12 tracks')).toBeTruthy();
+    });
+
+    it('calls onToggleExpansion with correct index when header is pressed', () => {
+      const mockToggle = jest.fn();
+      const { UNSAFE_getAllByType } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={5}
+          isExpanded={false}
+          onToggleExpansion={mockToggle}
+        />
+      );
+
+      // Find and press the TouchableOpacity (header)
+      const touchableOpacities = UNSAFE_getAllByType(require('react-native').TouchableOpacity);
+      const header = touchableOpacities[0]; // First TouchableOpacity is the header
+      fireEvent.press(header);
+
+      expect(mockToggle).toHaveBeenCalledWith(5);
+      expect(mockToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('generates album ID correctly for tagging', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(mockTaggingService.taggingService.generateAlbumId).toHaveBeenCalledWith(
+        'Test Album',
+        'test-album-id'
+      );
+    });
+
+    it('loads tags when expanded with user and albumTagId', async () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockResolvedValue([]);
+
+      render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(mockTaggingService.taggingService.getSongTags).toHaveBeenCalledWith(
+          'album_test-album-id_test album',
+          'test-user-id'
+        );
+      });
+    });
+
+    it('shows loading state while fetching tags', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      // Mock a delayed response
+      mockTaggingService.taggingService.getSongTags.mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve([]), 100))
+      );
+
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(getByText('Loading tags...')).toBeTruthy();
+    });
+
+    it('handles tag loading errors gracefully', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockRejectedValue(new Error('API Error'));
+
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should handle error and still show the UI
+      expect(getByText('Test Album')).toBeTruthy();
+    });
+
+    it('renders with animation hooks', () => {
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should render the component successfully with animation hooks
+      expect(getByText('Test Album')).toBeTruthy();
+    });
+
+    it('does not load tags when not expanded', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+      mockTaggingService.taggingService.getSongTags.mockClear();
+
+      render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      expect(mockTaggingService.taggingService.getSongTags).not.toHaveBeenCalled();
+    });
+
+    it('integrates with tagging service when expanded', () => {
+      const mockTaggingService = require('../../../services/taggingService');
+
+      render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={true}
+          onToggleExpansion={jest.fn()}
+        />
+      );
+
+      // Should call generateAlbumId with correct parameters
+      expect(mockTaggingService.taggingService.generateAlbumId).toHaveBeenCalledWith(
+        'Test Album',
+        'test-album-id'
+      );
     });
   });
 
@@ -285,7 +590,14 @@ describe('AlbumCard', () => {
         name: 'Album & Special "Characters" [2024]',
       };
 
-      const { getByText } = render(<AlbumCard album={specialCharAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={specialCharAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Album & Special "Characters" [2024]')).toBeTruthy();
     });
@@ -296,7 +608,14 @@ describe('AlbumCard', () => {
         artist: 'Artist with "Special" & Characters',
       };
 
-      const { getByText } = render(<AlbumCard album={specialCharAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={specialCharAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('Artist with "Special" & Characters')).toBeTruthy();
     });
@@ -307,9 +626,18 @@ describe('AlbumCard', () => {
         name: 'This is a very long album name that might cause layout issues in some cases',
       };
 
-      const { getByText } = render(<AlbumCard album={longNameAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={longNameAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
-      expect(getByText('This is a very long album name that might cause layout issues in some cases')).toBeTruthy();
+      expect(
+        getByText('This is a very long album name that might cause layout issues in some cases')
+      ).toBeTruthy();
     });
 
     it('handles very long artist names', () => {
@@ -318,9 +646,18 @@ describe('AlbumCard', () => {
         artist: 'This is a very long artist name that might cause layout issues',
       };
 
-      const { getByText } = render(<AlbumCard album={longArtistAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={longArtistAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
-      expect(getByText('This is a very long artist name that might cause layout issues')).toBeTruthy();
+      expect(
+        getByText('This is a very long artist name that might cause layout issues')
+      ).toBeTruthy();
     });
 
     it('handles negative track count gracefully', () => {
@@ -329,7 +666,14 @@ describe('AlbumCard', () => {
         track_count: -1,
       };
 
-      const { getByText } = render(<AlbumCard album={negativeTracksAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={negativeTracksAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('-1 tracks')).toBeTruthy();
     });
@@ -340,7 +684,14 @@ describe('AlbumCard', () => {
         release_date: 'invalid-date',
       };
 
-      const { getByText } = render(<AlbumCard album={invalidDateAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={invalidDateAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       // Should still render the album name and artist
       expect(getByText('Test Album')).toBeTruthy();
@@ -354,7 +705,14 @@ describe('AlbumCard', () => {
         release_date: '1900-01-01',
       };
 
-      const { getByText } = render(<AlbumCard album={veryOldAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={veryOldAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('1899')).toBeTruthy(); // Date parsing can vary by timezone
     });
@@ -365,7 +723,14 @@ describe('AlbumCard', () => {
         release_date: '2030-12-31',
       };
 
-      const { getByText } = render(<AlbumCard album={futureAlbum} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={futureAlbum}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       expect(getByText('2030')).toBeTruthy();
     });
@@ -373,7 +738,14 @@ describe('AlbumCard', () => {
 
   describe('layout structure', () => {
     it('renders album details in correct order', () => {
-      const { getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       // Check that all elements are present
       expect(getByText('Test Album')).toBeTruthy();
@@ -384,7 +756,14 @@ describe('AlbumCard', () => {
     });
 
     it('maintains proper component hierarchy', () => {
-      const { getByTestId, getByText } = render(<AlbumCard album={mockAlbumWithImage} _index={0} isExpanded={false} onToggleExpansion={jest.fn()} />);
+      const { getByTestId, getByText } = render(
+        <AlbumCard
+          album={mockAlbumWithImage}
+          _index={0}
+          isExpanded={false}
+          onToggleExpansion={jest.fn()}
+        />
+      );
 
       // Should have container with testID
       const container = getByTestId('album-card-0');
