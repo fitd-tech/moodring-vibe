@@ -11,6 +11,7 @@ import {
   SavedPlaylist,
   SavedAlbum,
 } from '../../types';
+import { ExpansionProvider } from '../../contexts/ExpansionContext';
 import { ProfileMenu } from './ProfileMenu';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';
@@ -118,47 +119,49 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <NowPlaying currentlyPlaying={currentlyPlaying} />
 
-          <RecentTracksList
-            tracks={recentTracks}
-            onLoadMore={onLoadMoreTracks}
-            hasMoreTracks={hasMoreTracks}
-            isLoadingMore={isLoadingMore}
-          />
-
-          {topTracks.length > 0 && (
-            <TopTracksList
-              tracks={topTracks}
-              onLoadMore={onLoadMoreTopTracks}
-              hasMoreTracks={hasMoreTopTracks}
-              isLoadingMore={isLoadingMoreTopTracks}
+          <ExpansionProvider>
+            <RecentTracksList
+              tracks={recentTracks}
+              onLoadMore={onLoadMoreTracks}
+              hasMoreTracks={hasMoreTracks}
+              isLoadingMore={isLoadingMore}
             />
-          )}
 
-          <SavedTracksList
-            tracks={savedTracks}
-            onLoadMore={onLoadMoreSavedTracks}
-            hasMoreTracks={hasMoreSavedTracks}
-            isLoadingMore={isLoadingMoreSavedTracks}
-            onReauthorize={onReauthorize}
-          />
+            {topTracks.length > 0 && (
+              <TopTracksList
+                tracks={topTracks}
+                onLoadMore={onLoadMoreTopTracks}
+                hasMoreTracks={hasMoreTopTracks}
+                isLoadingMore={isLoadingMoreTopTracks}
+              />
+            )}
 
-          {savedPlaylists.length > 0 && (
-            <SavedPlaylistsList
-              playlists={savedPlaylists}
-              onLoadMore={onLoadMoreSavedPlaylists}
-              hasMorePlaylists={hasMoreSavedPlaylists}
-              isLoadingMore={isLoadingMoreSavedPlaylists}
+            <SavedTracksList
+              tracks={savedTracks}
+              onLoadMore={onLoadMoreSavedTracks}
+              hasMoreTracks={hasMoreSavedTracks}
+              isLoadingMore={isLoadingMoreSavedTracks}
+              onReauthorize={onReauthorize}
             />
-          )}
 
-          {savedAlbums.length > 0 && (
-            <SavedAlbumsList
-              albums={savedAlbums}
-              onLoadMore={onLoadMoreSavedAlbums}
-              hasMoreAlbums={hasMoreSavedAlbums}
-              isLoadingMore={isLoadingMoreSavedAlbums}
-            />
-          )}
+            {savedPlaylists.length > 0 && (
+              <SavedPlaylistsList
+                playlists={savedPlaylists}
+                onLoadMore={onLoadMoreSavedPlaylists}
+                hasMorePlaylists={hasMoreSavedPlaylists}
+                isLoadingMore={isLoadingMoreSavedPlaylists}
+              />
+            )}
+
+            {savedAlbums.length > 0 && (
+              <SavedAlbumsList
+                albums={savedAlbums}
+                onLoadMore={onLoadMoreSavedAlbums}
+                hasMoreAlbums={hasMoreSavedAlbums}
+                isLoadingMore={isLoadingMoreSavedAlbums}
+              />
+            )}
+          </ExpansionProvider>
         </View>
       </ScrollView>
 

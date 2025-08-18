@@ -10,6 +10,7 @@ import {
   SavedPlaylist,
   SavedAlbum,
 } from '../../../types';
+import { ExpansionTestWrapper } from '../../../contexts/__tests__/testUtils';
 
 // Mock the TrackCard component to avoid AuthContext dependency
 jest.mock('../../tracks/TrackCard', () => ({
@@ -191,14 +192,39 @@ describe('Dashboard', () => {
   });
 
   it('renders successfully with all props', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
+  it('renders successfully with ExpansionProvider integration', () => {
+    // This test verifies that Dashboard works correctly with the ExpansionProvider
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
+
+    // All sections should render correctly
+    expect(screen.getByText('MOODRING')).toBeTruthy();
+    expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
+    expect(screen.getByText('TOP TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+  });
+
   it('configures RefreshControl with correct props', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // The RefreshControl is part of ScrollView, so we test its configuration indirectly
     // by ensuring the ScrollView is rendered with RefreshControl
@@ -207,21 +233,33 @@ describe('Dashboard', () => {
   });
 
   it('shows refreshing overlay when isRefreshing is true', () => {
-    render(<Dashboard {...defaultProps} isRefreshing={true} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} isRefreshing={true} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.getByText('Refreshing...')).toBeTruthy();
     expect(screen.getByTestId('activity-indicator')).toBeTruthy();
   });
 
   it('hides refreshing overlay when isRefreshing is false', () => {
-    render(<Dashboard {...defaultProps} isRefreshing={false} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} isRefreshing={false} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.queryByText('Refreshing...')).toBeNull();
   });
 
   it('calls onRefresh when RefreshControl is triggered', () => {
     const mockOnRefresh = jest.fn();
-    render(<Dashboard {...defaultProps} onRefresh={mockOnRefresh} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} onRefresh={mockOnRefresh} />
+      </ExpansionTestWrapper>
+    );
 
     const scrollView = screen.getByTestId('dashboard-scroll-view');
 
@@ -231,14 +269,22 @@ describe('Dashboard', () => {
   });
 
   it('renders ProfileMenu component', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // ProfileMenu should be rendered with profile button
     expect(screen.getByTestId('profile-menu-button')).toBeTruthy();
   });
 
   it('does not render old UserProfile component in main section', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // UserProfile is no longer rendered in the main dashboard area
     // User info is now in the ProfileMenu
@@ -246,7 +292,11 @@ describe('Dashboard', () => {
   });
 
   it('renders NowPlaying component when currentlyPlaying is provided', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // Verify the NowPlaying component is rendered with currently playing song
     expect(screen.getByTestId('now-playing')).toBeTruthy();
@@ -254,14 +304,22 @@ describe('Dashboard', () => {
   });
 
   it('renders RecentTracksList with recent tracks', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // Just verify the Recent Tracks section is rendered with the heading
     expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
   });
 
   it('renders TopTracksList with top tracks', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // Verify the Top Tracks section is rendered with the heading and content
     expect(screen.getByText('TOP TRACKS')).toBeTruthy();
@@ -269,7 +327,11 @@ describe('Dashboard', () => {
   });
 
   it('renders SavedTracksList with saved tracks', () => {
-    render(<Dashboard {...defaultProps} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // Verify the Saved Tracks section is rendered with the heading and content
     expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
@@ -285,14 +347,22 @@ describe('Dashboard', () => {
   });
 
   it('handles null currentlyPlaying', () => {
-    render(<Dashboard {...defaultProps} currentlyPlaying={null} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} currentlyPlaying={null} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('Test Song')).toBeNull();
   });
 
   it('handles empty recent tracks array', () => {
-    render(<Dashboard {...defaultProps} recentTracks={[]} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} recentTracks={[]} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('Recent Song 1')).toBeNull();
@@ -427,8 +497,12 @@ describe('Dashboard', () => {
     expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
   });
 
-  it('renders all sections in correct order', () => {
-    render(<Dashboard {...defaultProps} />);
+  it('renders all sections in correct order with ExpansionProvider', () => {
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
 
     // Verify all main sections are present and in correct order
     expect(screen.getByText('MOODRING')).toBeTruthy();
@@ -441,9 +515,32 @@ describe('Dashboard', () => {
   });
 
   it('renders with empty topTracks array without TopTracksList', () => {
-    render(<Dashboard {...defaultProps} topTracks={[]} />);
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} topTracks={[]} />
+      </ExpansionTestWrapper>
+    );
 
     expect(screen.getByText('MOODRING')).toBeTruthy();
     expect(screen.queryByText('TOP TRACKS')).toBeNull();
+  });
+
+  it('integrates properly with global expansion functionality', () => {
+    // Test that Dashboard properly provides ExpansionContext to all child list components
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} />
+      </ExpansionTestWrapper>
+    );
+
+    // All list components should be rendered and able to use ExpansionContext
+    expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
+    expect(screen.getByText('TOP TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+
+    // No expansion context errors should occur
+    expect(() => screen.getByText('MOODRING')).not.toThrow();
   });
 });

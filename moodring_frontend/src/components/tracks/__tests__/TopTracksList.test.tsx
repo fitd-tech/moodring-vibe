@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { TopTracksList } from '../TopTracksList';
 import { TopTrack } from '../../../types';
+import { ExpansionTestWrapper } from '../../../contexts/__tests__/testUtils';
 
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
@@ -25,9 +26,11 @@ jest.mock('../TrackCard', () => ({
   TrackCard: ({
     track,
     onToggleExpansion,
+    index,
   }: {
     track: TopTrack;
     onToggleExpansion?: (_index: number) => void;
+    index: number;
   }) => {
     const React = require('react');
     const { TouchableOpacity, Text } = require('react-native');
@@ -35,7 +38,7 @@ jest.mock('../TrackCard', () => ({
       TouchableOpacity,
       {
         testID: `track-card-${track.name}`,
-        onPress: () => onToggleExpansion && onToggleExpansion(0),
+        onPress: () => onToggleExpansion && onToggleExpansion(index),
       },
       React.createElement(Text, null, `${track.name} by ${track.artist}`)
     );
@@ -86,17 +89,29 @@ describe('TopTracksList', () => {
 
   describe('basic functionality', () => {
     it('renders empty state when no tracks provided', () => {
-      const { getByText } = render(<TopTracksList tracks={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={[]} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('No top tracks found')).toBeTruthy();
     });
 
     it('renders top tracks title', () => {
-      const { getByText } = render(<TopTracksList tracks={mockTopTracks} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('TOP TRACKS')).toBeTruthy();
     });
 
     it('renders track cards for provided tracks', () => {
-      const { getByTestId } = render(<TopTracksList tracks={mockTopTracks} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByTestId('track-card-Top Song 1')).toBeTruthy();
       expect(getByTestId('track-card-Top Song 2')).toBeTruthy();
@@ -106,7 +121,11 @@ describe('TopTracksList', () => {
 
   describe('See More functionality', () => {
     it('shows See More button when more than 10 tracks available', () => {
-      const { getByText, queryByTestId } = render(<TopTracksList tracks={manyTopTracks} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={manyTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText(/See More/)).toBeTruthy();
 
@@ -116,7 +135,11 @@ describe('TopTracksList', () => {
     });
 
     it('shows See More button when local tracks exceed limit', () => {
-      const { getByText } = render(<TopTracksList tracks={manyTopTracks} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={manyTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('See More')).toBeTruthy();
     });
@@ -124,20 +147,30 @@ describe('TopTracksList', () => {
     it('shows See More button when hasMoreTracks is true and onLoadMore is provided', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <TopTracksList tracks={mockTopTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('does not show See More button when hasMoreTracks is true but onLoadMore is not provided', () => {
-      const { queryByText } = render(<TopTracksList tracks={mockTopTracks} hasMoreTracks={true} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} hasMoreTracks={true} />
+        </ExpansionTestWrapper>
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
 
     it('expands to show all tracks when See More is pressed with local tracks', async () => {
-      const { getByText, getByTestId } = render(<TopTracksList tracks={manyTopTracks} />);
+      const { getByText, getByTestId } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={manyTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially track 11 should not be visible
       expect(() => getByTestId('track-card-Top Song 11')).toThrow();
@@ -157,7 +190,9 @@ describe('TopTracksList', () => {
     it('calls onLoadMore when See More is pressed and hasMoreTracks is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <TopTracksList tracks={mockTopTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -170,12 +205,14 @@ describe('TopTracksList', () => {
     it('shows loading state when isLoadingMore is true', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <TopTracksList
-          tracks={mockTopTracks}
-          hasMoreTracks={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <TopTracksList
+            tracks={mockTopTracks}
+            hasMoreTracks={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('Loading...')).toBeTruthy();
@@ -184,12 +221,14 @@ describe('TopTracksList', () => {
     it('shows loading state instead of clickable button when loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText, queryByText } = render(
-        <TopTracksList
-          tracks={mockTopTracks}
-          hasMoreTracks={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <TopTracksList
+            tracks={mockTopTracks}
+            hasMoreTracks={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Should show loading text and not the See More button text
@@ -199,14 +238,33 @@ describe('TopTracksList', () => {
   });
 
   describe('track expansion', () => {
-    it('handles track expansion correctly', () => {
-      const { getByTestId } = render(<TopTracksList tracks={mockTopTracks} />);
+    it('handles track expansion correctly with global expansion context', () => {
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       const trackCard = getByTestId('track-card-Top Song 1');
       fireEvent.press(trackCard);
 
       // TrackCard component should be called with onToggleExpansion
       expect(trackCard).toBeTruthy();
+    });
+
+    it('uses global expansion context for managing expansion state', () => {
+      // This test verifies that the component uses ExpansionContext correctly
+      // The actual expansion logic is tested in the ExpansionContext tests
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} />
+        </ExpansionTestWrapper>
+      );
+
+      // Component should render without errors when using ExpansionContext
+      expect(getByTestId('track-card-Top Song 1')).toBeTruthy();
+      expect(getByTestId('track-card-Top Song 2')).toBeTruthy();
+      expect(getByTestId('track-card-Top Song 3')).toBeTruthy();
     });
   });
 
@@ -223,7 +281,11 @@ describe('TopTracksList', () => {
         },
       ];
 
-      const { rerender, queryByText } = render(<TopTracksList tracks={manyTopTracks} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={manyTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Expand to show all tracks first
       const seeMoreButton = queryByText('See More');
@@ -232,14 +294,22 @@ describe('TopTracksList', () => {
       }
 
       // Simulate refresh by changing the first track
-      rerender(<TopTracksList tracks={refreshedTracks} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={refreshedTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show the title, component rendered correctly after refresh
       expect(queryByText('TOP TRACKS')).toBeTruthy();
     });
 
     it('resets showAll to false when track count decreases (refresh detected)', () => {
-      const { rerender, queryByText } = render(<TopTracksList tracks={manyTopTracks} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={manyTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially should show See More button
       expect(queryByText('See More')).toBeTruthy();
@@ -248,7 +318,11 @@ describe('TopTracksList', () => {
       fireEvent.press(queryByText('See More')!);
 
       // Now simulate refresh with fewer tracks
-      rerender(<TopTracksList tracks={mockTopTracks} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <TopTracksList tracks={mockTopTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // showAll should be reset to false (we can't easily test this directly,
       // but the component should behave correctly)

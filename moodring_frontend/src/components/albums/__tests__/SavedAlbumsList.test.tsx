@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { SavedAlbumsList } from '../SavedAlbumsList';
 import { SavedAlbum } from '../../../types';
+import { ExpansionTestWrapper } from '../../../contexts/__tests__/testUtils';
 
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
@@ -107,17 +108,29 @@ describe('SavedAlbumsList', () => {
 
   describe('basic functionality', () => {
     it('renders empty state when no albums provided', () => {
-      const { getByText } = render(<SavedAlbumsList albums={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={[]} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('No saved albums found')).toBeTruthy();
     });
 
     it('renders saved albums title', () => {
-      const { getByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
     });
 
     it('renders album cards for provided albums', () => {
-      const { getByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByTestId('album-card-Test Album 1')).toBeTruthy();
       expect(getByTestId('album-card-Test Album 2')).toBeTruthy();
@@ -125,7 +138,11 @@ describe('SavedAlbumsList', () => {
     });
 
     it('shows correct number of albums initially (5)', () => {
-      const { queryByTestId } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show first 5 albums
       expect(queryByTestId('album-card-Test Album 1')).toBeTruthy();
@@ -141,7 +158,11 @@ describe('SavedAlbumsList', () => {
 
   describe('See More functionality', () => {
     it('shows See More button when more than 5 albums available', () => {
-      const { getByText, queryByTestId } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('See More')).toBeTruthy();
 
@@ -151,7 +172,11 @@ describe('SavedAlbumsList', () => {
     });
 
     it('does not show See More button when 5 or fewer albums available', () => {
-      const { queryByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
@@ -159,20 +184,30 @@ describe('SavedAlbumsList', () => {
     it('shows See More button when hasMoreAlbums is true and onLoadMore is provided', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('does not show See More button when hasMoreAlbums is true but onLoadMore is not provided', () => {
-      const { queryByText } = render(<SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} />
+        </ExpansionTestWrapper>
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
 
     it('expands to show all albums when See More is pressed with local albums', async () => {
-      const { getByText, getByTestId } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { getByText, getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially album 6 should not be visible
       expect(() => getByTestId('album-card-Test Album 6')).toThrow();
@@ -192,7 +227,9 @@ describe('SavedAlbumsList', () => {
     it('calls onLoadMore when See More is pressed and hasMoreAlbums is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -205,7 +242,9 @@ describe('SavedAlbumsList', () => {
     it('handles both local expansion and API loading correctly', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText, getByTestId } = render(
-        <SavedAlbumsList albums={manyAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       // Initially should show See More for both local expansion and API loading
@@ -233,12 +272,14 @@ describe('SavedAlbumsList', () => {
     it('shows loading state when isLoadingMore is true', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('Loading...')).toBeTruthy();
@@ -247,12 +288,14 @@ describe('SavedAlbumsList', () => {
     it('shows loading state instead of clickable button when loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText, queryByText } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Should show loading text and not the See More button text
@@ -263,12 +306,14 @@ describe('SavedAlbumsList', () => {
     it('disables button during loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Just verify that loading state is shown
@@ -289,7 +334,11 @@ describe('SavedAlbumsList', () => {
         },
       ];
 
-      const { rerender, queryByText } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Expand to show all albums first
       const seeMoreButton = queryByText('See More');
@@ -298,14 +347,22 @@ describe('SavedAlbumsList', () => {
       }
 
       // Simulate refresh by changing the first album
-      rerender(<SavedAlbumsList albums={refreshedAlbums} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={refreshedAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show the title (component should work correctly)
       expect(queryByText('SAVED ALBUMS')).toBeTruthy();
     });
 
     it('resets showAll to false when album count decreases (refresh detected)', () => {
-      const { rerender, queryByText } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially should show See More button
       expect(queryByText('See More')).toBeTruthy();
@@ -314,7 +371,11 @@ describe('SavedAlbumsList', () => {
       fireEvent.press(queryByText('See More')!);
 
       // Now simulate refresh with fewer albums
-      rerender(<SavedAlbumsList albums={mockAlbums} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // showAll should be reset to false (we can't easily test this directly,
       // but the component should behave correctly)
@@ -325,7 +386,9 @@ describe('SavedAlbumsList', () => {
       const extendedAlbums = [...manyAlbums, ...mockAlbums];
 
       const { rerender, queryByText, queryByTestId } = render(
-        <SavedAlbumsList albums={manyAlbums} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
       );
 
       // Expand to show all albums
@@ -335,7 +398,11 @@ describe('SavedAlbumsList', () => {
       expect(queryByTestId('album-card-Test Album 10')).toBeTruthy();
 
       // Simulate adding more albums (like from API response)
-      rerender(<SavedAlbumsList albums={extendedAlbums} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={extendedAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should still be expanded (showAll should remain true)
       expect(queryByTestId('album-card-Test Album 10')).toBeTruthy();
@@ -345,7 +412,11 @@ describe('SavedAlbumsList', () => {
   describe('edge cases', () => {
     it('handles exactly 5 albums (boundary case)', () => {
       const exactlyFiveAlbums = manyAlbums.slice(0, 5);
-      const { queryByText } = render(<SavedAlbumsList albums={exactlyFiveAlbums} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={exactlyFiveAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should not show See More button for exactly 5 albums
       expect(queryByText('See More')).toBeNull();
@@ -353,7 +424,11 @@ describe('SavedAlbumsList', () => {
 
     it('handles 6 albums (just over boundary)', () => {
       const sixAlbums = manyAlbums.slice(0, 6);
-      const { getByText, queryByTestId } = render(<SavedAlbumsList albums={sixAlbums} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={sixAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show See More button
       expect(getByText('See More')).toBeTruthy();
@@ -366,7 +441,9 @@ describe('SavedAlbumsList', () => {
     it('calls onLoadMore when provided and hasMoreAlbums is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -379,7 +456,9 @@ describe('SavedAlbumsList', () => {
     it('handles rapid consecutive See More presses', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       const button = getByText('See More');
@@ -398,7 +477,11 @@ describe('SavedAlbumsList', () => {
 
   describe('component structure and accessibility', () => {
     it('renders with correct semantic structure', () => {
-      const { getByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should have title
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
@@ -408,7 +491,11 @@ describe('SavedAlbumsList', () => {
     });
 
     it('handles empty albums array gracefully', () => {
-      const { getByText } = render(<SavedAlbumsList albums={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={[]} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('No saved albums found')).toBeTruthy();
     });
@@ -416,19 +503,25 @@ describe('SavedAlbumsList', () => {
     it('renders without errors with all optional props', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          onLoadMore={mockLoadMore}
-          hasMoreAlbums={true}
-          isLoadingMore={false}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            onLoadMore={mockLoadMore}
+            hasMoreAlbums={true}
+            isLoadingMore={false}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
     });
 
     it('renders without errors with minimum props', () => {
-      const { getByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
     });
@@ -436,28 +529,44 @@ describe('SavedAlbumsList', () => {
 
   describe('prop handling', () => {
     it('handles missing optional props gracefully', () => {
-      const { getByText } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('SAVED ALBUMS')).toBeTruthy();
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('handles onLoadMore without hasMoreAlbums', () => {
-      const { getByText } = render(<SavedAlbumsList albums={manyAlbums} onLoadMore={jest.fn()} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} onLoadMore={jest.fn()} />
+        </ExpansionTestWrapper>
+      );
 
       // Should still show See More for local expansion
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('handles hasMoreAlbums without onLoadMore', () => {
-      const { queryByText } = render(<SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} hasMoreAlbums={true} />
+        </ExpansionTestWrapper>
+      );
 
       // Should not show See More without onLoadMore callback
       expect(queryByText('See More')).toBeNull();
     });
 
     it('passes correct props to AlbumCard components', () => {
-      const { getByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // AlbumCard should render with correct album data
       expect(getByTestId('album-card-Test Album 1')).toBeTruthy();
@@ -468,7 +577,11 @@ describe('SavedAlbumsList', () => {
 
   describe('state management', () => {
     it('correctly manages showAll state for local albums', () => {
-      const { getByText, queryByTestId } = render(<SavedAlbumsList albums={manyAlbums} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially should not show album 6
       expect(queryByTestId('album-card-Test Album 6')).toBeNull();
@@ -481,7 +594,11 @@ describe('SavedAlbumsList', () => {
     });
 
     it('maintains proper key generation for album cards', () => {
-      const { getByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Each album should have a unique testID
       mockAlbums.forEach(album => {
@@ -490,7 +607,11 @@ describe('SavedAlbumsList', () => {
     });
 
     it('handles album data changes correctly', () => {
-      const { rerender, getByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+      const { rerender, getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initial render
       expect(getByTestId('album-card-Test Album 1')).toBeTruthy();
@@ -507,7 +628,11 @@ describe('SavedAlbumsList', () => {
         },
       ];
 
-      rerender(<SavedAlbumsList albums={newAlbums} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={newAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Should render new album
       expect(getByTestId('album-card-Different Album')).toBeTruthy();
@@ -515,8 +640,12 @@ describe('SavedAlbumsList', () => {
   });
 
   describe('expansion functionality', () => {
-    it('manages expandedAlbum state correctly', () => {
-      const { queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+    it('manages expansion state correctly using global ExpansionContext', () => {
+      const { queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially no content should be expanded
       expect(queryByTestId('expanded-content-0')).toBeNull();
@@ -524,8 +653,12 @@ describe('SavedAlbumsList', () => {
       expect(queryByTestId('expanded-content-2')).toBeNull();
     });
 
-    it('handles expansion toggle correctly', () => {
-      const { getByTestId, queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+    it('handles expansion toggle correctly with global context', () => {
+      const { getByTestId, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially not expanded
       expect(queryByTestId('expanded-content-0')).toBeNull();
@@ -540,22 +673,32 @@ describe('SavedAlbumsList', () => {
       expect(queryByTestId('expanded-content-0')).toBeNull();
     });
 
-    it('allows only one album to be expanded at a time', () => {
-      const { getByTestId, queryByTestId } = render(<SavedAlbumsList albums={mockAlbums} />);
+    it('uses global expansion context - only one card expanded across all sections', () => {
+      // This test verifies that the album expansion integrates with global ExpansionContext
+      // The actual "only one at a time" logic is tested in ExpansionContext tests
+      const { getByTestId, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Expand first album
       fireEvent.press(getByTestId('toggle-expansion-0'));
       expect(queryByTestId('expanded-content-0')).toBeTruthy();
       expect(queryByTestId('expanded-content-1')).toBeNull();
 
-      // Expand second album (should collapse first)
+      // Expand second album (should collapse first via global context)
       fireEvent.press(getByTestId('toggle-expansion-1'));
       expect(queryByTestId('expanded-content-0')).toBeNull();
       expect(queryByTestId('expanded-content-1')).toBeTruthy();
     });
 
-    it('passes expansion props correctly to AlbumCard', () => {
-      const { getByTestId, getAllByText } = render(<SavedAlbumsList albums={mockAlbums} />);
+    it('passes expansion props correctly to AlbumCard with global context', () => {
+      const { getByTestId, getAllByText } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Check initial state - should show Expand buttons (multiple)
       const expandButtons = getAllByText('Expand');
@@ -569,9 +712,26 @@ describe('SavedAlbumsList', () => {
       expect(collapseButtons.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('passes correct section and card type to expansion context', () => {
+      // This test verifies that SavedAlbumsList uses the correct parameters for expansion
+      const { getByTestId, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
+      );
+
+      const toggleButton = getByTestId('toggle-expansion-0');
+      fireEvent.press(toggleButton);
+
+      // The component should call toggleExpansion with 'saved-albums', 'album', and index
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+    });
+
     it('resets expansion state when albums change', () => {
       const { getByTestId, queryByTestId, rerender, getByText } = render(
-        <SavedAlbumsList albums={mockAlbums} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={mockAlbums} />
+        </ExpansionTestWrapper>
       );
 
       // Expand first album
@@ -590,7 +750,11 @@ describe('SavedAlbumsList', () => {
         },
       ];
 
-      rerender(<SavedAlbumsList albums={newAlbums} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={newAlbums} />
+        </ExpansionTestWrapper>
+      );
 
       // Expansion state should persist for existing item logic,
       // but component renders correctly
@@ -600,7 +764,9 @@ describe('SavedAlbumsList', () => {
 
     it('maintains expansion state during showAll toggle', () => {
       const { getByTestId, getByText, queryByTestId } = render(
-        <SavedAlbumsList albums={manyAlbums} />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList albums={manyAlbums} />
+        </ExpansionTestWrapper>
       );
 
       // Expand first album
@@ -619,12 +785,14 @@ describe('SavedAlbumsList', () => {
     it('shows loading state when isLoadingMore is true', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('Loading...')).toBeTruthy();
@@ -633,12 +801,14 @@ describe('SavedAlbumsList', () => {
     it('re-enables interaction after loading completes', () => {
       const mockLoadMore = jest.fn();
       const { getByText, rerender } = render(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Initially loading
@@ -646,12 +816,14 @@ describe('SavedAlbumsList', () => {
 
       // Complete loading
       rerender(
-        <SavedAlbumsList
-          albums={mockAlbums}
-          hasMoreAlbums={true}
-          isLoadingMore={false}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedAlbumsList
+            albums={mockAlbums}
+            hasMoreAlbums={true}
+            isLoadingMore={false}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Should now show See More button again

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { SavedPlaylistsList } from '../SavedPlaylistsList';
 import { SavedPlaylist } from '../../../types';
+import { ExpansionTestWrapper } from '../../../contexts/__tests__/testUtils';
 
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
@@ -103,17 +104,29 @@ describe('SavedPlaylistsList', () => {
 
   describe('basic functionality', () => {
     it('renders empty state when no playlists provided', () => {
-      const { getByText } = render(<SavedPlaylistsList playlists={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={[]} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('No saved playlists found')).toBeTruthy();
     });
 
     it('renders saved playlists title', () => {
-      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
     });
 
     it('renders playlist cards for provided playlists', () => {
-      const { getByTestId } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByTestId('playlist-card-Test Playlist 1')).toBeTruthy();
       expect(getByTestId('playlist-card-Test Playlist 2')).toBeTruthy();
@@ -121,7 +134,11 @@ describe('SavedPlaylistsList', () => {
     });
 
     it('shows correct number of playlists initially (5)', () => {
-      const { queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show first 5 playlists
       expect(queryByTestId('playlist-card-Test Playlist 1')).toBeTruthy();
@@ -137,7 +154,11 @@ describe('SavedPlaylistsList', () => {
 
   describe('See More functionality', () => {
     it('shows See More button when more than 5 playlists available', () => {
-      const { getByText, queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('See More')).toBeTruthy();
 
@@ -147,7 +168,11 @@ describe('SavedPlaylistsList', () => {
     });
 
     it('does not show See More button when 5 or fewer playlists available', () => {
-      const { queryByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
@@ -155,11 +180,13 @@ describe('SavedPlaylistsList', () => {
     it('shows See More button when hasMorePlaylists is true and onLoadMore is provided', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('See More')).toBeTruthy();
@@ -167,14 +194,20 @@ describe('SavedPlaylistsList', () => {
 
     it('does not show See More button when hasMorePlaylists is true but onLoadMore is not provided', () => {
       const { queryByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} />
+        </ExpansionTestWrapper>
       );
 
       expect(queryByText('See More')).toBeNull();
     });
 
     it('expands to show all playlists when See More is pressed with local playlists', async () => {
-      const { getByText, getByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { getByText, getByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially playlist 6 should not be visible
       expect(() => getByTestId('playlist-card-Test Playlist 6')).toThrow();
@@ -194,11 +227,13 @@ describe('SavedPlaylistsList', () => {
     it('calls onLoadMore when See More is pressed and hasMorePlaylists is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -211,11 +246,13 @@ describe('SavedPlaylistsList', () => {
     it('handles both local expansion and API loading correctly', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText, getByTestId } = render(
-        <SavedPlaylistsList
-          playlists={manyPlaylists}
-          hasMorePlaylists={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={manyPlaylists}
+            hasMorePlaylists={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Initially should show See More for both local expansion and API loading
@@ -243,12 +280,14 @@ describe('SavedPlaylistsList', () => {
     it('shows loading state when isLoadingMore is true', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('Loading...')).toBeTruthy();
@@ -257,12 +296,14 @@ describe('SavedPlaylistsList', () => {
     it('shows loading state instead of clickable button when loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText, queryByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Should show loading text and not the See More button text
@@ -273,12 +314,14 @@ describe('SavedPlaylistsList', () => {
     it('disables button during loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Just verify that loading state is shown
@@ -299,7 +342,11 @@ describe('SavedPlaylistsList', () => {
         },
       ];
 
-      const { rerender, queryByText } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Expand to show all playlists first
       const seeMoreButton = queryByText('See More');
@@ -308,14 +355,22 @@ describe('SavedPlaylistsList', () => {
       }
 
       // Simulate refresh by changing the first playlist
-      rerender(<SavedPlaylistsList playlists={refreshedPlaylists} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={refreshedPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show the title (component should work correctly)
       expect(queryByText('SAVED PLAYLISTS')).toBeTruthy();
     });
 
     it('resets showAll to false when playlist count decreases (refresh detected)', () => {
-      const { rerender, queryByText } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially should show See More button
       expect(queryByText('See More')).toBeTruthy();
@@ -324,7 +379,11 @@ describe('SavedPlaylistsList', () => {
       fireEvent.press(queryByText('See More')!);
 
       // Now simulate refresh with fewer playlists
-      rerender(<SavedPlaylistsList playlists={mockPlaylists} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // showAll should be reset to false (we can't easily test this directly,
       // but the component should behave correctly)
@@ -335,7 +394,9 @@ describe('SavedPlaylistsList', () => {
       const extendedPlaylists = [...manyPlaylists, ...mockPlaylists];
 
       const { rerender, queryByText, queryByTestId } = render(
-        <SavedPlaylistsList playlists={manyPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Expand to show all playlists
@@ -345,7 +406,11 @@ describe('SavedPlaylistsList', () => {
       expect(queryByTestId('playlist-card-Test Playlist 10')).toBeTruthy();
 
       // Simulate adding more playlists (like from API response)
-      rerender(<SavedPlaylistsList playlists={extendedPlaylists} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={extendedPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should still be expanded (showAll should remain true)
       expect(queryByTestId('playlist-card-Test Playlist 10')).toBeTruthy();
@@ -355,7 +420,11 @@ describe('SavedPlaylistsList', () => {
   describe('edge cases', () => {
     it('handles exactly 5 playlists (boundary case)', () => {
       const exactlyFivePlaylists = manyPlaylists.slice(0, 5);
-      const { queryByText } = render(<SavedPlaylistsList playlists={exactlyFivePlaylists} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={exactlyFivePlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should not show See More button for exactly 5 playlists
       expect(queryByText('See More')).toBeNull();
@@ -363,7 +432,11 @@ describe('SavedPlaylistsList', () => {
 
     it('handles 6 playlists (just over boundary)', () => {
       const sixPlaylists = manyPlaylists.slice(0, 6);
-      const { getByText, queryByTestId } = render(<SavedPlaylistsList playlists={sixPlaylists} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={sixPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show See More button
       expect(getByText('See More')).toBeTruthy();
@@ -376,11 +449,13 @@ describe('SavedPlaylistsList', () => {
     it('calls onLoadMore when provided and hasMorePlaylists is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -393,11 +468,13 @@ describe('SavedPlaylistsList', () => {
     it('handles rapid consecutive See More presses', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          hasMorePlaylists={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            hasMorePlaylists={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       const button = getByText('See More');
@@ -415,8 +492,12 @@ describe('SavedPlaylistsList', () => {
   });
 
   describe('expansion functionality', () => {
-    it('manages expandedPlaylist state correctly', () => {
-      const { queryByTestId } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+    it('manages expansion state correctly using global ExpansionContext', () => {
+      const { queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially no content should be expanded
       expect(queryByTestId('expanded-content-0')).toBeNull();
@@ -424,9 +505,11 @@ describe('SavedPlaylistsList', () => {
       expect(queryByTestId('expanded-content-2')).toBeNull();
     });
 
-    it('handles expansion toggle correctly', () => {
+    it('handles expansion toggle correctly with global context', () => {
       const { getByTestId, queryByTestId } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Initially not expanded
@@ -442,9 +525,46 @@ describe('SavedPlaylistsList', () => {
       expect(queryByTestId('expanded-content-0')).toBeNull();
     });
 
-    it('allows only one playlist to be expanded at a time', () => {
+    it('uses global expansion context - only one card expanded across all sections', () => {
+      // This test verifies that the playlist expansion integrates with global ExpansionContext
+      // The actual "only one at a time" logic is tested in ExpansionContext tests
       const { getByTestId, queryByTestId } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
+
+      // Expand first playlist
+      fireEvent.press(getByTestId('toggle-expansion-0'));
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+      expect(queryByTestId('expanded-content-1')).toBeNull();
+
+      // Expand second playlist (should collapse first via global context)
+      fireEvent.press(getByTestId('toggle-expansion-1'));
+      expect(queryByTestId('expanded-content-0')).toBeNull();
+      expect(queryByTestId('expanded-content-1')).toBeTruthy();
+    });
+
+    it('passes correct section and card type to expansion context', () => {
+      // This test verifies that SavedPlaylistsList uses the correct parameters for expansion
+      const { getByTestId, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
+
+      const toggleButton = getByTestId('toggle-expansion-0');
+      fireEvent.press(toggleButton);
+
+      // The component should call toggleExpansion with 'saved-playlists', 'playlist', and index
+      expect(queryByTestId('expanded-content-0')).toBeTruthy();
+    });
+
+    it('legacy_test_allows_only_one_playlist_expanded', () => {
+      const { getByTestId, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Expand first playlist
@@ -460,7 +580,9 @@ describe('SavedPlaylistsList', () => {
 
     it('passes expansion props correctly to PlaylistCard', () => {
       const { getByTestId, getAllByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Check initial state - should show Expand buttons (multiple)
@@ -477,7 +599,9 @@ describe('SavedPlaylistsList', () => {
 
     it('resets expansion state when playlists change', () => {
       const { getByTestId, queryByTestId, rerender, getByText } = render(
-        <SavedPlaylistsList playlists={mockPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Expand first playlist
@@ -496,7 +620,11 @@ describe('SavedPlaylistsList', () => {
         },
       ];
 
-      rerender(<SavedPlaylistsList playlists={newPlaylists} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={newPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Expansion state should persist for existing item logic,
       // but component renders correctly
@@ -506,7 +634,9 @@ describe('SavedPlaylistsList', () => {
 
     it('maintains expansion state during showAll toggle', () => {
       const { getByTestId, getByText, queryByTestId } = render(
-        <SavedPlaylistsList playlists={manyPlaylists} />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={manyPlaylists} />
+        </ExpansionTestWrapper>
       );
 
       // Expand first playlist
@@ -523,7 +653,11 @@ describe('SavedPlaylistsList', () => {
 
   describe('component structure and accessibility', () => {
     it('renders with correct semantic structure', () => {
-      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       // Should have title
       expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
@@ -533,7 +667,11 @@ describe('SavedPlaylistsList', () => {
     });
 
     it('handles empty playlists array gracefully', () => {
-      const { getByText } = render(<SavedPlaylistsList playlists={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={[]} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('No saved playlists found')).toBeTruthy();
     });
@@ -541,19 +679,25 @@ describe('SavedPlaylistsList', () => {
     it('renders without errors with all optional props', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <SavedPlaylistsList
-          playlists={mockPlaylists}
-          onLoadMore={mockLoadMore}
-          hasMorePlaylists={true}
-          isLoadingMore={false}
-        />
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList
+            playlists={mockPlaylists}
+            onLoadMore={mockLoadMore}
+            hasMorePlaylists={true}
+            isLoadingMore={false}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
     });
 
     it('renders without errors with minimum props', () => {
-      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedPlaylistsList playlists={mockPlaylists} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
     });

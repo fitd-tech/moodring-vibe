@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { RecentTracksList } from '../RecentTracksList';
 import { RecentTrack } from '../../../types';
+import { ExpansionTestWrapper } from '../../../contexts/__tests__/testUtils';
 
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
@@ -25,9 +26,11 @@ jest.mock('../TrackCard', () => ({
   TrackCard: ({
     track,
     onToggleExpansion,
+    index,
   }: {
     track: RecentTrack;
     onToggleExpansion?: (_index: number) => void;
+    index: number;
   }) => {
     const React = require('react');
     const { TouchableOpacity, Text } = require('react-native');
@@ -35,7 +38,7 @@ jest.mock('../TrackCard', () => ({
       TouchableOpacity,
       {
         testID: `track-card-${track.name}`,
-        onPress: () => onToggleExpansion && onToggleExpansion(0),
+        onPress: () => onToggleExpansion && onToggleExpansion(index),
       },
       React.createElement(Text, null, `${track.name} by ${track.artist}`)
     );
@@ -82,17 +85,29 @@ describe('RecentTracksList', () => {
 
   describe('basic functionality', () => {
     it('renders empty state when no tracks provided', () => {
-      const { getByText } = render(<RecentTracksList tracks={[]} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={[]} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('No recent tracks found')).toBeTruthy();
     });
 
     it('renders recent tracks title', () => {
-      const { getByText } = render(<RecentTracksList tracks={mockTracks} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} />
+        </ExpansionTestWrapper>
+      );
       expect(getByText('RECENT TRACKS')).toBeTruthy();
     });
 
     it('renders track cards for provided tracks', () => {
-      const { getByTestId } = render(<RecentTracksList tracks={mockTracks} />);
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByTestId('track-card-Test Song 1')).toBeTruthy();
       expect(getByTestId('track-card-Test Song 2')).toBeTruthy();
@@ -102,7 +117,11 @@ describe('RecentTracksList', () => {
 
   describe('See More functionality', () => {
     it('shows See More button when more than 10 tracks available', () => {
-      const { getByText, queryByTestId } = render(<RecentTracksList tracks={manyTracks} />);
+      const { getByText, queryByTestId } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={manyTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText(/See More/)).toBeTruthy();
 
@@ -112,7 +131,11 @@ describe('RecentTracksList', () => {
     });
 
     it('shows See More button when local tracks exceed limit', () => {
-      const { getByText } = render(<RecentTracksList tracks={manyTracks} />);
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={manyTracks} />
+        </ExpansionTestWrapper>
+      );
 
       expect(getByText('See More')).toBeTruthy();
     });
@@ -120,20 +143,30 @@ describe('RecentTracksList', () => {
     it('shows See More button when hasMoreTracks is true and onLoadMore is provided', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <RecentTracksList tracks={mockTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('See More')).toBeTruthy();
     });
 
     it('does not show See More button when hasMoreTracks is true but onLoadMore is not provided', () => {
-      const { queryByText } = render(<RecentTracksList tracks={mockTracks} hasMoreTracks={true} />);
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} hasMoreTracks={true} />
+        </ExpansionTestWrapper>
+      );
 
       expect(queryByText('See More')).toBeNull();
     });
 
     it('expands to show all tracks when See More is pressed with local tracks', async () => {
-      const { getByText, getByTestId } = render(<RecentTracksList tracks={manyTracks} />);
+      const { getByText, getByTestId } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={manyTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially track 11 should not be visible
       expect(() => getByTestId('track-card-Test Song 11')).toThrow();
@@ -153,7 +186,9 @@ describe('RecentTracksList', () => {
     it('calls onLoadMore when See More is pressed and hasMoreTracks is true', async () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
-        <RecentTracksList tracks={mockTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+        </ExpansionTestWrapper>
       );
 
       fireEvent.press(getByText('See More'));
@@ -166,12 +201,14 @@ describe('RecentTracksList', () => {
     it('shows loading state when isLoadingMore is true', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
-        <RecentTracksList
-          tracks={mockTracks}
-          hasMoreTracks={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <RecentTracksList
+            tracks={mockTracks}
+            hasMoreTracks={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       expect(getByText('Loading...')).toBeTruthy();
@@ -180,12 +217,14 @@ describe('RecentTracksList', () => {
     it('shows loading state instead of clickable button when loading', () => {
       const mockLoadMore = jest.fn();
       const { getByText, queryByText } = render(
-        <RecentTracksList
-          tracks={mockTracks}
-          hasMoreTracks={true}
-          isLoadingMore={true}
-          onLoadMore={mockLoadMore}
-        />
+        <ExpansionTestWrapper>
+          <RecentTracksList
+            tracks={mockTracks}
+            hasMoreTracks={true}
+            isLoadingMore={true}
+            onLoadMore={mockLoadMore}
+          />
+        </ExpansionTestWrapper>
       );
 
       // Should show loading text and not the See More button text
@@ -195,14 +234,33 @@ describe('RecentTracksList', () => {
   });
 
   describe('track expansion', () => {
-    it('handles track expansion correctly', () => {
-      const { getByTestId } = render(<RecentTracksList tracks={mockTracks} />);
+    it('handles track expansion correctly with global expansion context', () => {
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} />
+        </ExpansionTestWrapper>
+      );
 
       const trackCard = getByTestId('track-card-Test Song 1');
       fireEvent.press(trackCard);
 
       // TrackCard component should be called with onToggleExpansion
       expect(trackCard).toBeTruthy();
+    });
+
+    it('uses global expansion context for managing expansion state', () => {
+      // This test verifies that the component uses ExpansionContext correctly
+      // The actual expansion logic is tested in the ExpansionContext tests
+      const { getByTestId } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} />
+        </ExpansionTestWrapper>
+      );
+
+      // Component should render without errors when using ExpansionContext
+      expect(getByTestId('track-card-Test Song 1')).toBeTruthy();
+      expect(getByTestId('track-card-Test Song 2')).toBeTruthy();
+      expect(getByTestId('track-card-Test Song 3')).toBeTruthy();
     });
   });
 
@@ -218,7 +276,11 @@ describe('RecentTracksList', () => {
         },
       ];
 
-      const { rerender, queryByText } = render(<RecentTracksList tracks={manyTracks} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={manyTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Expand to show all tracks first
       const seeMoreButton = queryByText('See More');
@@ -227,7 +289,11 @@ describe('RecentTracksList', () => {
       }
 
       // Simulate refresh by changing the first track
-      rerender(<RecentTracksList tracks={refreshedTracks} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={refreshedTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Should show the See More button again since showAll was reset
       // (if hasMoreTracks was true, the button would reappear)
@@ -235,7 +301,11 @@ describe('RecentTracksList', () => {
     });
 
     it('resets showAll to false when track count decreases (refresh detected)', () => {
-      const { rerender, queryByText } = render(<RecentTracksList tracks={manyTracks} />);
+      const { rerender, queryByText } = render(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={manyTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // Initially should show See More button
       expect(queryByText('See More')).toBeTruthy();
@@ -244,7 +314,11 @@ describe('RecentTracksList', () => {
       fireEvent.press(queryByText('See More')!);
 
       // Now simulate refresh with fewer tracks
-      rerender(<RecentTracksList tracks={mockTracks} />);
+      rerender(
+        <ExpansionTestWrapper>
+          <RecentTracksList tracks={mockTracks} />
+        </ExpansionTestWrapper>
+      );
 
       // showAll should be reset to false (we can't easily test this directly,
       // but the component should behave correctly)
