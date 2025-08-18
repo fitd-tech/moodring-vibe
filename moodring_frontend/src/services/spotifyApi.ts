@@ -59,6 +59,7 @@ export class SpotifyApiService {
 
         if (playlistsResponse.status === 200) {
           scopes.push('playlist-read-private');
+          scopes.push('playlist-read-collaborative'); // Assume collaborative access if playlists are accessible
         } else if (playlistsResponse.status === 403) {
           if (__DEV__) {
             console.warn('[SpotifyApi] Token missing playlist-read-private scope');
@@ -369,6 +370,23 @@ export class SpotifyApiService {
       if (response.ok) {
         const data = (await response.json()) as SpotifyPlaylistsResponse;
         
+        if (__DEV__) {
+          console.log('[SpotifyApi] getSavedPlaylists response:', {
+            total: data.total,
+            limit: data.limit,
+            offset: data.offset,
+            itemsLength: data.items.length,
+            items: data.items.map(playlist => ({
+              name: playlist.name,
+              id: playlist.id,
+              owner: playlist.owner.display_name,
+              owner_id: playlist.owner.id,
+              public: playlist.public,
+              collaborative: playlist.collaborative,
+            }))
+          });
+        }
+        
         return data.items.map(playlist => ({
           name: playlist.name,
           description: playlist.description || undefined,
@@ -412,6 +430,24 @@ export class SpotifyApiService {
 
       if (response.ok) {
         const data = (await response.json()) as SpotifyPlaylistsResponse;
+        
+        if (__DEV__) {
+          console.log('[SpotifyApi] getMoreSavedPlaylists response:', {
+            total: data.total,
+            limit: data.limit,
+            offset: data.offset,
+            itemsLength: data.items.length,
+            items: data.items.map(playlist => ({
+              name: playlist.name,
+              id: playlist.id,
+              owner: playlist.owner.display_name,
+              owner_id: playlist.owner.id,
+              public: playlist.public,
+              collaborative: playlist.collaborative,
+            }))
+          });
+        }
+        
         return data.items.map(playlist => ({
           name: playlist.name,
           description: playlist.description || undefined,

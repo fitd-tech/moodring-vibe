@@ -138,7 +138,10 @@ export interface SpotifyPlaylist {
   }>;
   owner: {
     display_name: string;
+    id: string;
   };
+  public: boolean;
+  collaborative: boolean;
 }
 
 export interface SpotifyPlaylistItem {

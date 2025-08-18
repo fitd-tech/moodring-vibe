@@ -77,15 +77,34 @@ export const useSpotifyData = (
       // Verify token has required scope before attempting fetch
       const scopes = await spotifyApi.verifyTokenScopes(token);
       if (!scopes.includes('playlist-read-private')) {
+        if (__DEV__) {
+          console.warn('[SpotifyData] Missing playlist-read-private scope');
+        }
         // Return empty array instead of throwing error to prevent app crashes
         return [];
       }
       
+      if (!scopes.includes('playlist-read-collaborative')) {
+        if (__DEV__) {
+          console.warn('[SpotifyData] Missing playlist-read-collaborative scope - collaborative playlists may not be returned');
+        }
+      }
+      
       const playlists = await spotifyApi.getSavedPlaylists(token, limit);
+      if (__DEV__) {
+        console.log('[SpotifyData] fetchSavedPlaylists result:', {
+          playlistsCount: playlists.length,
+          limit,
+          playlists: playlists.map(p => ({ name: p.name, id: p.playlist_id }))
+        });
+      }
       return playlists;
     } catch (error) {
       // Handle specific error types
       if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
+        if (__DEV__) {
+          console.warn('[SpotifyData] Permission denied for saved playlists');
+        }
         return [];
       }
       

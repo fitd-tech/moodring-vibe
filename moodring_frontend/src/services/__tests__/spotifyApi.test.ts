@@ -1094,13 +1094,19 @@ describe('spotifyApi', () => {
 
     it('returns saved playlists when API responds with data', async () => {
       const mockResponse = {
+        total: 2,
+        limit: 20,
+        offset: 0,
         items: [
           {
             id: 'playlist-1',
             name: 'My Awesome Playlist',
             description: 'A great collection of songs',
-            images: [{ url: 'https://example.com/playlist1.jpg' }],
+            images: [{ url: 'https://example.com/playlist1.jpg', height: 300, width: 300 }],
             tracks: { total: 25 },
+            owner: { display_name: 'Test User', id: 'user-1' },
+            public: true,
+            collaborative: false,
           },
           {
             id: 'playlist-2',
@@ -1108,6 +1114,9 @@ describe('spotifyApi', () => {
             description: null,
             images: [],
             tracks: { total: 15 },
+            owner: { display_name: 'Other User', id: 'user-2' },
+            public: false,
+            collaborative: true,
           },
         ],
       };
@@ -1181,6 +1190,9 @@ describe('spotifyApi', () => {
 
     it('handles empty playlist images array', async () => {
       const mockResponse = {
+        total: 1,
+        limit: 20,
+        offset: 0,
         items: [
           {
             id: 'playlist-1',
@@ -1188,6 +1200,9 @@ describe('spotifyApi', () => {
             description: 'A playlist without images',
             images: [],
             tracks: { total: 10 },
+            owner: { display_name: 'Test User', id: 'user-1' },
+            public: true,
+            collaborative: false,
           },
         ],
       };
@@ -1204,13 +1219,19 @@ describe('spotifyApi', () => {
 
     it('handles null description', async () => {
       const mockResponse = {
+        total: 1,
+        limit: 20,
+        offset: 0,
         items: [
           {
             id: 'playlist-1',
             name: 'No Description Playlist',
             description: null,
-            images: [{ url: 'https://example.com/playlist.jpg' }],
+            images: [{ url: 'https://example.com/playlist.jpg', height: 300, width: 300 }],
             tracks: { total: 5 },
+            owner: { display_name: 'Test User', id: 'user-1' },
+            public: true,
+            collaborative: false,
           },
         ],
       };
@@ -1280,13 +1301,19 @@ describe('spotifyApi', () => {
 
     it('returns more saved playlists with offset pagination', async () => {
       const mockResponse = {
+        total: 1,
+        limit: 20,
+        offset: 20,
         items: [
           {
             id: 'playlist-21',
             name: 'More Playlist 21',
             description: 'Another great playlist',
-            images: [{ url: 'https://example.com/playlist21.jpg' }],
+            images: [{ url: 'https://example.com/playlist21.jpg', height: 300, width: 300 }],
             tracks: { total: 18 },
+            owner: { display_name: 'Test User', id: 'user-1' },
+            public: true,
+            collaborative: false,
           },
         ],
       };

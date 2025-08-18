@@ -32,6 +32,8 @@ const SCOPES = [
   'user-read-currently-playing',
   'user-top-read',
   'user-library-read',
+  'playlist-read-private',
+  'playlist-read-collaborative',
 ];
 
 const AppContent: React.FC = () => {
@@ -41,18 +43,26 @@ const AppContent: React.FC = () => {
     recentTracks,
     topTracks,
     savedTracks,
+    savedPlaylists,
+    savedAlbums,
     isRefreshing,
     isLoadingMore,
     isLoadingMoreTopTracks,
     isLoadingMoreSavedTracks,
+    isLoadingMoreSavedPlaylists,
+    isLoadingMoreSavedAlbums,
     hasMoreTracks,
     hasMoreTopTracks,
     hasMoreSavedTracks,
+    hasMoreSavedPlaylists,
+    hasMoreSavedAlbums,
     refresh,
     loadActivity,
     loadMoreTracks,
     loadMoreTopTracks,
     loadMoreSavedTracks,
+    loadMoreSavedPlaylists,
+    loadMoreSavedAlbums,
     resetToFreshState,
   } = useSpotifyActivity();
   const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
@@ -155,17 +165,25 @@ const AppContent: React.FC = () => {
         recentTracks={recentTracks}
         topTracks={topTracks}
         savedTracks={savedTracks}
+        savedPlaylists={savedPlaylists}
+        savedAlbums={savedAlbums}
         isRefreshing={isRefreshing}
         isLoadingMore={isLoadingMore}
         isLoadingMoreTopTracks={isLoadingMoreTopTracks}
         isLoadingMoreSavedTracks={isLoadingMoreSavedTracks}
+        isLoadingMoreSavedPlaylists={isLoadingMoreSavedPlaylists}
+        isLoadingMoreSavedAlbums={isLoadingMoreSavedAlbums}
         hasMoreTracks={hasMoreTracks}
         hasMoreTopTracks={hasMoreTopTracks}
         hasMoreSavedTracks={hasMoreSavedTracks}
+        hasMoreSavedPlaylists={hasMoreSavedPlaylists}
+        hasMoreSavedAlbums={hasMoreSavedAlbums}
         onRefresh={refresh}
         onLoadMoreTracks={loadMoreTracks}
         onLoadMoreTopTracks={loadMoreTopTracks}
         onLoadMoreSavedTracks={loadMoreSavedTracks}
+        onLoadMoreSavedPlaylists={loadMoreSavedPlaylists}
+        onLoadMoreSavedAlbums={loadMoreSavedAlbums}
         onLogout={logout}
         onCreatePlaylist={handleCreatePlaylist}
         onBrowseTags={handleBrowseTags}

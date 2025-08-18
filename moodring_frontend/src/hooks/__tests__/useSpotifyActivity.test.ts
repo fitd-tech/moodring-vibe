@@ -748,11 +748,17 @@ describe('useSpotifyActivity - Core Tests', () => {
       mockSpotifyApi.getRecentTracks.mockClear();
       mockSpotifyApi.getTopTracks.mockClear();
       mockSpotifyApi.getSavedTracks.mockClear();
+      mockSpotifyApi.getSavedPlaylists.mockClear();
+      mockSpotifyApi.getSavedAlbums.mockClear();
+      mockSpotifyApi.verifyTokenScopes.mockClear();
 
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('Polling Error'));
       mockSpotifyApi.getRecentTracks.mockRejectedValue(new Error('Polling Error'));
       mockSpotifyApi.getTopTracks.mockRejectedValue(new Error('Polling Error'));
       mockSpotifyApi.getSavedTracks.mockRejectedValue(new Error('Polling Error'));
+      mockSpotifyApi.getSavedPlaylists.mockRejectedValue(new Error('Polling Error'));
+      mockSpotifyApi.getSavedAlbums.mockRejectedValue(new Error('Polling Error'));
+      mockSpotifyApi.verifyTokenScopes.mockRejectedValue(new Error('Polling Error'));
 
       // Trigger the interval manually
       await act(async () => {
