@@ -86,13 +86,8 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
             {'\n'}• Try logging out and back in to refresh permissions
           </Text>
           {onReauthorize && (
-            <TouchableOpacity
-              style={styles.reauthorizeButton}
-              onPress={onReauthorize}
-            >
-              <Text style={styles.reauthorizeButtonText}>
-                Refresh Permissions
-              </Text>
+            <TouchableOpacity style={styles.reauthorizeButton} onPress={onReauthorize}>
+              <Text style={styles.reauthorizeButtonText}>Refresh Permissions</Text>
             </TouchableOpacity>
           )}
         </View>

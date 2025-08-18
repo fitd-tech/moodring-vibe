@@ -480,7 +480,7 @@ describe('TagCard', () => {
       mockRemoveTagFromSong.mockRejectedValue(new Error('Removal failed'));
 
       const alertSpy = jest.spyOn(Alert, 'alert');
-      
+
       const { rerender } = render(<TagCard {...defaultProps} />);
       rerender(<TagCard {...defaultProps} isExpanded={true} />);
 
@@ -522,7 +522,7 @@ describe('TagCard', () => {
     it('covers removing songs state management', async () => {
       jest.clearAllMocks();
       mockGetSongsWithTag.mockResolvedValue(['test_song__test_artist']);
-      
+
       // Make removal take some time to test loading state
       mockRemoveTagFromSong.mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 100))
@@ -559,7 +559,7 @@ describe('TagCard', () => {
       mockGetSongsWithTag.mockResolvedValue(['song1', 'song2', 'song3']);
 
       const { rerender, getByText } = render(<TagCard {...defaultProps} />);
-      
+
       // Initially collapsed should show "Tap to view"
       expect(getByText('Tap to view')).toBeTruthy();
 
@@ -577,7 +577,7 @@ describe('TagCard', () => {
     it('covers activity indicator during song removal', async () => {
       jest.clearAllMocks();
       mockGetSongsWithTag.mockResolvedValue(['test_song__test_artist']);
-      
+
       // Make removal slow to test loading state
       mockRemoveTagFromSong.mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 1000))
