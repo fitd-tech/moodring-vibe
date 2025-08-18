@@ -2,12 +2,14 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../types';
 import { ProfileMenu } from './ProfileMenu';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';
 import { TopTracksList } from '../tracks/TopTracksList';
 import { SavedTracksList } from '../tracks/SavedTracksList';
+import { SavedPlaylistsList } from '../playlists/SavedPlaylistsList';
+import { SavedAlbumsList } from '../albums/SavedAlbumsList';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { theme } from '../../styles/theme';
 
@@ -17,17 +19,25 @@ interface DashboardProps {
   recentTracks: RecentTrack[];
   topTracks: TopTrack[];
   savedTracks: SavedTrack[];
+  savedPlaylists: SavedPlaylist[];
+  savedAlbums: SavedAlbum[];
   isRefreshing: boolean;
   isLoadingMore?: boolean;
   isLoadingMoreTopTracks?: boolean;
   isLoadingMoreSavedTracks?: boolean;
+  isLoadingMoreSavedPlaylists?: boolean;
+  isLoadingMoreSavedAlbums?: boolean;
   hasMoreTracks?: boolean;
   hasMoreTopTracks?: boolean;
   hasMoreSavedTracks?: boolean;
+  hasMoreSavedPlaylists?: boolean;
+  hasMoreSavedAlbums?: boolean;
   onRefresh: () => void;
   onLoadMoreTracks?: () => Promise<void>;
   onLoadMoreTopTracks?: () => Promise<void>;
   onLoadMoreSavedTracks?: () => Promise<void>;
+  onLoadMoreSavedPlaylists?: () => Promise<void>;
+  onLoadMoreSavedAlbums?: () => Promise<void>;
   onLogout: () => void;
   onCreatePlaylist?: () => void;
   onBrowseTags?: () => void;
@@ -41,17 +51,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
   recentTracks,
   topTracks,
   savedTracks,
+  savedPlaylists,
+  savedAlbums,
   isRefreshing,
   isLoadingMore = false,
   isLoadingMoreTopTracks = false,
   isLoadingMoreSavedTracks = false,
+  isLoadingMoreSavedPlaylists = false,
+  isLoadingMoreSavedAlbums = false,
   hasMoreTracks = false,
   hasMoreTopTracks = false,
   hasMoreSavedTracks = false,
+  hasMoreSavedPlaylists = false,
+  hasMoreSavedAlbums = false,
   onRefresh,
   onLoadMoreTracks,
   onLoadMoreTopTracks,
   onLoadMoreSavedTracks,
+  onLoadMoreSavedPlaylists,
+  onLoadMoreSavedAlbums,
   onLogout,
   onCreatePlaylist,
   onBrowseTags,
@@ -115,6 +133,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
             isLoadingMore={isLoadingMoreSavedTracks}
             onReauthorize={onReauthorize}
           />
+
+          {savedPlaylists.length > 0 && (
+            <SavedPlaylistsList
+              playlists={savedPlaylists}
+              onLoadMore={onLoadMoreSavedPlaylists}
+              hasMorePlaylists={hasMoreSavedPlaylists}
+              isLoadingMore={isLoadingMoreSavedPlaylists}
+            />
+          )}
+
+          {savedAlbums.length > 0 && (
+            <SavedAlbumsList
+              albums={savedAlbums}
+              onLoadMore={onLoadMoreSavedAlbums}
+              hasMoreAlbums={hasMoreSavedAlbums}
+              isLoadingMore={isLoadingMoreSavedAlbums}
+            />
+          )}
         </View>
       </ScrollView>
 

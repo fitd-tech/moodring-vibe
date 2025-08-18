@@ -15,6 +15,14 @@ export { TagCard } from './tracks/TagCard';
 export { RecentTracksList } from './tracks/RecentTracksList';
 export { TaggingInterface } from './tracks/TaggingInterface';
 
+// Playlist components
+export { SavedPlaylistsList } from './playlists/SavedPlaylistsList';
+export { PlaylistCard } from './playlists/PlaylistCard';
+
+// Album components
+export { SavedAlbumsList } from './albums/SavedAlbumsList';
+export { AlbumCard } from './albums/AlbumCard';
+
 // Shared components
 export { GradientCard } from './shared/GradientCard';
 export { Button } from './shared/Button';

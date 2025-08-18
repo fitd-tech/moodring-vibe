@@ -72,13 +72,63 @@ export const useSpotifyData = (
     }
   };
 
+  const fetchSavedPlaylists = async (token: string, activeUser: BackendUser, limit: number = 20) => {
+    try {
+      // Verify token has required scope before attempting fetch
+      const scopes = await spotifyApi.verifyTokenScopes(token);
+      if (!scopes.includes('playlist-read-private')) {
+        // Return empty array instead of throwing error to prevent app crashes
+        return [];
+      }
+      
+      const playlists = await spotifyApi.getSavedPlaylists(token, limit);
+      return playlists;
+    } catch (error) {
+      // Handle specific error types
+      if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
+        return [];
+      }
+      
+      const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
+        spotifyApi.getSavedPlaylists(refreshedToken, limit)
+      );
+      return result || [];
+    }
+  };
+
+  const fetchSavedAlbums = async (token: string, activeUser: BackendUser, limit: number = 20) => {
+    try {
+      // Verify token has required scope before attempting fetch
+      const scopes = await spotifyApi.verifyTokenScopes(token);
+      if (!scopes.includes('user-library-read')) {
+        // Return empty array instead of throwing error to prevent app crashes
+        return [];
+      }
+      
+      const albums = await spotifyApi.getSavedAlbums(token, limit);
+      return albums;
+    } catch (error) {
+      // Handle specific error types
+      if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
+        return [];
+      }
+      
+      const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
+        spotifyApi.getSavedAlbums(refreshedToken, limit)
+      );
+      return result || [];
+    }
+  };
+
   const fetchAllInitialData = async (token: string, activeUser: BackendUser) => {
-    const [currentlyPlayingData, recentTracksData, topTracksData, savedTracksData] =
+    const [currentlyPlayingData, recentTracksData, topTracksData, savedTracksData, savedPlaylistsData, savedAlbumsData] =
       await Promise.all([
         fetchCurrentlyPlaying(token, activeUser),
         fetchRecentTracks(token, activeUser, 10),
         fetchTopTracks(token, activeUser, 'medium_term', 10),
         fetchSavedTracks(token, activeUser, 10),
+        fetchSavedPlaylists(token, activeUser, 20),
+        fetchSavedAlbums(token, activeUser, 20),
       ]);
 
     return {
@@ -86,6 +136,8 @@ export const useSpotifyData = (
       recentTracksData,
       topTracksData,
       savedTracksData,
+      savedPlaylistsData,
+      savedAlbumsData,
     };
   };
 
@@ -95,6 +147,8 @@ export const useSpotifyData = (
     fetchRecentTracks,
     fetchTopTracks,
     fetchSavedTracks,
+    fetchSavedPlaylists,
+    fetchSavedAlbums,
     fetchAllInitialData,
   };
 };

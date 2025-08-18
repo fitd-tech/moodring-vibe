@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { Dashboard } from '../Dashboard';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../../types';
 
 // Mock the TrackCard component to avoid AuthContext dependency
 jest.mock('../../tracks/TrackCard', () => ({
@@ -28,6 +28,46 @@ jest.mock('../../tracks/NowPlaying', () => ({
           `Now Playing: ${currentlyPlaying.name}`
         )
       : null;
+  },
+}));
+
+// Mock SavedPlaylistsList component
+jest.mock('../../playlists/SavedPlaylistsList', () => ({
+  SavedPlaylistsList: ({ playlists }: { playlists: SavedPlaylist[] }) => {
+    const React = require('react');
+    const { Text, View } = require('react-native');
+    return React.createElement(
+      View,
+      { testID: 'saved-playlists-list' },
+      React.createElement(Text, null, 'SAVED PLAYLISTS'),
+      ...playlists.map((playlist) =>
+        React.createElement(
+          Text,
+          { key: playlist.playlist_id, testID: `playlist-card-${playlist.name}` },
+          playlist.name
+        )
+      )
+    );
+  },
+}));
+
+// Mock SavedAlbumsList component
+jest.mock('../../albums/SavedAlbumsList', () => ({
+  SavedAlbumsList: ({ albums }: { albums: SavedAlbum[] }) => {
+    const React = require('react');
+    const { Text, View } = require('react-native');
+    return React.createElement(
+      View,
+      { testID: 'saved-albums-list' },
+      React.createElement(Text, null, 'SAVED ALBUMS'),
+      ...albums.map((album) =>
+        React.createElement(
+          Text,
+          { key: album.album_id, testID: `album-card-${album.name}` },
+          album.name
+        )
+      )
+    );
   },
 }));
 
@@ -84,23 +124,53 @@ const mockSavedTracks: SavedTrack[] = [
   },
 ];
 
+const mockSavedPlaylists: SavedPlaylist[] = [
+  {
+    name: 'Test Playlist 1',
+    description: 'A test playlist',
+    image_url: 'https://example.com/playlist1.jpg',
+    track_count: 20,
+    created_at: new Date().toISOString(),
+    playlist_id: 'playlist-1',
+  },
+];
+
+const mockSavedAlbums: SavedAlbum[] = [
+  {
+    name: 'Test Album 1',
+    artist: 'Test Album Artist',
+    image_url: 'https://example.com/album1.jpg',
+    release_date: '2023-01-01',
+    track_count: 12,
+    album_id: 'album-1',
+  },
+];
+
 const defaultProps = {
   user: mockUser,
   currentlyPlaying: mockCurrentlyPlaying,
   recentTracks: mockRecentTracks,
   topTracks: mockTopTracks,
   savedTracks: mockSavedTracks,
+  savedPlaylists: mockSavedPlaylists,
+  savedAlbums: mockSavedAlbums,
   isRefreshing: false,
   isLoadingMore: false,
   isLoadingMoreTopTracks: false,
   isLoadingMoreSavedTracks: false,
+  isLoadingMoreSavedPlaylists: false,
+  isLoadingMoreSavedAlbums: false,
   hasMoreTracks: false,
   hasMoreTopTracks: false,
   hasMoreSavedTracks: false,
+  hasMoreSavedPlaylists: false,
+  hasMoreSavedAlbums: false,
   onRefresh: jest.fn(),
   onLoadMoreTracks: jest.fn(),
   onLoadMoreTopTracks: jest.fn(),
   onLoadMoreSavedTracks: jest.fn(),
+  onLoadMoreSavedPlaylists: jest.fn(),
+  onLoadMoreSavedAlbums: jest.fn(),
   onLogout: jest.fn(),
   onCreatePlaylist: jest.fn(),
   onBrowseTags: jest.fn(),
@@ -265,5 +335,103 @@ describe('Dashboard', () => {
 
     // The overlay should be visible (parent container exists)
     expect(refreshingText.parent).toBeTruthy();
+  });
+
+  it('renders SavedPlaylistsList when savedPlaylists has content', () => {
+    render(<Dashboard {...defaultProps} />);
+
+    // Verify the Saved Playlists section is rendered with the heading and content
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+    expect(screen.getByTestId('playlist-card-Test Playlist 1')).toBeTruthy();
+  });
+
+  it('does not render SavedPlaylistsList when savedPlaylists is empty', () => {
+    render(<Dashboard {...defaultProps} savedPlaylists={[]} />);
+
+    // SavedPlaylistsList should not be rendered when no playlists
+    expect(screen.queryByText('SAVED PLAYLISTS')).toBeNull();
+    expect(screen.queryByTestId('saved-playlists-list')).toBeNull();
+  });
+
+  it('renders SavedAlbumsList when savedAlbums has content', () => {
+    render(<Dashboard {...defaultProps} />);
+
+    // Verify the Saved Albums section is rendered with the heading and content
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+    expect(screen.getByTestId('album-card-Test Album 1')).toBeTruthy();
+  });
+
+  it('does not render SavedAlbumsList when savedAlbums is empty', () => {
+    render(<Dashboard {...defaultProps} savedAlbums={[]} />);
+
+    // SavedAlbumsList should not be rendered when no albums
+    expect(screen.queryByText('SAVED ALBUMS')).toBeNull();
+    expect(screen.queryByTestId('saved-albums-list')).toBeNull();
+  });
+
+  it('passes playlist loading props to SavedPlaylistsList', () => {
+    render(
+      <Dashboard {...defaultProps} isLoadingMoreSavedPlaylists={true} hasMoreSavedPlaylists={true} />
+    );
+
+    // SavedPlaylistsList should be rendered with playlists
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+  });
+
+  it('passes album loading props to SavedAlbumsList', () => {
+    render(
+      <Dashboard {...defaultProps} isLoadingMoreSavedAlbums={true} hasMoreSavedAlbums={true} />
+    );
+
+    // SavedAlbumsList should be rendered with albums
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+  });
+
+  it('passes onLoadMoreSavedPlaylists callback to SavedPlaylistsList', () => {
+    const mockOnLoadMoreSavedPlaylists = jest.fn();
+
+    render(
+      <Dashboard
+        {...defaultProps}
+        onLoadMoreSavedPlaylists={mockOnLoadMoreSavedPlaylists}
+        hasMoreSavedPlaylists={true}
+      />
+    );
+
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+  });
+
+  it('passes onLoadMoreSavedAlbums callback to SavedAlbumsList', () => {
+    const mockOnLoadMoreSavedAlbums = jest.fn();
+
+    render(
+      <Dashboard
+        {...defaultProps}
+        onLoadMoreSavedAlbums={mockOnLoadMoreSavedAlbums}
+        hasMoreSavedAlbums={true}
+      />
+    );
+
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+  });
+
+  it('renders all sections in correct order', () => {
+    render(<Dashboard {...defaultProps} />);
+
+    // Verify all main sections are present and in correct order
+    expect(screen.getByText('MOODRING')).toBeTruthy();
+    expect(screen.getByTestId('now-playing')).toBeTruthy();
+    expect(screen.getByText('RECENT TRACKS')).toBeTruthy();
+    expect(screen.getByText('TOP TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+    expect(screen.getByText('SAVED PLAYLISTS')).toBeTruthy();
+    expect(screen.getByText('SAVED ALBUMS')).toBeTruthy();
+  });
+
+  it('renders with empty topTracks array without TopTracksList', () => {
+    render(<Dashboard {...defaultProps} topTracks={[]} />);
+
+    expect(screen.getByText('MOODRING')).toBeTruthy();
+    expect(screen.queryByText('TOP TRACKS')).toBeNull();
   });
 });

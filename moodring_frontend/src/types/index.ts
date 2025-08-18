@@ -43,6 +43,24 @@ export interface SavedTrack {
   added_at: string;
 }
 
+export interface SavedPlaylist {
+  name: string;
+  description?: string;
+  image_url?: string;
+  track_count: number;
+  created_at: string;
+  playlist_id: string;
+}
+
+export interface SavedAlbum {
+  name: string;
+  artist: string;
+  image_url?: string;
+  release_date: string;
+  track_count: number;
+  album_id: string;
+}
+
 export interface CurrentlyPlaying {
   name: string;
   artist: string;
@@ -99,6 +117,64 @@ export interface SpotifySavedTrackItem {
 
 export interface SpotifySavedTracksResponse {
   items: SpotifySavedTrackItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  description?: string;
+  tracks: {
+    total: number;
+  };
+  images: Array<{
+    url: string;
+    height: number;
+    width: number;
+  }>;
+  owner: {
+    display_name: string;
+  };
+}
+
+export interface SpotifyPlaylistItem {
+  added_at: string;
+  playlist: SpotifyPlaylist;
+}
+
+export interface SpotifyPlaylistsResponse {
+  items: SpotifyPlaylist[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface SpotifyAlbum {
+  id: string;
+  name: string;
+  artists: Array<{ name: string }>;
+  images: Array<{
+    url: string;
+    height: number;
+    width: number;
+  }>;
+  release_date: string;
+  total_tracks: number;
+}
+
+export interface SpotifyAlbumItem {
+  added_at: string;
+  album: SpotifyAlbum;
+}
+
+export interface SpotifyAlbumsResponse {
+  items: SpotifyAlbumItem[];
   total: number;
   limit: number;
   offset: number;

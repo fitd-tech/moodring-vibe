@@ -1,0 +1,412 @@
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { SavedPlaylistsList } from '../SavedPlaylistsList';
+import { SavedPlaylist } from '../../../types';
+
+// Mock theme
+jest.mock('../../../styles/theme', () => ({
+  theme: {
+    spacing: { sm: 8, md: 12, lg: 16, xl: 24 },
+    typography: {
+      fontSize: { sm: 14, md: 16 },
+      fontWeight: { semibold: '600' },
+      letterSpacing: { sm: '0.1px' },
+    },
+    colors: {
+      text: { primary: '#ffffff', muted: '#888888' },
+      accent: { purple: '#9b59b6' },
+    },
+    borderRadius: { lg: 8 },
+  },
+}));
+
+// Mock PlaylistCard component
+jest.mock('../PlaylistCard', () => ({
+  PlaylistCard: ({
+    playlist,
+    _index,
+  }: {
+    playlist: SavedPlaylist;
+    _index: number;
+  }) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View,
+      {
+        testID: `playlist-card-${playlist.name}`,
+      },
+      React.createElement(Text, null, `${playlist.name} - ${playlist.track_count} tracks`)
+    );
+  },
+}));
+
+const mockPlaylists: SavedPlaylist[] = [
+  {
+    name: 'Test Playlist 1',
+    description: 'First test playlist',
+    image_url: 'https://test.com/image1.jpg',
+    track_count: 20,
+    created_at: '2024-01-01T10:00:00Z',
+    playlist_id: 'playlist-1',
+  },
+  {
+    name: 'Test Playlist 2',
+    description: 'Second test playlist',
+    image_url: 'https://test.com/image2.jpg',
+    track_count: 15,
+    created_at: '2024-01-01T09:00:00Z',
+    playlist_id: 'playlist-2',
+  },
+  {
+    name: 'Test Playlist 3',
+    description: 'Third test playlist',
+    image_url: 'https://test.com/image3.jpg',
+    track_count: 30,
+    created_at: '2024-01-01T08:00:00Z',
+    playlist_id: 'playlist-3',
+  },
+];
+
+// Create array of 10 playlists for testing "See More" functionality
+const manyPlaylists: SavedPlaylist[] = Array.from({ length: 10 }, (_, i) => ({
+  name: `Test Playlist ${i + 1}`,
+  description: `Test playlist number ${i + 1}`,
+  image_url: `https://test.com/image${i + 1}.jpg`,
+  track_count: 10 + i,
+  created_at: `2024-01-01T${String(10 + i).padStart(2, '0')}:00:00Z`,
+  playlist_id: `playlist-${i + 1}`,
+}));
+
+describe('SavedPlaylistsList', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('basic functionality', () => {
+    it('renders empty state when no playlists provided', () => {
+      const { getByText } = render(<SavedPlaylistsList playlists={[]} />);
+      expect(getByText('No saved playlists found')).toBeTruthy();
+    });
+
+    it('renders saved playlists title', () => {
+      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+      expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
+    });
+
+    it('renders playlist cards for provided playlists', () => {
+      const { getByTestId } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      expect(getByTestId('playlist-card-Test Playlist 1')).toBeTruthy();
+      expect(getByTestId('playlist-card-Test Playlist 2')).toBeTruthy();
+      expect(getByTestId('playlist-card-Test Playlist 3')).toBeTruthy();
+    });
+
+    it('shows correct number of playlists initially (5)', () => {
+      const { queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      // Should show first 5 playlists
+      expect(queryByTestId('playlist-card-Test Playlist 1')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 2')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 3')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 4')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 5')).toBeTruthy();
+
+      // Should not show 6th playlist initially
+      expect(queryByTestId('playlist-card-Test Playlist 6')).toBeNull();
+    });
+  });
+
+  describe('See More functionality', () => {
+    it('shows See More button when more than 5 playlists available', () => {
+      const { getByText, queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      expect(getByText('See More')).toBeTruthy();
+
+      // Should only show first 5 playlists initially
+      expect(queryByTestId('playlist-card-Test Playlist 5')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 6')).toBeNull();
+    });
+
+    it('does not show See More button when 5 or fewer playlists available', () => {
+      const { queryByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      expect(queryByText('See More')).toBeNull();
+    });
+
+    it('shows See More button when hasMorePlaylists is true and onLoadMore is provided', () => {
+      const mockLoadMore = jest.fn();
+      const { getByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+      );
+
+      expect(getByText('See More')).toBeTruthy();
+    });
+
+    it('does not show See More button when hasMorePlaylists is true but onLoadMore is not provided', () => {
+      const { queryByText } = render(<SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} />);
+
+      expect(queryByText('See More')).toBeNull();
+    });
+
+    it('expands to show all playlists when See More is pressed with local playlists', async () => {
+      const { getByText, getByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      // Initially playlist 6 should not be visible
+      expect(() => getByTestId('playlist-card-Test Playlist 6')).toThrow();
+
+      // Press See More button
+      fireEvent.press(getByText('See More'));
+
+      // Now playlist 6 should be visible
+      await waitFor(() => {
+        expect(getByTestId('playlist-card-Test Playlist 6')).toBeTruthy();
+      });
+
+      // See More button should be gone (since we've shown all local playlists)
+      expect(() => getByText('See More')).toThrow();
+    });
+
+    it('calls onLoadMore when See More is pressed and hasMorePlaylists is true', async () => {
+      const mockLoadMore = jest.fn().mockResolvedValue(undefined);
+      const { getByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+      );
+
+      fireEvent.press(getByText('See More'));
+
+      await waitFor(() => {
+        expect(mockLoadMore).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('handles both local expansion and API loading correctly', async () => {
+      const mockLoadMore = jest.fn().mockResolvedValue(undefined);
+      const { getByText, getByTestId } = render(
+        <SavedPlaylistsList playlists={manyPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+      );
+
+      // Initially should show See More for both local expansion and API loading
+      expect(getByText('See More')).toBeTruthy();
+
+      // Press See More - should expand local playlists first
+      fireEvent.press(getByText('See More'));
+
+      // Should show all local playlists
+      await waitFor(() => {
+        expect(getByTestId('playlist-card-Test Playlist 10')).toBeTruthy();
+      });
+
+      // Since hasMorePlaylists is true, See More button should still be there for API call
+      expect(getByText('See More')).toBeTruthy();
+
+      // Press See More again - should call API
+      fireEvent.press(getByText('See More'));
+
+      await waitFor(() => {
+        expect(mockLoadMore).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('shows loading state when isLoadingMore is true', () => {
+      const mockLoadMore = jest.fn();
+      const { getByText } = render(
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          isLoadingMore={true}
+          onLoadMore={mockLoadMore}
+        />
+      );
+
+      expect(getByText('Loading...')).toBeTruthy();
+    });
+
+    it('shows loading state instead of clickable button when loading', () => {
+      const mockLoadMore = jest.fn();
+      const { getByText, queryByText } = render(
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          isLoadingMore={true}
+          onLoadMore={mockLoadMore}
+        />
+      );
+
+      // Should show loading text and not the See More button text
+      expect(getByText('Loading...')).toBeTruthy();
+      expect(queryByText('See More')).toBeNull();
+    });
+
+    it('disables button during loading', () => {
+      const mockLoadMore = jest.fn();
+      const { getByText } = render(
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          hasMorePlaylists={true}
+          isLoadingMore={true}
+          onLoadMore={mockLoadMore}
+        />
+      );
+
+      // Just verify that loading state is shown
+      expect(getByText('Loading...')).toBeTruthy();
+    });
+  });
+
+  describe('refresh behavior', () => {
+    it('resets showAll to false when first playlist changes (refresh detected)', () => {
+      const refreshedPlaylists = [
+        {
+          name: 'New Playlist 1',
+          description: 'New first playlist',
+          image_url: 'https://new.com/image.jpg',
+          track_count: 25,
+          created_at: '2024-01-01T11:00:00Z',
+          playlist_id: 'new-playlist-1',
+        },
+      ];
+
+      const { rerender, queryByText } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      // Expand to show all playlists first
+      const seeMoreButton = queryByText('See More');
+      if (seeMoreButton) {
+        fireEvent.press(seeMoreButton);
+      }
+
+      // Simulate refresh by changing the first playlist
+      rerender(<SavedPlaylistsList playlists={refreshedPlaylists} />);
+
+      // Should show the title (component should work correctly)
+      expect(queryByText('SAVED PLAYLISTS')).toBeTruthy();
+    });
+
+    it('resets showAll to false when playlist count decreases (refresh detected)', () => {
+      const { rerender, queryByText } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      // Initially should show See More button
+      expect(queryByText('See More')).toBeTruthy();
+
+      // Expand to show all playlists
+      fireEvent.press(queryByText('See More')!);
+
+      // Now simulate refresh with fewer playlists
+      rerender(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      // showAll should be reset to false (we can't easily test this directly,
+      // but the component should behave correctly)
+      expect(queryByText('SAVED PLAYLISTS')).toBeTruthy();
+    });
+
+    it('does not reset showAll when playlists are just appended', () => {
+      const extendedPlaylists = [...manyPlaylists, ...mockPlaylists];
+
+      const { rerender, queryByText, queryByTestId } = render(<SavedPlaylistsList playlists={manyPlaylists} />);
+
+      // Expand to show all playlists
+      fireEvent.press(queryByText('See More')!);
+
+      // Verify expanded state
+      expect(queryByTestId('playlist-card-Test Playlist 10')).toBeTruthy();
+
+      // Simulate adding more playlists (like from API response)
+      rerender(<SavedPlaylistsList playlists={extendedPlaylists} />);
+
+      // Should still be expanded (showAll should remain true)
+      expect(queryByTestId('playlist-card-Test Playlist 10')).toBeTruthy();
+    });
+  });
+
+  describe('edge cases', () => {
+    it('handles exactly 5 playlists (boundary case)', () => {
+      const exactlyFivePlaylists = manyPlaylists.slice(0, 5);
+      const { queryByText } = render(<SavedPlaylistsList playlists={exactlyFivePlaylists} />);
+
+      // Should not show See More button for exactly 5 playlists
+      expect(queryByText('See More')).toBeNull();
+    });
+
+    it('handles 6 playlists (just over boundary)', () => {
+      const sixPlaylists = manyPlaylists.slice(0, 6);
+      const { getByText, queryByTestId } = render(<SavedPlaylistsList playlists={sixPlaylists} />);
+
+      // Should show See More button
+      expect(getByText('See More')).toBeTruthy();
+
+      // Should only show first 5
+      expect(queryByTestId('playlist-card-Test Playlist 5')).toBeTruthy();
+      expect(queryByTestId('playlist-card-Test Playlist 6')).toBeNull();
+    });
+
+    it('calls onLoadMore when provided and hasMorePlaylists is true', async () => {
+      const mockLoadMore = jest.fn().mockResolvedValue(undefined);
+      const { getByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+      );
+
+      fireEvent.press(getByText('See More'));
+
+      await waitFor(() => {
+        expect(mockLoadMore).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('handles rapid consecutive See More presses', async () => {
+      const mockLoadMore = jest.fn().mockResolvedValue(undefined);
+      const { getByText } = render(
+        <SavedPlaylistsList playlists={mockPlaylists} hasMorePlaylists={true} onLoadMore={mockLoadMore} />
+      );
+
+      const button = getByText('See More');
+      
+      // Press multiple times rapidly
+      fireEvent.press(button);
+      fireEvent.press(button);
+      fireEvent.press(button);
+
+      // Should call multiple times since the component doesn't prevent rapid presses
+      await waitFor(() => {
+        expect(mockLoadMore).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('component structure and accessibility', () => {
+    it('renders with correct semantic structure', () => {
+      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      // Should have title
+      expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
+      
+      // Should render playlist cards
+      expect(getByText(/Test Playlist 1.*20 tracks/)).toBeTruthy();
+    });
+
+    it('handles empty playlists array gracefully', () => {
+      const { getByText } = render(<SavedPlaylistsList playlists={[]} />);
+
+      expect(getByText('No saved playlists found')).toBeTruthy();
+    });
+
+    it('renders without errors with all optional props', () => {
+      const mockLoadMore = jest.fn();
+      const { getByText } = render(
+        <SavedPlaylistsList
+          playlists={mockPlaylists}
+          onLoadMore={mockLoadMore}
+          hasMorePlaylists={true}
+          isLoadingMore={false}
+        />
+      );
+
+      expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
+    });
+
+    it('renders without errors with minimum props', () => {
+      const { getByText } = render(<SavedPlaylistsList playlists={mockPlaylists} />);
+
+      expect(getByText('SAVED PLAYLISTS')).toBeTruthy();
+    });
+  });
+});

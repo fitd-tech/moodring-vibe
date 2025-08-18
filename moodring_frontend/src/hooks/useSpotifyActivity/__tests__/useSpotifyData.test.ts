@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useSpotifyData } from '../useSpotifyData';
 import { spotifyApi } from '../../../services/spotifyApi';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack } from '../../../types';
+import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../../types';
 
 // Mock the modules
 jest.mock('../../../services/spotifyApi');
@@ -96,6 +96,44 @@ const mockSavedTracks: SavedTrack[] = [
   },
 ];
 
+const mockSavedPlaylists: SavedPlaylist[] = [
+  {
+    playlist_id: 'playlist1',
+    name: 'Saved Playlist 1',
+    description: 'Description for playlist 1',
+    image_url: 'https://example.com/playlist1.jpg',
+    track_count: 25,
+    created_at: '2023-01-01T12:00:00Z',
+  },
+  {
+    playlist_id: 'playlist2',
+    name: 'Saved Playlist 2',
+    description: 'Description for playlist 2',
+    image_url: 'https://example.com/playlist2.jpg',
+    track_count: 30,
+    created_at: '2023-01-01T11:00:00Z',
+  },
+];
+
+const mockSavedAlbums: SavedAlbum[] = [
+  {
+    album_id: 'album1',
+    name: 'Saved Album 1',
+    artist: 'Album Artist 1',
+    image_url: 'https://example.com/album1.jpg',
+    release_date: '2023-01-01',
+    track_count: 12,
+  },
+  {
+    album_id: 'album2',
+    name: 'Saved Album 2',
+    artist: 'Album Artist 2',
+    image_url: 'https://example.com/album2.jpg',
+    release_date: '2022-12-01',
+    track_count: 15,
+  },
+];
+
 describe('useSpotifyData', () => {
   const mockRefreshUserToken = jest.fn();
   const mockGetValidToken = jest.fn();
@@ -127,7 +165,9 @@ describe('useSpotifyData', () => {
     mockSpotifyApi.getRecentTracks.mockResolvedValue(mockRecentTracks);
     mockSpotifyApi.getTopTracks.mockResolvedValue(mockTopTracks);
     mockSpotifyApi.getSavedTracks.mockResolvedValue(mockSavedTracks);
-    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
+    mockSpotifyApi.getSavedPlaylists.mockResolvedValue(mockSavedPlaylists);
+    mockSpotifyApi.getSavedAlbums.mockResolvedValue(mockSavedAlbums);
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read', 'playlist-read-private']);
   });
 
   describe('fetchCurrentlyPlaying', () => {
@@ -429,6 +469,323 @@ describe('useSpotifyData', () => {
 
       expect(savedTracks).toEqual(mockSavedTracks);
     });
+
+    it('handles PERMISSION_DENIED error for saved tracks', async () => {
+      const testUser = createMockUser(1);
+      const permissionError = new Error('PERMISSION_DENIED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
+      mockSpotifyApi.getSavedTracks.mockRejectedValue(permissionError);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      // Should return empty array for permission denied errors
+      expect(savedTracks).toEqual([]);
+      expect(mockHandleTokenExpiredError).not.toHaveBeenCalled();
+    });
+
+    it('handles scope verification error for saved tracks', async () => {
+      const testUser = createMockUser(1);
+      const scopeError = new Error('Scope verification failed');
+
+      mockSpotifyApi.verifyTokenScopes.mockRejectedValue(scopeError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedTracks = await act(async () => {
+        return await result.current.fetchSavedTracks('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        scopeError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedTracks).toEqual([]);
+    });
+  });
+
+  describe('fetchSavedPlaylists', () => {
+    it('successfully fetches saved playlists with default limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedPlaylists).toHaveBeenCalledWith('test_token', 20);
+      expect(savedPlaylists).toEqual(mockSavedPlaylists);
+    });
+
+    it('successfully fetches saved playlists with custom limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser, 50);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedPlaylists).toHaveBeenCalledWith('test_token', 50);
+      expect(savedPlaylists).toEqual(mockSavedPlaylists);
+    });
+
+    it('returns empty array when token missing playlist-read-private scope', async () => {
+      const testUser = createMockUser(1);
+      
+      // Mock token without playlist-read-private scope
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
+      
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedPlaylists).not.toHaveBeenCalled();
+      expect(savedPlaylists).toEqual([]);
+    });
+
+    it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['playlist-read-private']);
+      mockSpotifyApi.getSavedPlaylists.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedPlaylists).toEqual([]);
+    });
+
+    it('successfully recovers from TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['playlist-read-private']);
+      mockSpotifyApi.getSavedPlaylists.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(mockSavedPlaylists);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      expect(savedPlaylists).toEqual(mockSavedPlaylists);
+    });
+
+    it('handles PERMISSION_DENIED error for saved playlists', async () => {
+      const testUser = createMockUser(1);
+      const permissionError = new Error('PERMISSION_DENIED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['playlist-read-private']);
+      mockSpotifyApi.getSavedPlaylists.mockRejectedValue(permissionError);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      // Should return empty array for permission denied errors
+      expect(savedPlaylists).toEqual([]);
+      expect(mockHandleTokenExpiredError).not.toHaveBeenCalled();
+    });
+
+    it('handles scope verification error for saved playlists', async () => {
+      const testUser = createMockUser(1);
+      const scopeError = new Error('Scope verification failed');
+
+      mockSpotifyApi.verifyTokenScopes.mockRejectedValue(scopeError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedPlaylists = await act(async () => {
+        return await result.current.fetchSavedPlaylists('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        scopeError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedPlaylists).toEqual([]);
+    });
+  });
+
+  describe('fetchSavedAlbums', () => {
+    it('successfully fetches saved albums with default limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedAlbums).toHaveBeenCalledWith('test_token', 20);
+      expect(savedAlbums).toEqual(mockSavedAlbums);
+    });
+
+    it('successfully fetches saved albums with custom limit', async () => {
+      const testUser = createMockUser(1);
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser, 50);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedAlbums).toHaveBeenCalledWith('test_token', 50);
+      expect(savedAlbums).toEqual(mockSavedAlbums);
+    });
+
+    it('returns empty array when token missing user-library-read scope', async () => {
+      const testUser = createMockUser(1);
+      
+      // Mock token without user-library-read scope
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
+      
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
+      expect(mockSpotifyApi.getSavedAlbums).not.toHaveBeenCalled();
+      expect(savedAlbums).toEqual([]);
+    });
+
+    it('handles TOKEN_EXPIRED error and returns empty array on failure', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
+      mockSpotifyApi.getSavedAlbums.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        tokenExpiredError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedAlbums).toEqual([]);
+    });
+
+    it('successfully recovers from TOKEN_EXPIRED error', async () => {
+      const testUser = createMockUser(1);
+      const tokenExpiredError = new Error('TOKEN_EXPIRED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
+      mockSpotifyApi.getSavedAlbums.mockRejectedValue(tokenExpiredError);
+      mockHandleTokenExpiredError.mockResolvedValue(mockSavedAlbums);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      expect(savedAlbums).toEqual(mockSavedAlbums);
+    });
+
+    it('handles PERMISSION_DENIED error for saved albums', async () => {
+      const testUser = createMockUser(1);
+      const permissionError = new Error('PERMISSION_DENIED');
+
+      mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
+      mockSpotifyApi.getSavedAlbums.mockRejectedValue(permissionError);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      // Should return empty array for permission denied errors
+      expect(savedAlbums).toEqual([]);
+      expect(mockHandleTokenExpiredError).not.toHaveBeenCalled();
+    });
+
+    it('handles scope verification error for saved albums', async () => {
+      const testUser = createMockUser(1);
+      const scopeError = new Error('Scope verification failed');
+
+      mockSpotifyApi.verifyTokenScopes.mockRejectedValue(scopeError);
+      mockHandleTokenExpiredError.mockResolvedValue(null);
+
+      const { result } = renderHook(() =>
+        useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
+      );
+
+      const savedAlbums = await act(async () => {
+        return await result.current.fetchSavedAlbums('test_token', testUser);
+      });
+
+      expect(mockHandleTokenExpiredError).toHaveBeenCalledWith(
+        scopeError,
+        testUser,
+        expect.any(Function)
+      );
+      expect(savedAlbums).toEqual([]);
+    });
   });
 
   describe('fetchAllInitialData', () => {
@@ -447,12 +804,16 @@ describe('useSpotifyData', () => {
       expect(mockSpotifyApi.getTopTracks).toHaveBeenCalledWith('test_token', 'medium_term', 10);
       expect(mockSpotifyApi.verifyTokenScopes).toHaveBeenCalledWith('test_token');
       expect(mockSpotifyApi.getSavedTracks).toHaveBeenCalledWith('test_token', 10);
+      expect(mockSpotifyApi.getSavedPlaylists).toHaveBeenCalledWith('test_token', 20);
+      expect(mockSpotifyApi.getSavedAlbums).toHaveBeenCalledWith('test_token', 20);
 
       expect(allData).toEqual({
         currentlyPlayingData: mockCurrentlyPlaying,
         recentTracksData: mockRecentTracks,
         topTracksData: mockTopTracks,
         savedTracksData: mockSavedTracks,
+        savedPlaylistsData: mockSavedPlaylists,
+        savedAlbumsData: mockSavedAlbums,
       });
     });
 
@@ -461,12 +822,9 @@ describe('useSpotifyData', () => {
 
       // Mock some API calls to fail
       mockSpotifyApi.getCurrentlyPlaying.mockRejectedValue(new Error('API_ERROR'));
-      mockHandleTokenExpiredError.mockImplementation((error, user, apiCall) => {
-        // Return null for getCurrentlyPlaying, success for others
-        if (apiCall === mockSpotifyApi.getCurrentlyPlaying) {
-          return Promise.resolve(null);
-        }
-        return apiCall('refreshed_token');
+      mockHandleTokenExpiredError.mockImplementation(() => {
+        // Return null for all failed calls in this test
+        return Promise.resolve(null);
       });
 
       const { result } = renderHook(() =>
@@ -481,6 +839,8 @@ describe('useSpotifyData', () => {
       expect(allData.recentTracksData).toEqual(mockRecentTracks);
       expect(allData.topTracksData).toEqual(mockTopTracks);
       expect(allData.savedTracksData).toEqual(mockSavedTracks);
+      expect(allData.savedPlaylistsData).toEqual(mockSavedPlaylists);
+      expect(allData.savedAlbumsData).toEqual(mockSavedAlbums);
     });
 
     it('executes all API calls in parallel', async () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, BackendUser } from '../../types';
+import { CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum, BackendUser } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSpotifyData } from './useSpotifyData';
 import { useSpotifyPagination } from './useSpotifyPagination';
@@ -10,6 +10,8 @@ export const useSpotifyActivity = () => {
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [savedTracks, setSavedTracks] = useState<SavedTrack[]>([]);
+  const [savedPlaylists, setSavedPlaylists] = useState<SavedPlaylist[]>([]);
+  const [savedAlbums, setSavedAlbums] = useState<SavedAlbum[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -19,12 +21,18 @@ export const useSpotifyActivity = () => {
     isLoadingMore,
     isLoadingMoreTopTracks,
     isLoadingMoreSavedTracks,
+    isLoadingMoreSavedPlaylists,
+    isLoadingMoreSavedAlbums,
     hasMoreTracks,
     hasMoreTopTracks,
     hasMoreSavedTracks,
+    hasMoreSavedPlaylists,
+    hasMoreSavedAlbums,
     loadMoreRecentTracks,
     loadMoreTopTracks,
     loadMoreSavedTracks,
+    loadMoreSavedPlaylists,
+    loadMoreSavedAlbums,
     resetPaginationStates,
     updateHasMoreFlags,
   } = useSpotifyPagination(user, authToken, refreshUserToken);
@@ -60,7 +68,7 @@ export const useSpotifyActivity = () => {
       const tokenResult = await getValidToken(currentUser, currentToken);
       if (!tokenResult) return;
 
-      const { currentlyPlayingData, recentTracksData, topTracksData, savedTracksData } =
+      const { currentlyPlayingData, recentTracksData, topTracksData, savedTracksData, savedPlaylistsData, savedAlbumsData } =
         await fetchAllInitialData(tokenResult.token, tokenResult.user);
 
       setCurrentlyPlaying(currentlyPlayingData);
@@ -93,8 +101,27 @@ export const useSpotifyActivity = () => {
         )
       );
 
+      // Update playlists and albums with preservation logic
+      setSavedPlaylists(prevPlaylists =>
+        updateTracksWithPreservation(
+          savedPlaylistsData,
+          prevPlaylists,
+          preserveAdditionalTracks,
+          playlist => playlist.playlist_id
+        )
+      );
+
+      setSavedAlbums(prevAlbums =>
+        updateTracksWithPreservation(
+          savedAlbumsData,
+          prevAlbums,
+          preserveAdditionalTracks,
+          album => album.album_id
+        )
+      );
+
       // Update pagination flags
-      updateHasMoreFlags(recentTracksData.length, topTracksData.length, savedTracksData.length);
+      updateHasMoreFlags(recentTracksData.length, topTracksData.length, savedTracksData.length, savedPlaylistsData.length, savedAlbumsData.length);
     } catch (error) {
       if (__DEV__) {
         console.warn('Error loading Spotify activity:', error);
@@ -102,6 +129,8 @@ export const useSpotifyActivity = () => {
       setCurrentlyPlaying(null);
       setRecentTracks([]);
       setSavedTracks([]);
+      setSavedPlaylists([]);
+      setSavedAlbums([]);
     }
   };
 
@@ -126,6 +155,8 @@ export const useSpotifyActivity = () => {
     setRecentTracks([]);
     setTopTracks([]);
     setSavedTracks([]);
+    setSavedPlaylists([]);
+    setSavedAlbums([]);
     setIsRefreshing(false);
     resetPaginationStates();
 
@@ -139,6 +170,8 @@ export const useSpotifyActivity = () => {
   const loadMoreTracks = () => loadMoreRecentTracks(recentTracks, setRecentTracks);
   const loadMoreTopTracksHandler = () => loadMoreTopTracks(topTracks, setTopTracks);
   const loadMoreSavedTracksHandler = () => loadMoreSavedTracks(savedTracks, setSavedTracks);
+  const loadMoreSavedPlaylistsHandler = () => loadMoreSavedPlaylists(savedPlaylists, setSavedPlaylists);
+  const loadMoreSavedAlbumsHandler = () => loadMoreSavedAlbums(savedAlbums, setSavedAlbums);
 
   useEffect(() => {
     if (user && authToken) {
@@ -176,18 +209,26 @@ export const useSpotifyActivity = () => {
     recentTracks,
     topTracks,
     savedTracks,
+    savedPlaylists,
+    savedAlbums,
     isRefreshing,
     isLoadingMore,
     isLoadingMoreTopTracks,
     isLoadingMoreSavedTracks,
+    isLoadingMoreSavedPlaylists,
+    isLoadingMoreSavedAlbums,
     hasMoreTracks,
     hasMoreTopTracks,
     hasMoreSavedTracks,
+    hasMoreSavedPlaylists,
+    hasMoreSavedAlbums,
     refresh,
     loadActivity,
     loadMoreTracks,
     loadMoreTopTracks: loadMoreTopTracksHandler,
     loadMoreSavedTracks: loadMoreSavedTracksHandler,
+    loadMoreSavedPlaylists: loadMoreSavedPlaylistsHandler,
+    loadMoreSavedAlbums: loadMoreSavedAlbumsHandler,
     resetToFreshState,
   };
 };

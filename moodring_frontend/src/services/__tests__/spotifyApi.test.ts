@@ -484,6 +484,35 @@ describe('spotifyApi', () => {
 
       await expect(spotifyApi.getTopTracks(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
     });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles malformed response structure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'structure' }),
+      } as Response);
+
+      const result = await spotifyApi.getTopTracks(mockToken);
+      expect(result).toEqual([]);
+    });
   });
 
   describe('getMoreTopTracks', () => {
@@ -555,6 +584,45 @@ describe('spotifyApi', () => {
       } as Response);
 
       await expect(spotifyApi.getMoreTopTracks(mockToken, 10)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getMoreTopTracks(mockToken, 10);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure with dev logging', async () => {
+      // Mock __DEV__ to true for this test
+      const originalDev = (global as { __DEV__?: boolean }).__DEV__;
+      (global as { __DEV__?: boolean }).__DEV__ = true;
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getMoreTopTracks(mockToken, 10);
+      
+      expect(result).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith('More top tracks fetch error:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+      (global as { __DEV__?: boolean }).__DEV__ = originalDev;
+    });
+
+    it('handles malformed response structure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'structure' }),
+      } as Response);
+
+      const result = await spotifyApi.getMoreTopTracks(mockToken, 10);
+      expect(result).toEqual([]);
     });
   });
 
@@ -722,6 +790,16 @@ describe('spotifyApi', () => {
       } as Response);
 
       await expect(spotifyApi.getSavedTracks(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('throws error on 403 permission denied response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+      } as Response);
+
+      await expect(spotifyApi.getSavedTracks(mockToken)).rejects.toThrow('PERMISSION_DENIED');
     });
 
     it('returns empty array on 429 rate limit response', async () => {
@@ -1007,6 +1085,630 @@ describe('spotifyApi', () => {
       } as Response);
 
       const result = await spotifyApi.getMoreSavedTracks(mockToken, 10);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getSavedPlaylists', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns saved playlists when API responds with data', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'playlist-1',
+            name: 'My Awesome Playlist',
+            description: 'A great collection of songs',
+            images: [{ url: 'https://example.com/playlist1.jpg' }],
+            tracks: { total: 25 },
+          },
+          {
+            id: 'playlist-2',
+            name: 'Workout Hits',
+            description: null,
+            images: [],
+            tracks: { total: 15 },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+
+      expect(result).toEqual([
+        {
+          name: 'My Awesome Playlist',
+          description: 'A great collection of songs',
+          image_url: 'https://example.com/playlist1.jpg',
+          track_count: 25,
+          created_at: expect.any(String),
+          playlist_id: 'playlist-1',
+        },
+        {
+          name: 'Workout Hits',
+          description: undefined,
+          image_url: undefined,
+          track_count: 15,
+          created_at: expect.any(String),
+          playlist_id: 'playlist-2',
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/playlists?limit=20', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    });
+
+    it('uses custom limit parameter', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      await spotifyApi.getSavedPlaylists(mockToken, 50);
+
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/playlists?limit=50', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    });
+
+    it('returns empty array when no saved playlists', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles empty playlist images array', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'playlist-1',
+            name: 'No Image Playlist',
+            description: 'A playlist without images',
+            images: [],
+            tracks: { total: 10 },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result[0].image_url).toBeUndefined();
+    });
+
+    it('handles null description', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'playlist-1',
+            name: 'No Description Playlist',
+            description: null,
+            images: [{ url: 'https://example.com/playlist.jpg' }],
+            tracks: { total: 5 },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result[0].description).toBeUndefined();
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getSavedPlaylists(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('throws error on 403 permission denied response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+      } as Response);
+
+      await expect(spotifyApi.getSavedPlaylists(mockToken)).rejects.toThrow('PERMISSION_DENIED');
+    });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles malformed response structure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'structure' }),
+      } as Response);
+
+      const result = await spotifyApi.getSavedPlaylists(mockToken);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getMoreSavedPlaylists', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns more saved playlists with offset pagination', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'playlist-21',
+            name: 'More Playlist 21',
+            description: 'Another great playlist',
+            images: [{ url: 'https://example.com/playlist21.jpg' }],
+            tracks: { total: 18 },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedPlaylists(mockToken, 20);
+
+      expect(result).toEqual([
+        {
+          name: 'More Playlist 21',
+          description: 'Another great playlist',
+          image_url: 'https://example.com/playlist21.jpg',
+          track_count: 18,
+          created_at: expect.any(String),
+          playlist_id: 'playlist-21',
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/playlists?limit=20&offset=20',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('returns empty array when no more playlists available', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedPlaylists(mockToken, 100);
+      expect(result).toEqual([]);
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getMoreSavedPlaylists(mockToken, 20)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedPlaylists(mockToken, 20);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getMoreSavedPlaylists(mockToken, 20);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getSavedAlbums', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns saved albums when API responds with data', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-1',
+              name: 'Amazing Album',
+              artists: [{ name: 'Great Artist' }],
+              images: [{ url: 'https://example.com/album1.jpg' }],
+              release_date: '2023-05-15',
+              total_tracks: 12,
+            },
+          },
+          {
+            album: {
+              id: 'album-2',
+              name: 'Another Album',
+              artists: [{ name: 'Another Artist' }],
+              images: [],
+              release_date: '2023-01-01',
+              total_tracks: 8,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+
+      expect(result).toEqual([
+        {
+          name: 'Amazing Album',
+          artist: 'Great Artist',
+          image_url: 'https://example.com/album1.jpg',
+          release_date: '2023-05-15',
+          track_count: 12,
+          album_id: 'album-1',
+        },
+        {
+          name: 'Another Album',
+          artist: 'Another Artist',
+          image_url: undefined,
+          release_date: '2023-01-01',
+          track_count: 8,
+          album_id: 'album-2',
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/albums?limit=20', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    });
+
+    it('uses custom limit parameter', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      await spotifyApi.getSavedAlbums(mockToken, 50);
+
+      expect(mockFetch).toHaveBeenCalledWith('https://api.spotify.com/v1/me/albums?limit=50', {
+        headers: {
+          Authorization: `Bearer ${mockToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    });
+
+    it('returns empty array when no saved albums', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles missing artist data in saved albums', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-1',
+              name: 'No Artist Album',
+              artists: [],
+              images: [{ url: 'https://example.com/album.jpg' }],
+              release_date: '2023-01-01',
+              total_tracks: 10,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result[0].artist).toBe('Unknown Artist');
+    });
+
+    it('handles empty album images array', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-1',
+              name: 'No Image Album',
+              artists: [{ name: 'Album Artist' }],
+              images: [],
+              release_date: '2023-01-01',
+              total_tracks: 10,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result[0].image_url).toBeUndefined();
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getSavedAlbums(mockToken)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('throws error on 403 permission denied response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+      } as Response);
+
+      await expect(spotifyApi.getSavedAlbums(mockToken)).rejects.toThrow('PERMISSION_DENIED');
+    });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result).toEqual([]);
+    });
+
+    it('handles malformed response structure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'structure' }),
+      } as Response);
+
+      const result = await spotifyApi.getSavedAlbums(mockToken);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getMoreSavedAlbums', () => {
+    const mockToken = 'test-access-token';
+
+    it('returns more saved albums with offset pagination', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-21',
+              name: 'More Album 21',
+              artists: [{ name: 'More Artist 21' }],
+              images: [{ url: 'https://example.com/album21.jpg' }],
+              release_date: '2023-03-15',
+              total_tracks: 14,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
+
+      expect(result).toEqual([
+        {
+          name: 'More Album 21',
+          artist: 'More Artist 21',
+          image_url: 'https://example.com/album21.jpg',
+          release_date: '2023-03-15',
+          track_count: 14,
+          album_id: 'album-21',
+        },
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/albums?limit=20&offset=20',
+        {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        }
+      );
+    });
+
+    it('returns empty array when no more albums available', async () => {
+      const mockResponse = { items: [] };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 100);
+      expect(result).toEqual([]);
+    });
+
+    it('handles missing artist data in more saved albums', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-21',
+              name: 'More Album 21',
+              artists: [],
+              images: [{ url: 'https://example.com/album21.jpg' }],
+              release_date: '2023-03-15',
+              total_tracks: 14,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
+      expect(result[0].artist).toBe('Unknown Artist');
+    });
+
+    it('handles empty album images in more saved albums', async () => {
+      const mockResponse = {
+        items: [
+          {
+            album: {
+              id: 'album-21',
+              name: 'More Album 21',
+              artists: [{ name: 'More Artist 21' }],
+              images: [],
+              release_date: '2023-03-15',
+              total_tracks: 14,
+            },
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
+      expect(result[0].image_url).toBeUndefined();
+    });
+
+    it('throws error on 401 unauthorized response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      } as Response);
+
+      await expect(spotifyApi.getMoreSavedAlbums(mockToken, 20)).rejects.toThrow('TOKEN_EXPIRED');
+    });
+
+    it('returns empty array on 500 server error response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array on network failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
+      expect(result).toEqual([]);
+    });
+
+    it('handles malformed response structure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'structure' }),
+      } as Response);
+
+      const result = await spotifyApi.getMoreSavedAlbums(mockToken, 20);
       expect(result).toEqual([]);
     });
   });

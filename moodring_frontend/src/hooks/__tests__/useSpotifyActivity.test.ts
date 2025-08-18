@@ -60,6 +60,10 @@ describe('useSpotifyActivity - Core Tests', () => {
     mockSpotifyApi.getTopTracks.mockResolvedValue([]);
     mockSpotifyApi.getSavedTracks.mockResolvedValue([]);
     mockSpotifyApi.getMoreSavedTracks.mockResolvedValue([]);
+    mockSpotifyApi.getSavedPlaylists.mockResolvedValue([]);
+    mockSpotifyApi.getMoreSavedPlaylists.mockResolvedValue([]);
+    mockSpotifyApi.getSavedAlbums.mockResolvedValue([]);
+    mockSpotifyApi.getMoreSavedAlbums.mockResolvedValue([]);
     mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
   });
 
@@ -93,12 +97,29 @@ describe('useSpotifyActivity - Core Tests', () => {
       },
     ];
 
+    const testUser = createMockUser(1);
+
+    // Ensure token scopes are valid for saved tracks
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
     mockSpotifyApi.getSavedTracks.mockResolvedValue(mockSavedTracks);
+
+    // Mock useAuth to return the test user and token
+    mockUseAuth.mockReturnValue({
+      user: testUser,
+      authToken: 'test-token',
+      isLoading: false,
+      error: null,
+      setUser: jest.fn(),
+      setAuthToken: jest.fn(),
+      setError: jest.fn(),
+      logout: jest.fn().mockResolvedValue(undefined),
+      refreshUserToken: jest.fn().mockResolvedValue(null),
+    } as AuthContextType);
 
     const { result } = renderHook(() => useSpotifyActivity(), { wrapper });
 
     await act(async () => {
-      await result.current.loadActivity('test-token', createMockUser(1));
+      await result.current.loadActivity('test-token', testUser);
     });
 
     expect(result.current.savedTracks).toEqual(mockSavedTracks);
@@ -126,6 +147,7 @@ describe('useSpotifyActivity - Core Tests', () => {
     const testUser = createMockUser(1);
 
     // Setup mocks for this test
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read']);
     mockSpotifyApi.getSavedTracks.mockResolvedValue(initialSavedTracks);
     mockSpotifyApi.getMoreSavedTracks.mockResolvedValue(moreSavedTracks);
 
@@ -147,6 +169,9 @@ describe('useSpotifyActivity - Core Tests', () => {
     await act(async () => {
       await result.current.loadActivity('test-token', testUser);
     });
+
+    // Verify initial load worked
+    expect(result.current.savedTracks).toHaveLength(10);
 
     await act(async () => {
       await result.current.loadMoreSavedTracks();

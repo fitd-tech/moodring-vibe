@@ -3,10 +3,14 @@ import {
   SpotifyRecentTracksResponse,
   SpotifyTopTracksResponse,
   SpotifySavedTracksResponse,
+  SpotifyPlaylistsResponse,
+  SpotifyAlbumsResponse,
   CurrentlyPlaying,
   RecentTrack,
   TopTrack,
   SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
 } from '../types';
 
 export class SpotifyApiService {
@@ -37,6 +41,12 @@ export class SpotifyApiService {
           },
         });
 
+        const playlistsResponse = await fetch('https://api.spotify.com/v1/me/playlists?limit=1', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         const scopes: string[] = ['user-read-private', 'user-read-email'];
         
         if (userLibraryResponse.status === 200) {
@@ -44,6 +54,14 @@ export class SpotifyApiService {
         } else if (userLibraryResponse.status === 403) {
           if (__DEV__) {
             console.warn('[SpotifyApi] Token missing user-library-read scope');
+          }
+        }
+
+        if (playlistsResponse.status === 200) {
+          scopes.push('playlist-read-private');
+        } else if (playlistsResponse.status === 403) {
+          if (__DEV__) {
+            console.warn('[SpotifyApi] Token missing playlist-read-private scope');
           }
         }
 
@@ -334,6 +352,164 @@ export class SpotifyApiService {
       }
       if (__DEV__) {
         console.warn('More saved tracks fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getSavedPlaylists(token: string, limit: number = 20): Promise<SavedPlaylist[]> {
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyPlaylistsResponse;
+        
+        return data.items.map(playlist => ({
+          name: playlist.name,
+          description: playlist.description || undefined,
+          image_url: this.getImageUrl(playlist.images),
+          track_count: playlist.tracks.total,
+          created_at: new Date().toISOString(), // Spotify API doesn't provide creation date for playlists
+          playlist_id: playlist.id,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      } else if (response.status === 403) {
+        throw new Error('PERMISSION_DENIED');
+      }
+
+      return [];
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message === 'TOKEN_EXPIRED' || error.message === 'PERMISSION_DENIED')
+      ) {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('Saved playlists fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getMoreSavedPlaylists(token: string, offset: number): Promise<SavedPlaylist[]> {
+    try {
+      // Load 20 additional playlists at a time with offset
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/playlists?limit=20&offset=${offset}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyPlaylistsResponse;
+        return data.items.map(playlist => ({
+          name: playlist.name,
+          description: playlist.description || undefined,
+          image_url: this.getImageUrl(playlist.images),
+          track_count: playlist.tracks.total,
+          created_at: new Date().toISOString(), // Spotify API doesn't provide creation date for playlists
+          playlist_id: playlist.id,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('More saved playlists fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getSavedAlbums(token: string, limit: number = 20): Promise<SavedAlbum[]> {
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/me/albums?limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyAlbumsResponse;
+        
+        return data.items.map(item => ({
+          name: item.album.name,
+          artist: item.album.artists[0]?.name || 'Unknown Artist',
+          image_url: this.getImageUrl(item.album.images),
+          release_date: item.album.release_date,
+          track_count: item.album.total_tracks,
+          album_id: item.album.id,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      } else if (response.status === 403) {
+        throw new Error('PERMISSION_DENIED');
+      }
+
+      return [];
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message === 'TOKEN_EXPIRED' || error.message === 'PERMISSION_DENIED')
+      ) {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('Saved albums fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  async getMoreSavedAlbums(token: string, offset: number): Promise<SavedAlbum[]> {
+    try {
+      // Load 20 additional albums at a time with offset
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/albums?limit=20&offset=${offset}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifyAlbumsResponse;
+        return data.items.map(item => ({
+          name: item.album.name,
+          artist: item.album.artists[0]?.name || 'Unknown Artist',
+          image_url: this.getImageUrl(item.album.images),
+          release_date: item.album.release_date,
+          track_count: item.album.total_tracks,
+          album_id: item.album.id,
+        }));
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      }
+
+      return [];
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.warn('More saved albums fetch error:', error);
       }
       return [];
     }
