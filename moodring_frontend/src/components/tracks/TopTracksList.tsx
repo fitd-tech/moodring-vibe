@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { TopTrack } from '../../types';
 import { TrackCard } from './TrackCard';
 import { theme } from '../../styles/theme';
+import { useExpansion } from '../../contexts/ExpansionContext';
 
 interface TopTracksListProps {
   tracks: TopTrack[];
@@ -17,7 +18,7 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
   hasMoreTracks = false,
   isLoadingMore = false,
 }) => {
-  const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
+  const { isExpanded, toggleExpansion } = useExpansion();
   const [showAll, setShowAll] = useState(false);
   const prevTracksRef = useRef<TopTrack[]>([]);
 
@@ -45,7 +46,7 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
   }, [tracks]);
 
   const handleToggleExpansion = (index: number) => {
-    setExpandedTrack(expandedTrack === index ? null : index);
+    toggleExpansion('top-tracks', 'track', index);
   };
 
   const handleSeeMore = async () => {
@@ -87,7 +88,7 @@ export const TopTracksList: React.FC<TopTracksListProps> = ({
             song_id: track.song_id,
           }}
           _index={index}
-          isExpanded={expandedTrack === index}
+          isExpanded={isExpanded('top-tracks', 'track', index)}
           onToggleExpansion={handleToggleExpansion}
         />
       ))}

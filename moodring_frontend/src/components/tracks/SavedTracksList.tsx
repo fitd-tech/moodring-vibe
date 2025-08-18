@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { SavedTrack } from '../../types';
 import { TrackCard } from './TrackCard';
 import { theme } from '../../styles/theme';
+import { useExpansion } from '../../contexts/ExpansionContext';
 
 interface SavedTracksListProps {
   tracks: SavedTrack[];
@@ -19,7 +20,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   isLoadingMore = false,
   onReauthorize,
 }) => {
-  const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
+  const { isExpanded, toggleExpansion } = useExpansion();
   const [showAll, setShowAll] = useState(false);
   const prevTracksRef = useRef<SavedTrack[]>([]);
 
@@ -47,7 +48,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   }, [tracks]);
 
   const handleToggleExpansion = (index: number) => {
-    setExpandedTrack(expandedTrack === index ? null : index);
+    toggleExpansion('saved-tracks', 'track', index);
   };
 
   const handleSeeMore = async () => {
@@ -105,7 +106,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
                 song_id: track.song_id,
               }}
               _index={index}
-              isExpanded={expandedTrack === index}
+              isExpanded={isExpanded('saved-tracks', 'track', index)}
               onToggleExpansion={handleToggleExpansion}
             />
           ))}

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { RecentTrack } from '../../types';
 import { TrackCard } from './TrackCard';
 import { theme } from '../../styles/theme';
+import { useExpansion } from '../../contexts/ExpansionContext';
 
 interface RecentTracksListProps {
   tracks: RecentTrack[];
@@ -17,7 +18,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
   hasMoreTracks = false,
   isLoadingMore = false,
 }) => {
-  const [expandedTrack, setExpandedTrack] = useState<number | null>(null);
+  const { isExpanded, toggleExpansion } = useExpansion();
   const [showAll, setShowAll] = useState(false);
   const prevTracksRef = useRef<RecentTrack[]>([]);
 
@@ -41,7 +42,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
   }, [tracks]);
 
   const handleToggleExpansion = (index: number) => {
-    setExpandedTrack(expandedTrack === index ? null : index);
+    toggleExpansion('recent-tracks', 'track', index);
   };
 
   const handleSeeMore = async () => {
@@ -73,7 +74,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
           key={`${track.name}-${track.played_at}-${index}`}
           track={track}
           _index={index}
-          isExpanded={expandedTrack === index}
+          isExpanded={isExpanded('recent-tracks', 'track', index)}
           onToggleExpansion={handleToggleExpansion}
         />
       ))}

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { SavedAlbum } from '../../types';
 import { AlbumCard } from './AlbumCard';
 import { theme } from '../../styles/theme';
+import { useExpansion } from '../../contexts/ExpansionContext';
 
 interface SavedAlbumsListProps {
   albums: SavedAlbum[];
@@ -17,7 +18,7 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
   hasMoreAlbums = false,
   isLoadingMore = false,
 }) => {
-  const [expandedAlbum, setExpandedAlbum] = useState<number | null>(null);
+  const { isExpanded, toggleExpansion } = useExpansion();
   const [showAll, setShowAll] = useState(false);
   const prevAlbumsRef = useRef<SavedAlbum[]>([]);
 
@@ -41,7 +42,7 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
   }, [albums]);
 
   const handleToggleExpansion = (index: number) => {
-    setExpandedAlbum(expandedAlbum === index ? null : index);
+    toggleExpansion('saved-albums', 'album', index);
   };
 
   const handleSeeMore = async () => {
@@ -73,7 +74,7 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
           key={`${album.album_id}-${index}`}
           album={album}
           _index={index}
-          isExpanded={expandedAlbum === index}
+          isExpanded={isExpanded('saved-albums', 'album', index)}
           onToggleExpansion={handleToggleExpansion}
         />
       ))}

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { SavedPlaylist } from '../../types';
 import { PlaylistCard } from './PlaylistCard';
 import { theme } from '../../styles/theme';
+import { useExpansion } from '../../contexts/ExpansionContext';
 
 interface SavedPlaylistsListProps {
   playlists: SavedPlaylist[];
@@ -17,7 +18,7 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
   hasMorePlaylists = false,
   isLoadingMore = false,
 }) => {
-  const [expandedPlaylist, setExpandedPlaylist] = useState<number | null>(null);
+  const { isExpanded, toggleExpansion } = useExpansion();
   const [showAll, setShowAll] = useState(false);
   const prevPlaylistsRef = useRef<SavedPlaylist[]>([]);
 
@@ -42,7 +43,7 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
   }, [playlists]);
 
   const handleToggleExpansion = (index: number) => {
-    setExpandedPlaylist(expandedPlaylist === index ? null : index);
+    toggleExpansion('saved-playlists', 'playlist', index);
   };
 
   const handleSeeMore = async () => {
@@ -74,7 +75,7 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
           key={`${playlist.playlist_id}-${index}`}
           playlist={playlist}
           _index={index}
-          isExpanded={expandedPlaylist === index}
+          isExpanded={isExpanded('saved-playlists', 'playlist', index)}
           onToggleExpansion={handleToggleExpansion}
         />
       ))}
