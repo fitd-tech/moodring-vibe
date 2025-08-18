@@ -91,6 +91,24 @@ export class TaggingService {
       '_'
     );
   }
+
+  // Utility method to generate a playlist ID from playlist information
+  generatePlaylistId(playlistName: string, playlistId: string): string {
+    // Create a consistent identifier from playlist name and Spotify playlist ID
+    return `playlist_${playlistId}_${playlistName.toLowerCase().trim()}`.replace(
+      /[^a-z0-9_]/g,
+      '_'
+    );
+  }
+
+  // Utility method to generate an album ID from album information
+  generateAlbumId(albumName: string, albumId: string): string {
+    // Create a consistent identifier from album name and Spotify album ID
+    return `album_${albumId}_${albumName.toLowerCase().trim()}`.replace(
+      /[^a-z0-9_]/g,
+      '_'
+    );
+  }
 }
 
 export const taggingService = new TaggingService();

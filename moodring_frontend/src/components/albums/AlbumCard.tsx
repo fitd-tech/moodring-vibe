@@ -1,15 +1,70 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import { SavedAlbum } from '../../types';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
+import { SavedAlbum, Tag } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
+import { TaggingInterface } from '../tracks/TaggingInterface';
+import { useAnimation } from '../../hooks/useAnimation';
 import { theme } from '../../styles/theme';
+import { taggingService } from '../../services/taggingService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AlbumCardProps {
   album: SavedAlbum;
   _index: number;
+  isExpanded: boolean;
+  onToggleExpansion: (_index: number) => void;
 }
 
-export const AlbumCard: React.FC<AlbumCardProps> = ({ album, _index }) => {
+export const AlbumCard: React.FC<AlbumCardProps> = ({
+  album,
+  _index,
+  isExpanded,
+  onToggleExpansion,
+}) => {
+  const { user } = useAuth();
+  const animatedValues = useRef(useAnimation().createAnimatedValues()).current;
+  const { animateExpansion } = useAnimation();
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
+  const [albumTagId, setAlbumTagId] = useState<string>('');
+
+  useEffect(() => {
+    // Generate a consistent album ID from album information
+    const generatedAlbumId = taggingService.generateAlbumId(album.name, album.album_id);
+    setAlbumTagId(generatedAlbumId);
+  }, [album.name, album.album_id]);
+
+  useEffect(() => {
+    if (isExpanded && user && albumTagId) {
+      loadAlbumTags();
+    }
+  }, [isExpanded, user, albumTagId]);
+
+  const loadAlbumTags = async () => {
+    if (!user || !albumTagId) return;
+
+    setIsLoadingTags(true);
+    try {
+      const albumTags = await taggingService.getSongTags(albumTagId, user.id);
+      setTags(albumTags);
+    } catch {
+      setTags([]);
+    } finally {
+      setIsLoadingTags(false);
+    }
+  };
+
+  React.useEffect(() => {
+    animateExpansion(animatedValues, isExpanded);
+  }, [isExpanded]);
   const formatTrackCount = (count: number) => {
     return count === 1 ? '1 track' : `${count} tracks`;
   };
@@ -20,9 +75,17 @@ export const AlbumCard: React.FC<AlbumCardProps> = ({ album, _index }) => {
   };
 
   return (
-    <View style={styles.container} testID={`album-card-${_index}`}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [{ scale: animatedValues.scale }],
+        },
+      ]}
+      testID={`album-card-${_index}`}
+    >
       <GradientCard colors={theme.colors.gradients.track}>
-        <View style={styles.header}>
+        <TouchableOpacity style={styles.header} onPress={() => onToggleExpansion(_index)}>
           <View style={styles.albumArt}>
             {album.image_url ? (
               <Image source={{ uri: album.image_url }} style={styles.albumImage} />
@@ -39,9 +102,33 @@ export const AlbumCard: React.FC<AlbumCardProps> = ({ album, _index }) => {
               <Text style={styles.trackCount}>{formatTrackCount(album.track_count)}</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <Animated.View
+            style={[
+              styles.expandedContent,
+              {
+                maxHeight: animatedValues.height.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 500],
+                }),
+                opacity: animatedValues.opacity,
+              },
+            ]}
+          >
+            {isLoadingTags ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={theme.colors.accent.purple} />
+                <Text style={styles.loadingText}>Loading tags...</Text>
+              </View>
+            ) : (
+              <TaggingInterface tags={tags} songId={albumTagId} onTagsChanged={loadAlbumTags} />
+            )}
+          </Animated.View>
+        )}
       </GradientCard>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -102,5 +189,22 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.muted,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  expandedContent: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.ui.border,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.lg,
+  },
+  loadingText: {
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
   },
 });

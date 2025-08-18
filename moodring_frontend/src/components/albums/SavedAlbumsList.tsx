@@ -17,6 +17,7 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
   hasMoreAlbums = false,
   isLoadingMore = false,
 }) => {
+  const [expandedAlbum, setExpandedAlbum] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
   const prevAlbumsRef = useRef<SavedAlbum[]>([]);
 
@@ -38,6 +39,10 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
 
     prevAlbumsRef.current = currentAlbums;
   }, [albums]);
+
+  const handleToggleExpansion = (index: number) => {
+    setExpandedAlbum(expandedAlbum === index ? null : index);
+  };
 
   const handleSeeMore = async () => {
     if (albums.length > INITIAL_DISPLAY_COUNT && !showAll) {
@@ -68,6 +73,8 @@ export const SavedAlbumsList: React.FC<SavedAlbumsListProps> = ({
           key={`${album.album_id}-${index}`}
           album={album}
           _index={index}
+          isExpanded={expandedAlbum === index}
+          onToggleExpansion={handleToggleExpansion}
         />
       ))}
       {shouldShowSeeMoreButton && (

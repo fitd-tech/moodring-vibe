@@ -17,6 +17,7 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
   hasMorePlaylists = false,
   isLoadingMore = false,
 }) => {
+  const [expandedPlaylist, setExpandedPlaylist] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
   const prevPlaylistsRef = useRef<SavedPlaylist[]>([]);
 
@@ -38,6 +39,10 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
 
     prevPlaylistsRef.current = currentPlaylists;
   }, [playlists]);
+
+  const handleToggleExpansion = (index: number) => {
+    setExpandedPlaylist(expandedPlaylist === index ? null : index);
+  };
 
   const handleSeeMore = async () => {
     if (playlists.length > INITIAL_DISPLAY_COUNT && !showAll) {
@@ -68,6 +73,8 @@ export const SavedPlaylistsList: React.FC<SavedPlaylistsListProps> = ({
           key={`${playlist.playlist_id}-${index}`}
           playlist={playlist}
           _index={index}
+          isExpanded={expandedPlaylist === index}
+          onToggleExpansion={handleToggleExpansion}
         />
       ))}
       {shouldShowSeeMoreButton && (
