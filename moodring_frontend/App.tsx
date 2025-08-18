@@ -168,6 +168,7 @@ const AppContent: React.FC = () => {
         savedPlaylists={savedPlaylists}
         savedAlbums={savedAlbums}
         isRefreshing={isRefreshing}
+        isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         isLoadingMoreTopTracks={isLoadingMoreTopTracks}
         isLoadingMoreSavedTracks={isLoadingMoreSavedTracks}

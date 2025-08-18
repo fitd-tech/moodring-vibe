@@ -10,6 +10,7 @@ interface SavedTracksListProps {
   onLoadMore?: () => Promise<void>;
   hasMoreTracks?: boolean;
   isLoadingMore?: boolean;
+  isLoading?: boolean;
   onReauthorize?: () => void;
 }
 
@@ -18,6 +19,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   onLoadMore,
   hasMoreTracks = false,
   isLoadingMore = false,
+  isLoading = false,
   onReauthorize,
 }) => {
   const { isExpanded, toggleExpansion } = useExpansion();
@@ -70,7 +72,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SAVED TRACKS</Text>
-      {tracks.length === 0 ? (
+      {tracks.length === 0 && !isLoading ? (
         <View style={styles.emptyStateContainer}>
           <Text style={styles.emptyStateTitle}>No liked songs found</Text>
           <Text style={styles.emptyStateDescription}>
@@ -92,7 +94,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
             </TouchableOpacity>
           )}
         </View>
-      ) : (
+      ) : tracks.length > 0 ? (
         <>
           {displayedTracks.map((track, index) => (
             <TrackCard
@@ -129,7 +131,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
             </View>
           )}
         </>
-      )}
+      ) : null}
     </View>
   );
 };

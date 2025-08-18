@@ -164,6 +164,7 @@ const defaultProps = {
   savedPlaylists: mockSavedPlaylists,
   savedAlbums: mockSavedAlbums,
   isRefreshing: false,
+  isLoading: false,
   isLoadingMore: false,
   isLoadingMoreTopTracks: false,
   isLoadingMoreSavedTracks: false,

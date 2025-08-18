@@ -31,6 +31,7 @@ interface DashboardProps {
   savedPlaylists: SavedPlaylist[];
   savedAlbums: SavedAlbum[];
   isRefreshing: boolean;
+  isLoading?: boolean;
   isLoadingMore?: boolean;
   isLoadingMoreTopTracks?: boolean;
   isLoadingMoreSavedTracks?: boolean;
@@ -63,6 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   savedPlaylists,
   savedAlbums,
   isRefreshing,
+  isLoading = false,
   isLoadingMore = false,
   isLoadingMoreTopTracks = false,
   isLoadingMoreSavedTracks = false,
@@ -141,6 +143,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onLoadMore={onLoadMoreSavedTracks}
               hasMoreTracks={hasMoreSavedTracks}
               isLoadingMore={isLoadingMoreSavedTracks}
+              isLoading={isLoading}
               onReauthorize={onReauthorize}
             />
 

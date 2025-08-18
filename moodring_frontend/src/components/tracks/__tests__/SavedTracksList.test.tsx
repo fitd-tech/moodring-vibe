@@ -90,13 +90,22 @@ describe('SavedTracksList', () => {
   });
 
   describe('basic functionality', () => {
-    it('renders empty state when no tracks provided', () => {
+    it('renders empty state when no tracks provided and not loading', () => {
       const { getByText } = render(
         <ExpansionTestWrapper>
-          <SavedTracksList tracks={[]} />
+          <SavedTracksList tracks={[]} isLoading={false} />
         </ExpansionTestWrapper>
       );
       expect(getByText('No liked songs found')).toBeTruthy();
+    });
+
+    it('does not render empty state when loading', () => {
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedTracksList tracks={[]} isLoading={true} />
+        </ExpansionTestWrapper>
+      );
+      expect(queryByText('No liked songs found')).toBeNull();
     });
 
     it('renders saved tracks title', () => {
