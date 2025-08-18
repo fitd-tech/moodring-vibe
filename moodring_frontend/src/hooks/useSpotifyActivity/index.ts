@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum, BackendUser } from '../../types';
+import {
+  CurrentlyPlaying,
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+  BackendUser,
+} from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSpotifyData } from './useSpotifyData';
 import { useSpotifyPagination } from './useSpotifyPagination';
@@ -68,8 +76,14 @@ export const useSpotifyActivity = () => {
       const tokenResult = await getValidToken(currentUser, currentToken);
       if (!tokenResult) return;
 
-      const { currentlyPlayingData, recentTracksData, topTracksData, savedTracksData, savedPlaylistsData, savedAlbumsData } =
-        await fetchAllInitialData(tokenResult.token, tokenResult.user);
+      const {
+        currentlyPlayingData,
+        recentTracksData,
+        topTracksData,
+        savedTracksData,
+        savedPlaylistsData,
+        savedAlbumsData,
+      } = await fetchAllInitialData(tokenResult.token, tokenResult.user);
 
       setCurrentlyPlaying(currentlyPlayingData);
 
@@ -121,7 +135,13 @@ export const useSpotifyActivity = () => {
       );
 
       // Update pagination flags
-      updateHasMoreFlags(recentTracksData.length, topTracksData.length, savedTracksData.length, savedPlaylistsData.length, savedAlbumsData.length);
+      updateHasMoreFlags(
+        recentTracksData.length,
+        topTracksData.length,
+        savedTracksData.length,
+        savedPlaylistsData.length,
+        savedAlbumsData.length
+      );
     } catch (error) {
       if (__DEV__) {
         console.warn('Error loading Spotify activity:', error);
@@ -170,7 +190,8 @@ export const useSpotifyActivity = () => {
   const loadMoreTracks = () => loadMoreRecentTracks(recentTracks, setRecentTracks);
   const loadMoreTopTracksHandler = () => loadMoreTopTracks(topTracks, setTopTracks);
   const loadMoreSavedTracksHandler = () => loadMoreSavedTracks(savedTracks, setSavedTracks);
-  const loadMoreSavedPlaylistsHandler = () => loadMoreSavedPlaylists(savedPlaylists, setSavedPlaylists);
+  const loadMoreSavedPlaylistsHandler = () =>
+    loadMoreSavedPlaylists(savedPlaylists, setSavedPlaylists);
   const loadMoreSavedAlbumsHandler = () => loadMoreSavedAlbums(savedAlbums, setSavedAlbums);
 
   useEffect(() => {

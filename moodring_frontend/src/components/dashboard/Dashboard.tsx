@@ -2,7 +2,15 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../types';
+import {
+  BackendUser,
+  CurrentlyPlaying,
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+} from '../../types';
 import { ProfileMenu } from './ProfileMenu';
 import { NowPlaying } from '../tracks/NowPlaying';
 import { RecentTracksList } from '../tracks/RecentTracksList';

@@ -48,7 +48,7 @@ export class SpotifyApiService {
         });
 
         const scopes: string[] = ['user-read-private', 'user-read-email'];
-        
+
         if (userLibraryResponse.status === 200) {
           scopes.push('user-library-read');
         } else if (userLibraryResponse.status === 403) {
@@ -69,7 +69,7 @@ export class SpotifyApiService {
         if (__DEV__) {
           console.log('[SpotifyApi] Verified token scopes:', scopes);
         }
-        
+
         return scopes;
       } else {
         if (__DEV__) {
@@ -290,7 +290,7 @@ export class SpotifyApiService {
 
       if (response.ok) {
         const data = (await response.json()) as SpotifySavedTracksResponse;
-        
+
         return data.items.map(item => ({
           name: item.track.name,
           artist: item.track.artists[0]?.name || 'Unknown Artist',
@@ -369,7 +369,7 @@ export class SpotifyApiService {
 
       if (response.ok) {
         const data = (await response.json()) as SpotifyPlaylistsResponse;
-        
+
         if (__DEV__) {
           console.log('[SpotifyApi] getSavedPlaylists response:', {
             total: data.total,
@@ -383,10 +383,10 @@ export class SpotifyApiService {
               owner_id: playlist.owner.id,
               public: playlist.public,
               collaborative: playlist.collaborative,
-            }))
+            })),
           });
         }
-        
+
         return data.items.map(playlist => ({
           name: playlist.name,
           description: playlist.description || undefined,
@@ -430,7 +430,7 @@ export class SpotifyApiService {
 
       if (response.ok) {
         const data = (await response.json()) as SpotifyPlaylistsResponse;
-        
+
         if (__DEV__) {
           console.log('[SpotifyApi] getMoreSavedPlaylists response:', {
             total: data.total,
@@ -444,10 +444,10 @@ export class SpotifyApiService {
               owner_id: playlist.owner.id,
               public: playlist.public,
               collaborative: playlist.collaborative,
-            }))
+            })),
           });
         }
-        
+
         return data.items.map(playlist => ({
           name: playlist.name,
           description: playlist.description || undefined,
@@ -483,7 +483,7 @@ export class SpotifyApiService {
 
       if (response.ok) {
         const data = (await response.json()) as SpotifyAlbumsResponse;
-        
+
         return data.items.map(item => ({
           name: item.album.name,
           artist: item.album.artists[0]?.name || 'Unknown Artist',

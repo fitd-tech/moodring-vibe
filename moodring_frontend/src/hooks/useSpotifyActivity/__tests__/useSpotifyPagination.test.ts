@@ -1,7 +1,14 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useSpotifyPagination } from '../useSpotifyPagination';
 import { spotifyApi } from '../../../services/spotifyApi';
-import { BackendUser, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../../types';
+import {
+  BackendUser,
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+} from '../../../types';
 
 // Mock the modules
 jest.mock('../../../services/spotifyApi');
@@ -78,7 +85,9 @@ const createMockSavedAlbums = (count: number, startIndex: number = 0): SavedAlbu
     name: `Saved Album ${startIndex + i + 1}`,
     artist: `Album Artist ${startIndex + i + 1}`,
     image_url: `https://example.com/album${startIndex + i + 1}.jpg`,
-    release_date: new Date(Date.now() - (startIndex + i) * 86400000 * 30).toISOString().split('T')[0], // Different months
+    release_date: new Date(Date.now() - (startIndex + i) * 86400000 * 30)
+      .toISOString()
+      .split('T')[0], // Different months
     track_count: 10 + (startIndex + i),
   }));
 };
@@ -769,7 +778,10 @@ describe('useSpotifyPagination', () => {
         await result.current.loadMoreSavedPlaylists(initialPlaylists, mockSetSavedPlaylists);
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error loading more saved playlists:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error loading more saved playlists:',
+        expect.any(Error)
+      );
       expect(result.current.hasMoreSavedPlaylists).toBe(false);
       expect(result.current.isLoadingMoreSavedPlaylists).toBe(false);
 
@@ -1036,7 +1048,10 @@ describe('useSpotifyPagination', () => {
         await result.current.loadMoreSavedAlbums(initialAlbums, mockSetSavedAlbums);
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error loading more saved albums:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error loading more saved albums:',
+        expect.any(Error)
+      );
       expect(result.current.hasMoreSavedAlbums).toBe(false);
       expect(result.current.isLoadingMoreSavedAlbums).toBe(false);
 

@@ -606,7 +606,7 @@ describe('spotifyApi', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
 
       const result = await spotifyApi.getMoreTopTracks(mockToken, 10);
-      
+
       expect(result).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith('More top tracks fetch error:', expect.any(Error));
 
@@ -1367,7 +1367,9 @@ describe('spotifyApi', () => {
         statusText: 'Unauthorized',
       } as Response);
 
-      await expect(spotifyApi.getMoreSavedPlaylists(mockToken, 20)).rejects.toThrow('TOKEN_EXPIRED');
+      await expect(spotifyApi.getMoreSavedPlaylists(mockToken, 20)).rejects.toThrow(
+        'TOKEN_EXPIRED'
+      );
     });
 
     it('returns empty array on 500 server error response', async () => {

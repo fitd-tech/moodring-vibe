@@ -14,23 +14,23 @@ interface UseSavedLibraryReturn {
   // Data states
   savedPlaylists: SavedPlaylist[];
   savedAlbums: SavedAlbum[];
-  
+
   // Loading states
   isLoading: boolean;
   isLoadingPlaylists: boolean;
   isLoadingAlbums: boolean;
   isLoadingMorePlaylists: boolean;
   isLoadingMoreAlbums: boolean;
-  
+
   // Pagination states
   hasMorePlaylists: boolean;
   hasMoreAlbums: boolean;
-  
+
   // Error states
   error: string | null;
   playlistsError: string | null;
   albumsError: string | null;
-  
+
   // Actions
   loadSavedLibrary: () => Promise<void>;
   loadMorePlaylists: () => Promise<void>;
@@ -41,29 +41,25 @@ interface UseSavedLibraryReturn {
 }
 
 export const useSavedLibrary = (options: UseSavedLibraryOptions = {}): UseSavedLibraryReturn => {
-  const {
-    autoLoad = true,
-    initialPageSize = 10,
-    maxRetries = 3,
-  } = options;
+  const { autoLoad = true, initialPageSize = 10, maxRetries = 3 } = options;
 
   const { user, authToken, refreshUserToken } = useAuth();
-  
+
   // Data states
   const [savedPlaylists, setSavedPlaylists] = useState<SavedPlaylist[]>([]);
   const [savedAlbums, setSavedAlbums] = useState<SavedAlbum[]>([]);
-  
+
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const [isLoadingMorePlaylists, setIsLoadingMorePlaylists] = useState(false);
   const [isLoadingMoreAlbums, setIsLoadingMoreAlbums] = useState(false);
-  
+
   // Pagination states
   const [hasMorePlaylists, setHasMorePlaylists] = useState(true);
   const [hasMoreAlbums, setHasMoreAlbums] = useState(true);
-  
+
   // Error states
   const [error, setError] = useState<string | null>(null);
   const [playlistsError, setPlaylistsError] = useState<string | null>(null);
@@ -88,148 +84,160 @@ export const useSavedLibrary = (options: UseSavedLibraryOptions = {}): UseSavedL
     clearError();
   }, [clearError]);
 
-  const getValidToken = useCallback(async (currentUser: BackendUser, currentToken: string, retryCount = 0): Promise<{ token: string; user: BackendUser } | null> => {
-    try {
-      // Check if token is expired
-      if (authService.isTokenExpired(currentUser)) {
-        const refreshResult = await refreshUserToken(currentUser.id);
-        if (refreshResult) {
-          return { token: refreshResult.token, user: refreshResult.user };
-        }
-        return null;
-      }
-
-      return { token: currentToken, user: currentUser };
-    } catch (error) {
-      if (error instanceof Error && error.message === 'TOKEN_EXPIRED' && retryCount < maxRetries) {
-        const refreshResult = await refreshUserToken(currentUser.id);
-        if (refreshResult) {
-          return getValidToken(refreshResult.user, refreshResult.token, retryCount + 1);
-        }
-      }
-      throw error;
-    }
-  }, [refreshUserToken, maxRetries]);
-
-  const loadSavedPlaylists = useCallback(async (
-    currentUser: BackendUser,
-    token: string,
-    append = false
-  ): Promise<SavedPlaylist[]> => {
-    try {
-      if (!append) {
-        setIsLoadingPlaylists(true);
-        setPlaylistsError(null);
-      } else {
-        setIsLoadingMorePlaylists(true);
-      }
-
-      const tokenResult = await getValidToken(currentUser, token);
-      if (!tokenResult) {
-        throw new Error('Unable to get valid token');
-      }
-
-      let newPlaylists: SavedPlaylist[];
-      if (append && savedPlaylists.length > 0) {
-        newPlaylists = await spotifyApi.getMoreSavedPlaylists(tokenResult.token, savedPlaylists.length);
-      } else {
-        newPlaylists = await spotifyApi.getSavedPlaylists(tokenResult.token);
-      }
-
-      if (append) {
-        // Filter out duplicates when appending
-        const existingIds = new Set(savedPlaylists.map(p => p.playlist_id));
-        const uniqueNewPlaylists = newPlaylists.filter(p => !existingIds.has(p.playlist_id));
-        
-        if (uniqueNewPlaylists.length === 0) {
-          setHasMorePlaylists(false);
-          return savedPlaylists;
+  const getValidToken = useCallback(
+    async (
+      currentUser: BackendUser,
+      currentToken: string,
+      retryCount = 0
+    ): Promise<{ token: string; user: BackendUser } | null> => {
+      try {
+        // Check if token is expired
+        if (authService.isTokenExpired(currentUser)) {
+          const refreshResult = await refreshUserToken(currentUser.id);
+          if (refreshResult) {
+            return { token: refreshResult.token, user: refreshResult.user };
+          }
+          return null;
         }
 
-        const updatedPlaylists = [...savedPlaylists, ...uniqueNewPlaylists];
-        setSavedPlaylists(updatedPlaylists);
-        setHasMorePlaylists(newPlaylists.length >= initialPageSize);
-        return updatedPlaylists;
-      } else {
-        setSavedPlaylists(newPlaylists);
-        setHasMorePlaylists(newPlaylists.length >= initialPageSize);
-        return newPlaylists;
+        return { token: currentToken, user: currentUser };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === 'TOKEN_EXPIRED' &&
+          retryCount < maxRetries
+        ) {
+          const refreshResult = await refreshUserToken(currentUser.id);
+          if (refreshResult) {
+            return getValidToken(refreshResult.user, refreshResult.token, retryCount + 1);
+          }
+        }
+        throw error;
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load playlists';
-      setPlaylistsError(errorMessage);
-      if (!append) {
-        setError(errorMessage);
-      }
-      throw error;
-    } finally {
-      if (!append) {
-        setIsLoadingPlaylists(false);
-      } else {
-        setIsLoadingMorePlaylists(false);
-      }
-    }
-  }, [savedPlaylists, getValidToken, initialPageSize]);
+    },
+    [refreshUserToken, maxRetries]
+  );
 
-  const loadSavedAlbums = useCallback(async (
-    currentUser: BackendUser,
-    token: string,
-    append = false
-  ): Promise<SavedAlbum[]> => {
-    try {
-      if (!append) {
-        setIsLoadingAlbums(true);
-        setAlbumsError(null);
-      } else {
-        setIsLoadingMoreAlbums(true);
-      }
-
-      const tokenResult = await getValidToken(currentUser, token);
-      if (!tokenResult) {
-        throw new Error('Unable to get valid token');
-      }
-
-      let newAlbums: SavedAlbum[];
-      if (append && savedAlbums.length > 0) {
-        newAlbums = await spotifyApi.getMoreSavedAlbums(tokenResult.token, savedAlbums.length);
-      } else {
-        newAlbums = await spotifyApi.getSavedAlbums(tokenResult.token);
-      }
-
-      if (append) {
-        // Filter out duplicates when appending
-        const existingIds = new Set(savedAlbums.map(a => a.album_id));
-        const uniqueNewAlbums = newAlbums.filter(a => !existingIds.has(a.album_id));
-        
-        if (uniqueNewAlbums.length === 0) {
-          setHasMoreAlbums(false);
-          return savedAlbums;
+  const loadSavedPlaylists = useCallback(
+    async (currentUser: BackendUser, token: string, append = false): Promise<SavedPlaylist[]> => {
+      try {
+        if (!append) {
+          setIsLoadingPlaylists(true);
+          setPlaylistsError(null);
+        } else {
+          setIsLoadingMorePlaylists(true);
         }
 
-        const updatedAlbums = [...savedAlbums, ...uniqueNewAlbums];
-        setSavedAlbums(updatedAlbums);
-        setHasMoreAlbums(newAlbums.length >= initialPageSize);
-        return updatedAlbums;
-      } else {
-        setSavedAlbums(newAlbums);
-        setHasMoreAlbums(newAlbums.length >= initialPageSize);
-        return newAlbums;
+        const tokenResult = await getValidToken(currentUser, token);
+        if (!tokenResult) {
+          throw new Error('Unable to get valid token');
+        }
+
+        let newPlaylists: SavedPlaylist[];
+        if (append && savedPlaylists.length > 0) {
+          newPlaylists = await spotifyApi.getMoreSavedPlaylists(
+            tokenResult.token,
+            savedPlaylists.length
+          );
+        } else {
+          newPlaylists = await spotifyApi.getSavedPlaylists(tokenResult.token);
+        }
+
+        if (append) {
+          // Filter out duplicates when appending
+          const existingIds = new Set(savedPlaylists.map(p => p.playlist_id));
+          const uniqueNewPlaylists = newPlaylists.filter(p => !existingIds.has(p.playlist_id));
+
+          if (uniqueNewPlaylists.length === 0) {
+            setHasMorePlaylists(false);
+            return savedPlaylists;
+          }
+
+          const updatedPlaylists = [...savedPlaylists, ...uniqueNewPlaylists];
+          setSavedPlaylists(updatedPlaylists);
+          setHasMorePlaylists(newPlaylists.length >= initialPageSize);
+          return updatedPlaylists;
+        } else {
+          setSavedPlaylists(newPlaylists);
+          setHasMorePlaylists(newPlaylists.length >= initialPageSize);
+          return newPlaylists;
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load playlists';
+        setPlaylistsError(errorMessage);
+        if (!append) {
+          setError(errorMessage);
+        }
+        throw error;
+      } finally {
+        if (!append) {
+          setIsLoadingPlaylists(false);
+        } else {
+          setIsLoadingMorePlaylists(false);
+        }
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load albums';
-      setAlbumsError(errorMessage);
-      if (!append) {
-        setError(errorMessage);
+    },
+    [savedPlaylists, getValidToken, initialPageSize]
+  );
+
+  const loadSavedAlbums = useCallback(
+    async (currentUser: BackendUser, token: string, append = false): Promise<SavedAlbum[]> => {
+      try {
+        if (!append) {
+          setIsLoadingAlbums(true);
+          setAlbumsError(null);
+        } else {
+          setIsLoadingMoreAlbums(true);
+        }
+
+        const tokenResult = await getValidToken(currentUser, token);
+        if (!tokenResult) {
+          throw new Error('Unable to get valid token');
+        }
+
+        let newAlbums: SavedAlbum[];
+        if (append && savedAlbums.length > 0) {
+          newAlbums = await spotifyApi.getMoreSavedAlbums(tokenResult.token, savedAlbums.length);
+        } else {
+          newAlbums = await spotifyApi.getSavedAlbums(tokenResult.token);
+        }
+
+        if (append) {
+          // Filter out duplicates when appending
+          const existingIds = new Set(savedAlbums.map(a => a.album_id));
+          const uniqueNewAlbums = newAlbums.filter(a => !existingIds.has(a.album_id));
+
+          if (uniqueNewAlbums.length === 0) {
+            setHasMoreAlbums(false);
+            return savedAlbums;
+          }
+
+          const updatedAlbums = [...savedAlbums, ...uniqueNewAlbums];
+          setSavedAlbums(updatedAlbums);
+          setHasMoreAlbums(newAlbums.length >= initialPageSize);
+          return updatedAlbums;
+        } else {
+          setSavedAlbums(newAlbums);
+          setHasMoreAlbums(newAlbums.length >= initialPageSize);
+          return newAlbums;
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load albums';
+        setAlbumsError(errorMessage);
+        if (!append) {
+          setError(errorMessage);
+        }
+        throw error;
+      } finally {
+        if (!append) {
+          setIsLoadingAlbums(false);
+        } else {
+          setIsLoadingMoreAlbums(false);
+        }
       }
-      throw error;
-    } finally {
-      if (!append) {
-        setIsLoadingAlbums(false);
-      } else {
-        setIsLoadingMoreAlbums(false);
-      }
-    }
-  }, [savedAlbums, getValidToken, initialPageSize]);
+    },
+    [savedAlbums, getValidToken, initialPageSize]
+  );
 
   const loadSavedLibrary = useCallback(async (): Promise<void> => {
     if (!user || !authToken) {
@@ -287,7 +295,7 @@ export const useSavedLibrary = (options: UseSavedLibraryOptions = {}): UseSavedL
     // Reset pagination states
     setHasMorePlaylists(true);
     setHasMoreAlbums(true);
-    
+
     await loadSavedLibrary();
   }, [user, authToken, loadSavedLibrary]);
 
@@ -302,23 +310,23 @@ export const useSavedLibrary = (options: UseSavedLibraryOptions = {}): UseSavedL
     // Data states
     savedPlaylists,
     savedAlbums,
-    
+
     // Loading states
     isLoading,
     isLoadingPlaylists,
     isLoadingAlbums,
     isLoadingMorePlaylists,
     isLoadingMoreAlbums,
-    
+
     // Pagination states
     hasMorePlaylists,
     hasMoreAlbums,
-    
+
     // Error states
     error,
     playlistsError,
     albumsError,
-    
+
     // Actions
     loadSavedLibrary,
     loadMorePlaylists,

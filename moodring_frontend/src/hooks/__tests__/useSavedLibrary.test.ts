@@ -48,11 +48,11 @@ const createMockAlbum = (id: string, name: string, artist: string): SavedAlbum =
   track_count: Math.floor(Math.random() * 20) + 1,
 });
 
-const mockPlaylists: SavedPlaylist[] = Array.from({ length: 10 }, (_, i) => 
+const mockPlaylists: SavedPlaylist[] = Array.from({ length: 10 }, (_, i) =>
   createMockPlaylist(`playlist-${i + 1}`, `Test Playlist ${i + 1}`)
 );
 
-const mockAlbums: SavedAlbum[] = Array.from({ length: 10 }, (_, i) => 
+const mockAlbums: SavedAlbum[] = Array.from({ length: 10 }, (_, i) =>
   createMockAlbum(`album-${i + 1}`, `Test Album ${i + 1}`, `Test Artist ${i + 1}`)
 );
 
@@ -313,7 +313,7 @@ describe('useSavedLibrary', () => {
       });
 
       // Load more - create new playlists with different IDs to avoid duplicates
-      const morePlaylists = Array.from({ length: 5 }, (_, i) => 
+      const morePlaylists = Array.from({ length: 5 }, (_, i) =>
         createMockPlaylist(`more-playlist-${i + 1}`, `More Playlist ${i + 1}`)
       );
       mockSpotifyApi.getMoreSavedPlaylists.mockResolvedValue(morePlaylists);
@@ -369,7 +369,7 @@ describe('useSavedLibrary', () => {
       await act(async () => {
         await result.current.loadMorePlaylists();
       });
-      
+
       // getMoreSavedPlaylists should only have been called once (from the first call)
       expect(mockSpotifyApi.getMoreSavedPlaylists).toHaveBeenCalledTimes(1);
 
@@ -398,7 +398,10 @@ describe('useSavedLibrary', () => {
       mockSpotifyApi.getSavedPlaylists.mockResolvedValue(mockPlaylists.slice(0, 5));
       mockSpotifyApi.getSavedAlbums.mockResolvedValue([]);
 
-      const { result } = renderHook(() => useSavedLibrary({ autoLoad: false, initialPageSize: 10 }), { wrapper });
+      const { result } = renderHook(
+        () => useSavedLibrary({ autoLoad: false, initialPageSize: 10 }),
+        { wrapper }
+      );
 
       await act(async () => {
         await result.current.loadSavedLibrary();
@@ -479,7 +482,7 @@ describe('useSavedLibrary', () => {
       });
 
       // Load more - create new albums with different IDs to avoid duplicates
-      const moreAlbums = Array.from({ length: 5 }, (_, i) => 
+      const moreAlbums = Array.from({ length: 5 }, (_, i) =>
         createMockAlbum(`more-album-${i + 1}`, `More Album ${i + 1}`, `More Artist ${i + 1}`)
       );
       mockSpotifyApi.getMoreSavedAlbums.mockResolvedValue(moreAlbums);
@@ -535,7 +538,7 @@ describe('useSavedLibrary', () => {
       await act(async () => {
         await result.current.loadMoreAlbums();
       });
-      
+
       // getMoreSavedAlbums should only have been called once (from the first call)
       expect(mockSpotifyApi.getMoreSavedAlbums).toHaveBeenCalledTimes(1);
 
@@ -693,7 +696,10 @@ describe('useSavedLibrary', () => {
       mockSpotifyApi.getSavedPlaylists.mockResolvedValue(mockPlaylists.slice(0, 5));
       mockSpotifyApi.getSavedAlbums.mockResolvedValue(mockAlbums.slice(0, 5));
 
-      const { result } = renderHook(() => useSavedLibrary({ autoLoad: false, initialPageSize: 10 }), { wrapper });
+      const { result } = renderHook(
+        () => useSavedLibrary({ autoLoad: false, initialPageSize: 10 }),
+        { wrapper }
+      );
 
       await act(async () => {
         await result.current.loadSavedLibrary();
@@ -733,7 +739,10 @@ describe('useSavedLibrary', () => {
       mockSpotifyApi.getSavedPlaylists.mockResolvedValue(mockPlaylists.slice(0, 5));
       mockSpotifyApi.getSavedAlbums.mockResolvedValue([]);
 
-      const { result } = renderHook(() => useSavedLibrary({ autoLoad: false, initialPageSize: 5 }), { wrapper });
+      const { result } = renderHook(
+        () => useSavedLibrary({ autoLoad: false, initialPageSize: 5 }),
+        { wrapper }
+      );
 
       await act(async () => {
         await result.current.loadSavedLibrary();
@@ -760,7 +769,9 @@ describe('useSavedLibrary', () => {
       mockSpotifyApi.getSavedPlaylists.mockRejectedValue(new Error('API Error'));
       mockSpotifyApi.getSavedAlbums.mockResolvedValue([]);
 
-      const { result } = renderHook(() => useSavedLibrary({ autoLoad: false, maxRetries: 1 }), { wrapper });
+      const { result } = renderHook(() => useSavedLibrary({ autoLoad: false, maxRetries: 1 }), {
+        wrapper,
+      });
 
       await act(async () => {
         await result.current.loadSavedLibrary();

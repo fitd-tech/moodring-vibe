@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { spotifyApi } from '../../services/spotifyApi';
-import { RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum, BackendUser } from '../../types';
+import {
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+  BackendUser,
+} from '../../types';
 import { useSpotifyTokenManagement } from './useSpotifyTokenManagement';
 
 export const useSpotifyPagination = (

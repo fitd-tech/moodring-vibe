@@ -1,7 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { Dashboard } from '../Dashboard';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../../types';
+import {
+  BackendUser,
+  CurrentlyPlaying,
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+} from '../../../types';
 
 // Mock the TrackCard component to avoid AuthContext dependency
 jest.mock('../../tracks/TrackCard', () => ({
@@ -40,7 +48,7 @@ jest.mock('../../playlists/SavedPlaylistsList', () => ({
       View,
       { testID: 'saved-playlists-list' },
       React.createElement(Text, null, 'SAVED PLAYLISTS'),
-      ...playlists.map((playlist) =>
+      ...playlists.map(playlist =>
         React.createElement(
           Text,
           { key: playlist.playlist_id, testID: `playlist-card-${playlist.name}` },
@@ -60,7 +68,7 @@ jest.mock('../../albums/SavedAlbumsList', () => ({
       View,
       { testID: 'saved-albums-list' },
       React.createElement(Text, null, 'SAVED ALBUMS'),
-      ...albums.map((album) =>
+      ...albums.map(album =>
         React.createElement(
           Text,
           { key: album.album_id, testID: `album-card-${album.name}` },
@@ -371,7 +379,11 @@ describe('Dashboard', () => {
 
   it('passes playlist loading props to SavedPlaylistsList', () => {
     render(
-      <Dashboard {...defaultProps} isLoadingMoreSavedPlaylists={true} hasMoreSavedPlaylists={true} />
+      <Dashboard
+        {...defaultProps}
+        isLoadingMoreSavedPlaylists={true}
+        hasMoreSavedPlaylists={true}
+      />
     );
 
     // SavedPlaylistsList should be rendered with playlists

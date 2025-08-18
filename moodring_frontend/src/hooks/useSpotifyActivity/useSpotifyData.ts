@@ -56,7 +56,7 @@ export const useSpotifyData = (
         // Return empty array instead of throwing error to prevent app crashes
         return [];
       }
-      
+
       const tracks = await spotifyApi.getSavedTracks(token, limit);
       return tracks;
     } catch (error) {
@@ -64,7 +64,7 @@ export const useSpotifyData = (
       if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
         return [];
       }
-      
+
       const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
         spotifyApi.getSavedTracks(refreshedToken, limit)
       );
@@ -72,7 +72,11 @@ export const useSpotifyData = (
     }
   };
 
-  const fetchSavedPlaylists = async (token: string, activeUser: BackendUser, limit: number = 20) => {
+  const fetchSavedPlaylists = async (
+    token: string,
+    activeUser: BackendUser,
+    limit: number = 20
+  ) => {
     try {
       // Verify token has required scope before attempting fetch
       const scopes = await spotifyApi.verifyTokenScopes(token);
@@ -83,19 +87,21 @@ export const useSpotifyData = (
         // Return empty array instead of throwing error to prevent app crashes
         return [];
       }
-      
+
       if (!scopes.includes('playlist-read-collaborative')) {
         if (__DEV__) {
-          console.warn('[SpotifyData] Missing playlist-read-collaborative scope - collaborative playlists may not be returned');
+          console.warn(
+            '[SpotifyData] Missing playlist-read-collaborative scope - collaborative playlists may not be returned'
+          );
         }
       }
-      
+
       const playlists = await spotifyApi.getSavedPlaylists(token, limit);
       if (__DEV__) {
         console.log('[SpotifyData] fetchSavedPlaylists result:', {
           playlistsCount: playlists.length,
           limit,
-          playlists: playlists.map(p => ({ name: p.name, id: p.playlist_id }))
+          playlists: playlists.map(p => ({ name: p.name, id: p.playlist_id })),
         });
       }
       return playlists;
@@ -107,7 +113,7 @@ export const useSpotifyData = (
         }
         return [];
       }
-      
+
       const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
         spotifyApi.getSavedPlaylists(refreshedToken, limit)
       );
@@ -123,7 +129,7 @@ export const useSpotifyData = (
         // Return empty array instead of throwing error to prevent app crashes
         return [];
       }
-      
+
       const albums = await spotifyApi.getSavedAlbums(token, limit);
       return albums;
     } catch (error) {
@@ -131,7 +137,7 @@ export const useSpotifyData = (
       if (error instanceof Error && error.message === 'PERMISSION_DENIED') {
         return [];
       }
-      
+
       const result = await handleTokenExpiredError(error, activeUser, refreshedToken =>
         spotifyApi.getSavedAlbums(refreshedToken, limit)
       );
@@ -140,15 +146,21 @@ export const useSpotifyData = (
   };
 
   const fetchAllInitialData = async (token: string, activeUser: BackendUser) => {
-    const [currentlyPlayingData, recentTracksData, topTracksData, savedTracksData, savedPlaylistsData, savedAlbumsData] =
-      await Promise.all([
-        fetchCurrentlyPlaying(token, activeUser),
-        fetchRecentTracks(token, activeUser, 10),
-        fetchTopTracks(token, activeUser, 'medium_term', 10),
-        fetchSavedTracks(token, activeUser, 10),
-        fetchSavedPlaylists(token, activeUser, 20),
-        fetchSavedAlbums(token, activeUser, 20),
-      ]);
+    const [
+      currentlyPlayingData,
+      recentTracksData,
+      topTracksData,
+      savedTracksData,
+      savedPlaylistsData,
+      savedAlbumsData,
+    ] = await Promise.all([
+      fetchCurrentlyPlaying(token, activeUser),
+      fetchRecentTracks(token, activeUser, 10),
+      fetchTopTracks(token, activeUser, 'medium_term', 10),
+      fetchSavedTracks(token, activeUser, 10),
+      fetchSavedPlaylists(token, activeUser, 20),
+      fetchSavedAlbums(token, activeUser, 20),
+    ]);
 
     return {
       currentlyPlayingData,

@@ -1,7 +1,15 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useSpotifyData } from '../useSpotifyData';
 import { spotifyApi } from '../../../services/spotifyApi';
-import { BackendUser, CurrentlyPlaying, RecentTrack, TopTrack, SavedTrack, SavedPlaylist, SavedAlbum } from '../../../types';
+import {
+  BackendUser,
+  CurrentlyPlaying,
+  RecentTrack,
+  TopTrack,
+  SavedTrack,
+  SavedPlaylist,
+  SavedAlbum,
+} from '../../../types';
 
 // Mock the modules
 jest.mock('../../../services/spotifyApi');
@@ -167,7 +175,10 @@ describe('useSpotifyData', () => {
     mockSpotifyApi.getSavedTracks.mockResolvedValue(mockSavedTracks);
     mockSpotifyApi.getSavedPlaylists.mockResolvedValue(mockSavedPlaylists);
     mockSpotifyApi.getSavedAlbums.mockResolvedValue(mockSavedAlbums);
-    mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-library-read', 'playlist-read-private']);
+    mockSpotifyApi.verifyTokenScopes.mockResolvedValue([
+      'user-library-read',
+      'playlist-read-private',
+    ]);
   });
 
   describe('fetchCurrentlyPlaying', () => {
@@ -433,10 +444,10 @@ describe('useSpotifyData', () => {
 
     it('returns empty array when token missing user-library-read scope', async () => {
       const testUser = createMockUser(1);
-      
+
       // Mock token without user-library-read scope
       mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
-      
+
       const { result } = renderHook(() =>
         useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
       );
@@ -547,10 +558,10 @@ describe('useSpotifyData', () => {
 
     it('returns empty array when token missing playlist-read-private scope', async () => {
       const testUser = createMockUser(1);
-      
+
       // Mock token without playlist-read-private scope
       mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
-      
+
       const { result } = renderHook(() =>
         useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
       );
@@ -684,10 +695,10 @@ describe('useSpotifyData', () => {
 
     it('returns empty array when token missing user-library-read scope', async () => {
       const testUser = createMockUser(1);
-      
+
       // Mock token without user-library-read scope
       mockSpotifyApi.verifyTokenScopes.mockResolvedValue(['user-read-private', 'user-read-email']);
-      
+
       const { result } = renderHook(() =>
         useSpotifyData(testUser, 'auth_token', mockRefreshUserToken)
       );
