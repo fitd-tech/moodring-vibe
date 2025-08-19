@@ -5,7 +5,22 @@ module.exports = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': [
       'babel-jest',
-      { presets: ['babel-preset-expo', '@babel/preset-typescript'] },
+      { 
+        presets: [
+          [
+            'babel-preset-expo',
+            {
+              // Disable the automatic reanimated plugin to prevent deprecation warning
+              reanimated: false,
+            },
+          ],
+          '@babel/preset-typescript'
+        ],
+        plugins: [
+          // Add the new worklets plugin instead of the deprecated reanimated plugin
+          'react-native-worklets/plugin',
+        ],
+      },
     ],
   },
   transformIgnorePatterns: [
