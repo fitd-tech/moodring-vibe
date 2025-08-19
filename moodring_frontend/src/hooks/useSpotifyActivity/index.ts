@@ -21,6 +21,7 @@ export const useSpotifyActivity = () => {
   const [savedPlaylists, setSavedPlaylists] = useState<SavedPlaylist[]>([]);
   const [savedAlbums, setSavedAlbums] = useState<SavedAlbum[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { fetchAllInitialData, getValidToken } = useSpotifyData(user, authToken, refreshUserToken);
@@ -170,19 +171,24 @@ export const useSpotifyActivity = () => {
   };
 
   const resetToFreshState = async () => {
-    // Reset all state to initial values
-    setCurrentlyPlaying(null);
-    setRecentTracks([]);
-    setTopTracks([]);
-    setSavedTracks([]);
-    setSavedPlaylists([]);
-    setSavedAlbums([]);
-    setIsRefreshing(false);
-    resetPaginationStates();
+    setIsResetting(true);
+    try {
+      // Reset all state to initial values
+      setCurrentlyPlaying(null);
+      setRecentTracks([]);
+      setTopTracks([]);
+      setSavedTracks([]);
+      setSavedPlaylists([]);
+      setSavedAlbums([]);
+      setIsRefreshing(false);
+      resetPaginationStates();
 
-    // Load fresh data from Spotify API
-    if (user && authToken) {
-      await loadActivity(authToken, user, false);
+      // Load fresh data from Spotify API
+      if (user && authToken) {
+        await loadActivity(authToken, user, false);
+      }
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -233,6 +239,7 @@ export const useSpotifyActivity = () => {
     savedPlaylists,
     savedAlbums,
     isRefreshing,
+    isResetting,
     isLoadingMore,
     isLoadingMoreTopTracks,
     isLoadingMoreSavedTracks,

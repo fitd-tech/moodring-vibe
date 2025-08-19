@@ -90,23 +90,6 @@ describe('SavedTracksList', () => {
   });
 
   describe('basic functionality', () => {
-    it('renders empty state when no tracks provided and not loading', () => {
-      const { getByText } = render(
-        <ExpansionTestWrapper>
-          <SavedTracksList tracks={[]} isLoading={false} />
-        </ExpansionTestWrapper>
-      );
-      expect(getByText('No liked songs found')).toBeTruthy();
-    });
-
-    it('does not render empty state when loading', () => {
-      const { queryByText } = render(
-        <ExpansionTestWrapper>
-          <SavedTracksList tracks={[]} isLoading={true} />
-        </ExpansionTestWrapper>
-      );
-      expect(queryByText('No liked songs found')).toBeNull();
-    });
 
     it('renders saved tracks title', () => {
       const { getByText } = render(
@@ -534,6 +517,26 @@ describe('SavedTracksList', () => {
       );
 
       expect(getByTestId('track-card-No Image Song')).toBeTruthy();
+    });
+  });
+
+  describe('isResetting behavior', () => {
+    it('shows loading indicator when isResetting is true', () => {
+      const { getByText } = render(
+        <ExpansionTestWrapper>
+          <SavedTracksList tracks={[]} isResetting={true} />
+        </ExpansionTestWrapper>
+      );
+      expect(getByText('Loading...')).toBeTruthy();
+    });
+
+    it('does not show loading indicator when isResetting is false', () => {
+      const { queryByText } = render(
+        <ExpansionTestWrapper>
+          <SavedTracksList tracks={[]} isResetting={false} />
+        </ExpansionTestWrapper>
+      );
+      expect(queryByText('Loading...')).toBeNull();
     });
   });
 });

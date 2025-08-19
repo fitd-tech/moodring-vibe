@@ -46,6 +46,7 @@ const AppContent: React.FC = () => {
     savedPlaylists,
     savedAlbums,
     isRefreshing,
+    isResetting,
     isLoadingMore,
     isLoadingMoreTopTracks,
     isLoadingMoreSavedTracks,
@@ -88,10 +89,6 @@ const AppContent: React.FC = () => {
     // TODO: Implement settings functionality
   };
 
-  const handleReauthorize = () => {
-    // Log out and restart auth flow to refresh permissions
-    logout();
-  };
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -168,7 +165,7 @@ const AppContent: React.FC = () => {
         savedPlaylists={savedPlaylists}
         savedAlbums={savedAlbums}
         isRefreshing={isRefreshing}
-        isLoading={isLoading}
+        isResetting={isResetting}
         isLoadingMore={isLoadingMore}
         isLoadingMoreTopTracks={isLoadingMoreTopTracks}
         isLoadingMoreSavedTracks={isLoadingMoreSavedTracks}
@@ -189,7 +186,6 @@ const AppContent: React.FC = () => {
         onCreatePlaylist={handleCreatePlaylist}
         onBrowseTags={handleBrowseTags}
         onSettings={handleSettings}
-        onReauthorize={handleReauthorize}
       />
     );
   }
