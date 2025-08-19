@@ -1,22 +1,14 @@
 module.exports = function (api) {
-  // Cache based on environment
-  api.cache.using(() => process.env.NODE_ENV);
+  api.cache(true);
   
-  // Environment-specific configuration
   const isTest = process.env.NODE_ENV === 'test';
   
   return {
     presets: [
-      [
-        'babel-preset-expo',
-        {
-          // Default configuration for compatibility
-        },
-      ],
-    ],
-    plugins: [
-      // Only add NativeWind for non-test environments
+      'babel-preset-expo',
+      // Use NativeWind as a preset, not a plugin, and only in non-test environments
       ...(isTest ? [] : ['nativewind/babel']),
     ],
+    plugins: [],
   };
 };

@@ -33,6 +33,8 @@ module.exports = [
         require: 'readonly',
         module: 'readonly',
         exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
         // Jest globals
         jest: 'readonly',
         describe: 'readonly',
@@ -89,6 +91,8 @@ module.exports = [
         require: 'readonly',
         module: 'readonly',
         exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
         // Jest globals
         jest: 'readonly',
         describe: 'readonly',
