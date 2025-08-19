@@ -17,8 +17,7 @@ module.exports = {
           '@babel/preset-typescript'
         ],
         plugins: [
-          // Add the new worklets plugin instead of the deprecated reanimated plugin
-          'react-native-worklets/plugin',
+          // NativeWind babel plugin excluded from Jest environment for compatibility
         ],
       },
     ],
@@ -28,6 +27,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     '\\.(png|jpg|jpeg|gif|svg)$': 'identity-obj-proxy',
+    '\\.(css)$': 'identity-obj-proxy',
   },
   collectCoverageFrom: [
     '**/*.{ts,tsx}',

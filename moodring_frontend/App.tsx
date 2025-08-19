@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import './styles/globals.css';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useSpotifyActivity } from './src/hooks/useSpotifyActivity';

@@ -5,14 +5,10 @@ module.exports = function (api) {
       [
         'babel-preset-expo',
         {
-          // Disable the automatic reanimated plugin to prevent deprecation warning
-          reanimated: false,
+          // Default configuration for compatibility
         },
       ],
     ],
-    plugins: [
-      // Add the new worklets plugin instead of the deprecated reanimated plugin
-      'react-native-worklets/plugin',
-    ],
+    plugins: [],
   };
 };

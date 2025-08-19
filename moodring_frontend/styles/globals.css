@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* TailwindCSS v4 Configuration */
+@config {
+  content: [
+    "./App.tsx",
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./index.ts"
+  ];
+
+  /* 90's Retro Theme Configuration */
+  --color-background-primary: #1a0a1a;
+  --color-background-card: #2a0a2a;
+  --color-background-nowplaying: #2a0a2a;
+  --color-background-track: #4a1458;
+  --color-background-action: #1a0a0a;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+
+  --color-accent-purple: #8a2be2;
+  --color-accent-cyan: #00ffff;
+  --color-accent-orange: #ff6600;
+  --color-accent-yellow: #ffff00;
+  --color-accent-pink: #ff69b4;
+  --color-accent-magenta: #ff00aa;
+
+  --color-ui-border: rgba(255, 255, 255, 0.1);
+  --color-ui-overlay: rgba(255, 255, 255, 0.1);
+  --color-ui-tag: rgba(138, 43, 226, 0.7);
+  --color-ui-tag-remove: rgba(255, 255, 255, 0.2);
+
+  --shadow-default: #000;
+  --shadow-purple: #8a2be2;
+
+  /* Custom Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+  --spacing-xxxl: 32px;
+
+  /* Custom Border Radius */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-full: 40px;
+
+  /* Typography Scale */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 32px;
+  --font-size-xxxl: 48px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-heavy: 900;
+
+  --letter-spacing-sm: 1px;
+  --letter-spacing-md: 2px;
+  --letter-spacing-lg: 4px;
+}
+
+/* Custom Utility Classes for 90's Retro Theme */
+@theme {
+  --color-bg-primary: var(--color-background-primary);
+  --color-bg-card: var(--color-background-card);
+  --color-bg-nowplaying: var(--color-background-nowplaying);
+  --color-bg-track: var(--color-background-track);
+  --color-bg-action: var(--color-background-action);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+
+  --color-accent-purple: var(--color-accent-purple);
+  --color-accent-cyan: var(--color-accent-cyan);
+  --color-accent-orange: var(--color-accent-orange);
+  --color-accent-yellow: var(--color-accent-yellow);
+  --color-accent-pink: var(--color-accent-pink);
+  --color-accent-magenta: var(--color-accent-magenta);
+
+  --color-ui-border: var(--color-ui-border);
+  --color-ui-overlay: var(--color-ui-overlay);
+  --color-ui-tag: var(--color-ui-tag);
+  --color-ui-tag-remove: var(--color-ui-tag-remove);
+
+  --spacing-xs: var(--spacing-xs);
+  --spacing-sm: var(--spacing-sm);
+  --spacing-md: var(--spacing-md);
+  --spacing-lg: var(--spacing-lg);
+  --spacing-xl: var(--spacing-xl);
+  --spacing-xxl: var(--spacing-xxl);
+  --spacing-xxxl: var(--spacing-xxxl);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-full: var(--radius-full);
+}
+
+/* Retro Gradient Classes */
+.gradient-profile {
+  background: linear-gradient(135deg, #1a0a1a 0%, #0d0d0d 50%, #1a0a2e 100%);
+}
+
+.gradient-nowplaying {
+  background: linear-gradient(135deg, #2a0a2a 0%, #0d0d0d 50%, #0a2a2a 100%);
+}
+
+.gradient-track {
+  background: linear-gradient(135deg, #4a1458 0%, #2d0a35 50%, #1a0a2a 100%);
+}
+
+.gradient-action {
+  background: linear-gradient(135deg, #1a0a0a 0%, #0d0d0d 50%, #2a0a1a 100%);
+}
+
+.gradient-error {
+  background: linear-gradient(135deg, #4a1458 0%, #2d0a35 50%, #1a0a2a 100%);
+}
+
+.gradient-features {
+  background: linear-gradient(135deg, #4a1458 0%, #2d0a35 50%, #1a0a2a 100%);
+}
+
+/* Retro Shadow Effects */
+.shadow-retro {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-purple-glow {
+  box-shadow: 0 0 12px rgba(138, 43, 226, 0.5);
+}
+
+.shadow-playing-glow {
+  box-shadow: 0 0 4px rgba(138, 43, 226, 0.8);
+}
+
+/* Animation Classes */
+.animate-retro-pulse {
+  animation: retro-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes retro-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
