@@ -69,42 +69,58 @@
   --letter-spacing-lg: 4px;
 }
 
-/* Custom Utility Classes for 90's Retro Theme */
+/* TailwindCSS v4 Theme Integration with 90's Retro Values */
 @theme {
+  /* Color Palette */
   --color-bg-primary: var(--color-background-primary);
   --color-bg-card: var(--color-background-card);
   --color-bg-nowplaying: var(--color-background-nowplaying);
   --color-bg-track: var(--color-background-track);
   --color-bg-action: var(--color-background-action);
-
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
-
   --color-accent-purple: var(--color-accent-purple);
   --color-accent-cyan: var(--color-accent-cyan);
   --color-accent-orange: var(--color-accent-orange);
   --color-accent-yellow: var(--color-accent-yellow);
   --color-accent-pink: var(--color-accent-pink);
   --color-accent-magenta: var(--color-accent-magenta);
-
   --color-ui-border: var(--color-ui-border);
   --color-ui-overlay: var(--color-ui-overlay);
   --color-ui-tag: var(--color-ui-tag);
   --color-ui-tag-remove: var(--color-ui-tag-remove);
 
-  --spacing-xs: var(--spacing-xs);
-  --spacing-sm: var(--spacing-sm);
-  --spacing-md: var(--spacing-md);
-  --spacing-lg: var(--spacing-lg);
-  --spacing-xl: var(--spacing-xl);
-  --spacing-xxl: var(--spacing-xxl);
-  --spacing-xxxl: var(--spacing-xxxl);
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
 
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-full: var(--radius-full);
+  /* Border Radius */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 40px;
+
+  /* Font Sizes */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 32px;
+  --text-3xl: 48px;
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-black: 900;
 }
 
 /* Retro Gradient Classes */

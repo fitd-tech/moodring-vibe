@@ -3,28 +3,59 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { BackendUser } from '../../types';
 import { GradientCard } from '../shared/GradientCard';
 import { theme } from '../../styles/theme';
+import { ClassNameProps } from '../../../nativewind-env';
 
-interface UserProfileProps {
+interface UserProfileProps extends ClassNameProps {
   user: BackendUser;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+export const UserProfile: React.FC<UserProfileProps> = ({ user, className }) => {
   return (
-    <GradientCard colors={theme.colors.gradients.profile}>
-      <View style={styles.profileHeader}>
+    <GradientCard colors={theme.colors.gradients.profile} className={className}>
+      <View 
+        className={className ? "flex-row items-center" : undefined}
+        style={className ? undefined : styles.profileHeader}
+      >
         {user.profile_image_url ? (
-          <Image source={{ uri: user.profile_image_url }} style={styles.profileImage} />
+          <Image 
+            source={{ uri: user.profile_image_url }} 
+            className={className ? "w-20 h-20 rounded-full mr-5 border-4 border-cyan-400" : undefined}
+            style={className ? undefined : styles.profileImage} 
+          />
         ) : (
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarPlaceholder}>
+          <View 
+            className={className ? "w-20 h-20 rounded-full bg-orange-500 justify-center items-center mr-5 border-4 border-yellow-400" : undefined}
+            style={className ? undefined : styles.avatarContainer}
+          >
+            <Text 
+              className={className ? "text-3xl font-bold text-white" : undefined}
+              style={className ? {
+                textShadowColor: '#000000',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 2,
+              } : styles.avatarPlaceholder}
+            >
               {user.display_name?.charAt(0).toUpperCase() ||
                 user.spotify_id.charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user.display_name || user.spotify_id}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
+        <View 
+          className={className ? "flex-1" : undefined}
+          style={className ? undefined : styles.userInfo}
+        >
+          <Text 
+            className={className ? "text-xl font-bold text-white mb-1" : undefined}
+            style={className ? undefined : styles.userName}
+          >
+            {user.display_name || user.spotify_id}
+          </Text>
+          <Text 
+            className={className ? "text-base text-white opacity-70" : undefined}
+            style={className ? undefined : styles.userEmail}
+          >
+            {user.email}
+          </Text>
         </View>
       </View>
     </GradientCard>

@@ -15,8 +15,9 @@ import { useAnimation } from '../../hooks/useAnimation';
 import { theme } from '../../styles/theme';
 import { taggingService } from '../../services/taggingService';
 import { useAuth } from '../../contexts/AuthContext';
+import { ClassNameProps } from '../../../nativewind-env';
 
-interface TrackCardProps {
+interface TrackCardProps extends ClassNameProps {
   track: Track;
   _index: number;
   isExpanded: boolean;

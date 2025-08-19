@@ -1,5 +1,10 @@
 module.exports = function (api) {
-  api.cache(true);
+  // Cache based on environment
+  api.cache.using(() => process.env.NODE_ENV);
+  
+  // Environment-specific configuration
+  const isTest = process.env.NODE_ENV === 'test';
+  
   return {
     presets: [
       [
@@ -9,6 +14,9 @@ module.exports = function (api) {
         },
       ],
     ],
-    plugins: [],
+    plugins: [
+      // Only add NativeWind for non-test environments
+      ...(isTest ? [] : ['nativewind/babel']),
+    ],
   };
 };

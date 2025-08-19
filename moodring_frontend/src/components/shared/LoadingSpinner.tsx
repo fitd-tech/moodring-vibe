@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { theme } from '../../styles/theme';
+import { ClassNameProps } from '../../../nativewind-env';
 
-interface LoadingSpinnerProps {
+interface LoadingSpinnerProps extends ClassNameProps {
   text?: string;
   size?: 'small' | 'large';
   color?: string;
   compact?: boolean;
+  textClassName?: string;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
@@ -14,11 +16,40 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'large',
   color = theme.colors.accent.purple,
   compact = false,
+  className,
+  textClassName,
 }) => {
+  // TailwindCSS classes
+  const getContainerClasses = () => {
+    const baseClasses = compact 
+      ? 'flex-row justify-center items-center py-2 px-3'
+      : 'flex-1 justify-center items-center bg-black p-5 pt-15';
+    return `${baseClasses} ${className || ''}`.trim();
+  };
+
+  const getTextClasses = () => {
+    const baseClasses = compact
+      ? 'text-white text-sm ml-2 font-medium'
+      : 'text-white text-base mt-3 font-bold';
+    return `${baseClasses} ${textClassName || ''}`.trim();
+  };
+
+  // Fallback to StyleSheet if no className provided
+  const containerStyle = className ? undefined : (compact ? styles.compactContainer : styles.container);
+  const textStyle = textClassName !== undefined ? undefined : (compact ? styles.compactText : styles.text);
+
   return (
-    <View style={compact ? styles.compactContainer : styles.container}>
+    <View 
+      className={className !== undefined ? getContainerClasses() : undefined}
+      style={containerStyle}
+    >
       <ActivityIndicator size={size} color={color} testID="activity-indicator" />
-      <Text style={compact ? styles.compactText : styles.text}>{text}</Text>
+      <Text 
+        className={textClassName !== undefined ? getTextClasses() : undefined}
+        style={textStyle}
+      >
+        {text}
+      </Text>
     </View>
   );
 };

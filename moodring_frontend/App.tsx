@@ -191,7 +191,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return <LoginScreen error={error} onLogin={handleLogin} isLoginDisabled={!request} />;
+  return <LoginScreen error={error} onLogin={handleLogin} isLoginDisabled={!request} className="" />;
 };
 
 export default function App() {
