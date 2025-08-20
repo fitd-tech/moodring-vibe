@@ -35,11 +35,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         >
           <Text 
             className={className ? "text-5xl font-black text-white text-center tracking-widest" : undefined}
-            style={className ? {
-              textShadowColor: theme.colors.accent.purple,
-              textShadowOffset: { width: 0, height: 0 },
-              textShadowRadius: 20,
-            } : styles.appTitle}
+            style={className ? styles.appTitleShadow : styles.appTitle}
           >
             MOODRING
           </Text>
@@ -129,7 +125,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
           <Text 
             className={className ? "text-sm text-white text-center opacity-60" : undefined}
-            style={className ? {lineHeight: 20} : styles.disclaimerText}
+            style={className ? styles.disclaimerTextInline : styles.disclaimerText}
           >
             We'll only access your music library and playlists.{'\n'}
             Your data stays private and secure.
@@ -235,5 +231,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     opacity: 0.6,
+  },
+  appTitleShadow: {
+    textShadowColor: theme.colors.accent.purple,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  disclaimerTextInline: {
+    lineHeight: 20,
   },
 });

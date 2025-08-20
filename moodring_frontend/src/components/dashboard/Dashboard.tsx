@@ -120,12 +120,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <NowPlaying currentlyPlaying={currentlyPlaying} />
 
           <ExpansionProvider>
-            <RecentTracksList
-              tracks={recentTracks}
-              onLoadMore={onLoadMoreTracks}
-              hasMoreTracks={hasMoreTracks}
-              isLoadingMore={isLoadingMore}
-            />
+            {recentTracks.length > 0 && (
+              <RecentTracksList
+                tracks={recentTracks}
+                onLoadMore={onLoadMoreTracks}
+                hasMoreTracks={hasMoreTracks}
+                isLoadingMore={isLoadingMore}
+              />
+            )}
 
             {topTracks.length > 0 && (
               <TopTracksList
@@ -136,13 +138,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               />
             )}
 
-            <SavedTracksList
-              tracks={savedTracks}
-              onLoadMore={onLoadMoreSavedTracks}
-              hasMoreTracks={hasMoreSavedTracks}
-              isLoadingMore={isLoadingMoreSavedTracks}
-              isResetting={isResetting}
-            />
+            {(savedTracks.length > 0 || isResetting) && (
+              <SavedTracksList
+                tracks={savedTracks}
+                onLoadMore={onLoadMoreSavedTracks}
+                hasMoreTracks={hasMoreSavedTracks}
+                isLoadingMore={isLoadingMoreSavedTracks}
+                isResetting={isResetting}
+              />
+            )}
 
             {savedPlaylists.length > 0 && (
               <SavedPlaylistsList

@@ -1,5 +1,9 @@
 // Jest setup for React Native testing
 
+// Set test environment variables FIRST
+process.env.NODE_ENV = 'test';
+process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = 'test_client_id';
+
 // Define React Native globals
 global.__DEV__ = true;
 
@@ -48,8 +52,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
 
-// Set test environment variables
-process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = 'test_client_id';
+// Additional test environment variables (if needed)
 
 // Mock React Native modules
 jest.mock('react-native', () => ({

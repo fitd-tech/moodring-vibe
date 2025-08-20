@@ -67,6 +67,10 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
   const shouldShowSeeMoreButton =
     (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
 
+  if (tracks.length === 0 && !isResetting) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SAVED TRACKS</Text>

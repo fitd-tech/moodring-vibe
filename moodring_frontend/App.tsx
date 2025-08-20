@@ -19,7 +19,7 @@ const discovery = {
 
 const CLIENT_ID = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
 
-if (!CLIENT_ID) {
+if (!CLIENT_ID && process.env.NODE_ENV !== 'test') {
   throw new Error(
     'Missing EXPO_PUBLIC_SPOTIFY_CLIENT_ID environment variable. ' +
       'Please add it to your .env file or environment configuration.'

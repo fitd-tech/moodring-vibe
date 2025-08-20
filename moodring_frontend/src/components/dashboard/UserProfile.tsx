@@ -29,11 +29,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, className }) => 
           >
             <Text 
               className={className ? "text-3xl font-bold text-white" : undefined}
-              style={className ? {
-                textShadowColor: '#000000',
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 2,
-              } : styles.avatarPlaceholder}
+              style={className ? styles.avatarPlaceholderShadow : styles.avatarPlaceholder}
             >
               {user.display_name?.charAt(0).toUpperCase() ||
                 user.spotify_id.charAt(0).toUpperCase()}
@@ -108,5 +104,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.normal,
     opacity: 0.7,
+  },
+  avatarPlaceholderShadow: {
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });

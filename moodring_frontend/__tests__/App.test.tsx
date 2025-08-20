@@ -4,9 +4,6 @@ import App from '../App';
 import * as SecureStore from 'expo-secure-store';
 import { useAuthRequest } from 'expo-auth-session';
 
-// Mock the environment variable
-process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = 'test_client_id';
-
 // Mock the hooks and modules
 jest.mock('expo-auth-session');
 jest.mock('expo-secure-store');
@@ -114,13 +111,14 @@ describe('App', () => {
     });
 
     it('displays dashboard sections for authenticated user', async () => {
-      const { getByText } = render(<App />);
+      const { getByText, queryByText } = render(<App />);
 
       await waitFor(() => {
-        // Check for recent tracks section (shows empty state when no tracks)
-        expect(getByText('No recent tracks found')).toBeTruthy();
-        // Quick actions are now in the profile menu, not the main dashboard
+        // Dashboard title should be visible
         expect(getByText('MOODRING')).toBeTruthy();
+        // Recent tracks section should not be shown when no tracks (component returns null)
+        expect(queryByText('RECENT TRACKS')).toBeNull();
+        expect(queryByText('No recent tracks found')).toBeNull();
       });
     });
 
@@ -185,17 +183,20 @@ describe('App', () => {
     });
 
     it('handles missing CLIENT_ID environment variable', () => {
-      // Temporarily remove the env var
+      // Temporarily remove the env var and set NODE_ENV to production to trigger the error
       const originalClientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+      const originalNodeEnv = process.env.NODE_ENV;
       delete process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
+      process.env.NODE_ENV = 'production';
 
       expect(() => {
         jest.resetModules();
         require('../App');
       }).toThrow('Missing EXPO_PUBLIC_SPOTIFY_CLIENT_ID environment variable');
 
-      // Restore the env var
+      // Restore the env vars
       process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID = originalClientId;
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
     it('handles backend authentication failure', async () => {

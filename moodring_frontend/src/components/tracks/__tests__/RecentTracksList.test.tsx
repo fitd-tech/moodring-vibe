@@ -84,13 +84,15 @@ describe('RecentTracksList', () => {
   });
 
   describe('basic functionality', () => {
-    it('renders empty state when no tracks provided', () => {
-      const { getByText } = render(
+    it('renders nothing when no tracks provided', () => {
+      const { queryByText } = render(
         <ExpansionTestWrapper>
           <RecentTracksList tracks={[]} />
         </ExpansionTestWrapper>
       );
-      expect(getByText('No recent tracks found')).toBeTruthy();
+      // Component should return null and not render any content when no tracks
+      expect(queryByText('RECENT TRACKS')).toBeNull();
+      expect(queryByText('No recent tracks found')).toBeNull();
     });
 
     it('renders recent tracks title', () => {

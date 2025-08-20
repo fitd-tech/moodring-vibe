@@ -59,11 +59,7 @@ export const RecentTracksList: React.FC<RecentTracksListProps> = ({
     (tracks.length > INITIAL_DISPLAY_COUNT && !showAll) || (hasMoreTracks && onLoadMore);
 
   if (tracks.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No recent tracks found</Text>
-      </View>
-    );
+    return null;
   }
 
   return (
@@ -112,15 +108,6 @@ const styles = StyleSheet.create({
     letterSpacing: theme.typography.letterSpacing.sm,
     opacity: 0.8,
     textTransform: 'uppercase',
-  },
-  emptyContainer: {
-    padding: theme.spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: theme.colors.text.muted,
-    fontSize: theme.typography.fontSize.md,
-    fontStyle: 'italic',
   },
   seeMoreContainer: {
     marginTop: theme.spacing.lg,

@@ -339,10 +339,26 @@ describe('Dashboard', () => {
     expect(screen.getByTestId('track-card-Saved Song 1')).toBeTruthy();
   });
 
-  it('renders SavedTracksList even when savedTracks array is empty', () => {
-    render(<Dashboard {...defaultProps} savedTracks={[]} />);
+  it('does not render SavedTracksList when savedTracks array is empty and not resetting', () => {
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} savedTracks={[]} isResetting={false} />
+      </ExpansionTestWrapper>
+    );
 
-    // SavedTracksList should always be rendered, even when no saved tracks
+    // SavedTracksList should not be rendered when no saved tracks and not resetting
+    expect(screen.queryByText('SAVED TRACKS')).toBeNull();
+    expect(screen.queryByTestId('track-card-Saved Song 1')).toBeNull();
+  });
+
+  it('renders SavedTracksList when savedTracks array is empty but isResetting is true', () => {
+    render(
+      <ExpansionTestWrapper>
+        <Dashboard {...defaultProps} savedTracks={[]} isResetting={true} />
+      </ExpansionTestWrapper>
+    );
+
+    // SavedTracksList should be rendered when isResetting is true even with empty savedTracks
     expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
     expect(screen.queryByTestId('track-card-Saved Song 1')).toBeNull();
   });
