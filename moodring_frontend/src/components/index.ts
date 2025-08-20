@@ -18,6 +18,7 @@ export { TaggingInterface } from './tracks/TaggingInterface';
 // Playlist components
 export { SavedPlaylistsList } from './playlists/SavedPlaylistsList';
 export { PlaylistCard } from './playlists/PlaylistCard';
+export { CreatePlaylistPage } from './playlists/CreatePlaylistPage';
 
 // Album components
 export { SavedAlbumsList } from './albums/SavedAlbumsList';
