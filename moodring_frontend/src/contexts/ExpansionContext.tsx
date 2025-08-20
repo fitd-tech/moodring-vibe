@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type CardType = 'track' | 'playlist' | 'album';
 
-export type SectionType = 
+export type SectionType =
   | 'recent-tracks'
   | 'top-tracks'
   | 'saved-tracks'
@@ -33,7 +33,7 @@ export const ExpansionProvider: React.FC<ExpansionProviderProps> = ({ children }
 
   const isExpanded = (sectionType: SectionType, cardType: CardType, index: number): boolean => {
     if (!expandedCard) return false;
-    
+
     return (
       expandedCard.sectionType === sectionType &&
       expandedCard.cardType === cardType &&
@@ -43,7 +43,7 @@ export const ExpansionProvider: React.FC<ExpansionProviderProps> = ({ children }
 
   const toggleExpansion = (sectionType: SectionType, cardType: CardType, index: number): void => {
     const currentlyExpanded = isExpanded(sectionType, cardType, index);
-    
+
     if (currentlyExpanded) {
       // If clicking the same card, collapse it
       setExpandedCard(null);

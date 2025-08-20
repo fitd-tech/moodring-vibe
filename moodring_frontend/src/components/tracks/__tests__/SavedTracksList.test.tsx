@@ -90,7 +90,6 @@ describe('SavedTracksList', () => {
   });
 
   describe('basic functionality', () => {
-
     it('renders saved tracks title', () => {
       const { getByText } = render(
         <ExpansionTestWrapper>
@@ -155,7 +154,11 @@ describe('SavedTracksList', () => {
       const mockLoadMore = jest.fn();
       const { getByText } = render(
         <ExpansionTestWrapper>
-          <SavedTracksList tracks={mockSavedTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+          <SavedTracksList
+            tracks={mockSavedTracks}
+            hasMoreTracks={true}
+            onLoadMore={mockLoadMore}
+          />
         </ExpansionTestWrapper>
       );
 
@@ -198,7 +201,11 @@ describe('SavedTracksList', () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText } = render(
         <ExpansionTestWrapper>
-          <SavedTracksList tracks={mockSavedTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+          <SavedTracksList
+            tracks={mockSavedTracks}
+            hasMoreTracks={true}
+            onLoadMore={mockLoadMore}
+          />
         </ExpansionTestWrapper>
       );
 
@@ -213,7 +220,11 @@ describe('SavedTracksList', () => {
       const mockLoadMore = jest.fn().mockResolvedValue(undefined);
       const { getByText, rerender, getAllByTestId } = render(
         <ExpansionTestWrapper>
-          <SavedTracksList tracks={mockSavedTracks} hasMoreTracks={true} onLoadMore={mockLoadMore} />
+          <SavedTracksList
+            tracks={mockSavedTracks}
+            hasMoreTracks={true}
+            onLoadMore={mockLoadMore}
+          />
         </ExpansionTestWrapper>
       );
 

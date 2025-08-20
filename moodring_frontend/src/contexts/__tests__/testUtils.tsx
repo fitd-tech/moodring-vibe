@@ -20,12 +20,12 @@ export const ExpansionTestWrapper: React.FC<{ children: ReactNode }> = ({ childr
 // Mock the useExpansion hook for testing
 export const mockUseExpansion = (mockContext: Partial<ExpansionContextType> = {}) => {
   const fullContext = createMockExpansionContext(mockContext);
-  
+
   jest.doMock('../ExpansionContext', () => ({
     ...jest.requireActual('../ExpansionContext'),
     useExpansion: () => fullContext,
   }));
-  
+
   return fullContext;
 };
 

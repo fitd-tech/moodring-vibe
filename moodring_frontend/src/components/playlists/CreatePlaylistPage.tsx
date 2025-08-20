@@ -24,7 +24,11 @@ interface EntityType {
 
 interface CreatePlaylistPageProps extends ClassNameProps {
   onBack?: () => void;
-  onCreatePlaylist?: (_playlistName: string, _entityTypes: string[], _selectedTags: string[]) => void;
+  onCreatePlaylist?: (
+    _playlistName: string,
+    _entityTypes: string[],
+    _selectedTags: string[]
+  ) => void;
 }
 
 export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
@@ -33,7 +37,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   className,
 }) => {
   const insets = useSafeAreaInsets();
-  
+
   const [playlistName, setPlaylistName] = useState('');
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     { type: 'songs', label: 'Songs', enabled: true },
@@ -48,18 +52,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
 
   const handleEntityTypeToggle = (type: 'songs' | 'albums' | 'playlists') => {
     setEntityTypes(prev =>
-      prev.map(entity =>
-        entity.type === type
-          ? { ...entity, enabled: !entity.enabled }
-          : entity
-      )
+      prev.map(entity => (entity.type === type ? { ...entity, enabled: !entity.enabled } : entity))
     );
   };
 
   const handleTagToggle = (tagId: number) => {
-    setSelectableTags(prev => prev.map(tag => 
-      tag.id === tagId ? { ...tag, isSelected: !tag.isSelected } : tag
-    ));
+    setSelectableTags(prev =>
+      prev.map(tag => (tag.id === tagId ? { ...tag, isSelected: !tag.isSelected } : tag))
+    );
   };
 
   const handleLoadMoreTags = () => {
@@ -74,11 +74,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       const enabledEntityTypes = entityTypes
         .filter(entity => entity.enabled)
         .map(entity => entity.type);
-      
-      const selectedTagNames = selectableTags
-        .filter(tag => tag.isSelected)
-        .map(tag => tag.name);
-      
+
+      const selectedTagNames = selectableTags.filter(tag => tag.isSelected).map(tag => tag.name);
+
       onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
     }
   };
@@ -98,22 +96,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
 
         <View style={styles.content}>
           {/* Tag Selection Section - Now First */}
-          <GradientCard
-            colors={theme.colors.gradients.action}
-            style={styles.section}
-          >
+          <GradientCard colors={theme.colors.gradients.action} style={styles.section}>
             <Text style={styles.sectionTitle}>Tag Selection</Text>
-            <Text style={styles.sectionDescription}>
-              Select tags to filter your content
-            </Text>
+            <Text style={styles.sectionDescription}>Select tags to filter your content</Text>
             <View style={styles.tagGrid}>
               {selectableTags.map(tag => (
                 <TouchableOpacity
                   key={tag.id}
-                  style={[
-                    styles.tagOption,
-                    tag.isSelected && styles.tagOptionSelected,
-                  ]}
+                  style={[styles.tagOption, tag.isSelected && styles.tagOptionSelected]}
                   onPress={() => handleTagToggle(tag.id)}
                   testID={`tag-option-${tag.id}`}
                   className={`border-2 rounded-lg px-4 py-3 m-1 ${
@@ -123,17 +113,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                   }`}
                 >
                   <View style={styles.tagContent}>
-                    <View 
-                      style={[
-                        styles.tagColorIndicator, 
-                        { backgroundColor: tag.color }
-                      ]} 
-                    />
+                    <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />
                     <Text
-                      style={[
-                        styles.tagLabel,
-                        tag.isSelected && styles.tagLabelSelected,
-                      ]}
+                      style={[styles.tagLabel, tag.isSelected && styles.tagLabelSelected]}
                       className={`text-sm font-medium ${
                         tag.isSelected ? 'text-purple-200' : 'text-gray-300'
                       }`}
@@ -158,10 +140,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           </GradientCard>
 
           {/* Entity Type Selection Section - Now Second */}
-          <GradientCard
-            colors={theme.colors.gradients.features}
-            style={styles.section}
-          >
+          <GradientCard colors={theme.colors.gradients.features} style={styles.section}>
             <Text style={styles.sectionTitle}>Include Content Types</Text>
             <Text style={styles.sectionDescription}>
               Select which types of content to include in your playlist
@@ -170,23 +149,17 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               {entityTypes.map(entity => (
                 <TouchableOpacity
                   key={entity.type}
-                  style={[
-                    styles.entityTypeOption,
-                    entity.enabled && styles.entityTypeOptionActive,
-                  ]}
+                  style={[styles.entityTypeOption, entity.enabled && styles.entityTypeOptionActive]}
                   onPress={() => handleEntityTypeToggle(entity.type)}
                   testID={`entity-type-${entity.type}`}
                   className={`border-2 rounded-lg p-4 mb-3 ${
-                    entity.enabled 
-                      ? 'border-purple-500 bg-purple-500/20' 
+                    entity.enabled
+                      ? 'border-purple-500 bg-purple-500/20'
                       : 'border-gray-600 bg-transparent'
                   }`}
                 >
                   <Text
-                    style={[
-                      styles.entityTypeLabel,
-                      entity.enabled && styles.entityTypeLabelActive,
-                    ]}
+                    style={[styles.entityTypeLabel, entity.enabled && styles.entityTypeLabelActive]}
                     className={`text-lg font-semibold ${
                       entity.enabled ? 'text-purple-300' : 'text-gray-300'
                     }`}
@@ -199,10 +172,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           </GradientCard>
 
           {/* Playlist Name Section - Now Third */}
-          <GradientCard
-            colors={theme.colors.gradients.track}
-            style={styles.section}
-          >
+          <GradientCard colors={theme.colors.gradients.track} style={styles.section}>
             <Text style={styles.sectionTitle}>Playlist Name</Text>
             <TextInput
               style={styles.textInput}
@@ -225,13 +195,13 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               variant="primary"
               testID="create-playlist-button"
               className={`py-4 px-8 ${
-                isCreateDisabled 
-                  ? 'bg-gray-600 opacity-50' 
+                isCreateDisabled
+                  ? 'bg-gray-600 opacity-50'
                   : 'bg-purple-600 shadow-lg shadow-purple-500/50'
               } border-2 border-purple-600 rounded-lg`}
               textClassName="text-white text-lg font-bold tracking-wider"
             />
-            
+
             {onBack && (
               <Button
                 title="BACK"
@@ -246,10 +216,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           </View>
 
           {/* Song Preview Section */}
-          <GradientCard
-            colors={theme.colors.gradients.track}
-            style={styles.section}
-          >
+          <GradientCard colors={theme.colors.gradients.track} style={styles.section}>
             <Text style={styles.sectionTitle}>SONGS TO BE ADDED</Text>
             <Text style={styles.sectionDescription}>
               Preview of songs that will be included in your playlist
@@ -259,18 +226,21 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                 <View key={index} style={styles.songPreviewCard} testID={`song-preview-${index}`}>
                   <View style={styles.songAlbumArt}>
                     {song.album_image_url ? (
-                      <Image 
-                        source={{ uri: song.album_image_url }} 
-                        style={styles.songAlbumImage} 
-                      />
+                      <Image source={{ uri: song.album_image_url }} style={styles.songAlbumImage} />
                     ) : (
                       <View style={styles.songAlbumPlaceholder} />
                     )}
                   </View>
                   <View style={styles.songInfo}>
-                    <Text style={styles.songTitle} numberOfLines={1}>{song.name}</Text>
-                    <Text style={styles.songArtist} numberOfLines={1}>{song.artist}</Text>
-                    <Text style={styles.songAlbum} numberOfLines={1}>{song.album}</Text>
+                    <Text style={styles.songTitle} numberOfLines={1}>
+                      {song.name}
+                    </Text>
+                    <Text style={styles.songArtist} numberOfLines={1}>
+                      {song.artist}
+                    </Text>
+                    <Text style={styles.songAlbum} numberOfLines={1}>
+                      {song.album}
+                    </Text>
                   </View>
                 </View>
               ))}

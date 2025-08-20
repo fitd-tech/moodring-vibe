@@ -67,7 +67,9 @@ const AppContent: React.FC = () => {
     loadMoreSavedAlbums,
     resetToFreshState,
   } = useSpotifyActivity();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'tags' | 'create-playlist'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'tags' | 'create-playlist'>(
+    'dashboard'
+  );
 
   const redirectUri = 'moodring://auth';
 
@@ -94,13 +96,16 @@ const AppContent: React.FC = () => {
     setCurrentView('dashboard');
   };
 
-  const handlePlaylistCreated = (playlistName: string, entityTypes: string[], selectedTags: string[]) => {
+  const handlePlaylistCreated = (
+    playlistName: string,
+    entityTypes: string[],
+    selectedTags: string[]
+  ) => {
     // TODO: Implement actual playlist creation logic
     console.log('Creating playlist:', { playlistName, entityTypes, selectedTags });
     // For now, just navigate back to dashboard
     setCurrentView('dashboard');
   };
-
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -169,10 +174,7 @@ const AppContent: React.FC = () => {
 
     if (currentView === 'create-playlist') {
       return (
-        <CreatePlaylistPage
-          onBack={handleBackToHome}
-          onCreatePlaylist={handlePlaylistCreated}
-        />
+        <CreatePlaylistPage onBack={handleBackToHome} onCreatePlaylist={handlePlaylistCreated} />
       );
     }
 
@@ -211,7 +213,9 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return <LoginScreen error={error} onLogin={handleLogin} isLoginDisabled={!request} className="" />;
+  return (
+    <LoginScreen error={error} onLogin={handleLogin} isLoginDisabled={!request} className="" />
+  );
 };
 
 export default function App() {

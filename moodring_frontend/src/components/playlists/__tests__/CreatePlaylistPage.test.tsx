@@ -18,14 +18,14 @@ jest.mock('../../../styles/theme', () => ({
     },
     colors: {
       background: { primary: '#1a0a1a' },
-      text: { 
-        primary: '#ffffff', 
-        secondary: 'rgba(255, 255, 255, 0.8)', 
-        muted: 'rgba(255, 255, 255, 0.6)' 
+      text: {
+        primary: '#ffffff',
+        secondary: 'rgba(255, 255, 255, 0.8)',
+        muted: 'rgba(255, 255, 255, 0.6)',
       },
-      ui: { 
-        overlay: 'rgba(255, 255, 255, 0.1)', 
-        border: 'rgba(255, 255, 255, 0.1)' 
+      ui: {
+        overlay: 'rgba(255, 255, 255, 0.1)',
+        border: 'rgba(255, 255, 255, 0.1)',
       },
       accent: { purple: '#8a2be2' },
       gradients: {
@@ -49,17 +49,17 @@ jest.mock('../../shared/GradientCard', () => ({
 
 // Mock Button component
 jest.mock('../../shared/Button', () => ({
-  Button: ({ 
-    title, 
-    onPress, 
-    disabled, 
-    testID, 
+  Button: ({
+    title,
+    onPress,
+    disabled,
+    testID,
     className,
-    textClassName 
-  }: { 
-    title: string; 
-    onPress: () => void; 
-    disabled?: boolean; 
+    textClassName,
+  }: {
+    title: string;
+    onPress: () => void;
+    disabled?: boolean;
     testID?: string;
     className?: string;
     textClassName?: string;
@@ -68,11 +68,11 @@ jest.mock('../../shared/Button', () => ({
     const { TouchableOpacity, Text } = require('react-native');
     return React.createElement(
       TouchableOpacity,
-      { 
-        testID: testID || 'button', 
+      {
+        testID: testID || 'button',
         onPress: disabled ? undefined : onPress,
         disabled,
-        className 
+        className,
       },
       React.createElement(Text, { className: textClassName }, title)
     );
@@ -91,25 +91,61 @@ jest.mock('expo-status-bar', () => ({
 // Mock mockData
 jest.mock('../mockData', () => ({
   mockTags: [
-    { id: 1, user_id: 1, name: 'Neon Dreams', color: '#ff00ff', created_at: '2024-01-15T08:30:00Z', updated_at: '2024-01-15T08:30:00Z' },
-    { id: 2, user_id: 1, name: 'Synthwave Vibes', color: '#00ffff', created_at: '2024-01-15T09:15:00Z', updated_at: '2024-01-15T09:15:00Z' },
-    { id: 3, user_id: 1, name: 'Arcade Nights', color: '#ff6600', created_at: '2024-01-15T10:00:00Z', updated_at: '2024-01-15T10:00:00Z' },
-    { id: 11, user_id: 1, name: 'Holographic', color: '#3366ff', created_at: '2024-01-16T08:00:00Z', updated_at: '2024-01-16T08:00:00Z' },
-    { id: 12, user_id: 1, name: 'Chrome Dreams', color: '#cc00ff', created_at: '2024-01-16T08:45:00Z', updated_at: '2024-01-16T08:45:00Z' },
+    {
+      id: 1,
+      user_id: 1,
+      name: 'Neon Dreams',
+      color: '#ff00ff',
+      created_at: '2024-01-15T08:30:00Z',
+      updated_at: '2024-01-15T08:30:00Z',
+    },
+    {
+      id: 2,
+      user_id: 1,
+      name: 'Synthwave Vibes',
+      color: '#00ffff',
+      created_at: '2024-01-15T09:15:00Z',
+      updated_at: '2024-01-15T09:15:00Z',
+    },
+    {
+      id: 3,
+      user_id: 1,
+      name: 'Arcade Nights',
+      color: '#ff6600',
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z',
+    },
+    {
+      id: 11,
+      user_id: 1,
+      name: 'Holographic',
+      color: '#3366ff',
+      created_at: '2024-01-16T08:00:00Z',
+      updated_at: '2024-01-16T08:00:00Z',
+    },
+    {
+      id: 12,
+      user_id: 1,
+      name: 'Chrome Dreams',
+      color: '#cc00ff',
+      created_at: '2024-01-16T08:45:00Z',
+      updated_at: '2024-01-16T08:45:00Z',
+    },
   ],
   mockSongs: Array.from({ length: 15 }, (_, i) => ({
     name: `Song ${i + 1}`,
     artist: `Artist ${i + 1}`,
     album: `Album ${i + 1}`,
     album_image_url: `https://picsum.photos/300/300?random=${i + 1}`,
-    played_at: '2024-01-20T22:30:00Z'
+    played_at: '2024-01-20T22:30:00Z',
   })),
-  createSelectableTags: (tags: { id: number; name: string; color?: string }[]) => tags.map((tag: { id: number; name: string; color?: string }) => ({
-    id: tag.id,
-    name: tag.name,
-    color: tag.color || '#8a2be2',
-    isSelected: false,
-  })),
+  createSelectableTags: (tags: { id: number; name: string; color?: string }[]) =>
+    tags.map((tag: { id: number; name: string; color?: string }) => ({
+      id: tag.id,
+      name: tag.name,
+      color: tag.color || '#8a2be2',
+      isSelected: false,
+    })),
 }));
 
 describe('CreatePlaylistPage', () => {
@@ -154,7 +190,7 @@ describe('CreatePlaylistPage', () => {
 
     it('renders with safe area insets applied', () => {
       const { getByTestId } = render(<CreatePlaylistPage />);
-      
+
       const scrollView = getByTestId('create-playlist-scroll-view');
       expect(scrollView).toBeTruthy();
     });
@@ -173,7 +209,7 @@ describe('CreatePlaylistPage', () => {
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'My Test Playlist');
-      
+
       expect(input.props.value).toBe('My Test Playlist');
     });
 
@@ -189,7 +225,7 @@ describe('CreatePlaylistPage', () => {
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, '');
-      
+
       expect(input.props.value).toBe('');
     });
 
@@ -198,7 +234,7 @@ describe('CreatePlaylistPage', () => {
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Test & Special "Characters" [2024]');
-      
+
       expect(input.props.value).toBe('Test & Special "Characters" [2024]');
     });
   });
@@ -231,7 +267,7 @@ describe('CreatePlaylistPage', () => {
 
       const albumsOption = getByTestId('entity-type-albums');
       fireEvent.press(albumsOption);
-      
+
       // Album should now be selected
       // We can't directly test the visual state, but the interaction should work
       expect(albumsOption).toBeTruthy();
@@ -242,10 +278,10 @@ describe('CreatePlaylistPage', () => {
 
       const albumsOption = getByTestId('entity-type-albums');
       const playlistsOption = getByTestId('entity-type-playlists');
-      
+
       fireEvent.press(albumsOption);
       fireEvent.press(playlistsOption);
-      
+
       expect(albumsOption).toBeTruthy();
       expect(playlistsOption).toBeTruthy();
     });
@@ -254,10 +290,10 @@ describe('CreatePlaylistPage', () => {
       const { getByTestId } = render(<CreatePlaylistPage />);
 
       const songsOption = getByTestId('entity-type-songs');
-      
+
       // Songs is enabled by default, so pressing it should disable it
       fireEvent.press(songsOption);
-      
+
       expect(songsOption).toBeTruthy();
     });
 
@@ -296,7 +332,7 @@ describe('CreatePlaylistPage', () => {
 
       const tagOption = getByTestId('tag-option-1');
       fireEvent.press(tagOption);
-      
+
       // Tag should be toggled (we can't easily test visual state, but the interaction should work)
       expect(tagOption).toBeTruthy();
     });
@@ -306,7 +342,7 @@ describe('CreatePlaylistPage', () => {
 
       const loadMoreButton = getByTestId('load-more-tags-button');
       fireEvent.press(loadMoreButton);
-      
+
       // Should now show more tags
       expect(getByText('Holographic')).toBeTruthy();
       expect(getByText('Chrome Dreams')).toBeTruthy();
@@ -317,7 +353,7 @@ describe('CreatePlaylistPage', () => {
 
       const loadMoreButton = getByTestId('load-more-tags-button');
       fireEvent.press(loadMoreButton);
-      
+
       // Load more button should be hidden after clicking
       expect(queryByTestId('load-more-tags-button')).toBeNull();
     });
@@ -418,11 +454,7 @@ describe('CreatePlaylistPage', () => {
       const button = getByTestId('create-playlist-button');
       fireEvent.press(button);
 
-      expect(mockOnCreatePlaylist).toHaveBeenCalledWith(
-        'My Playlist',
-        ['songs'],
-        []
-      );
+      expect(mockOnCreatePlaylist).toHaveBeenCalledWith('My Playlist', ['songs'], []);
     });
 
     it('does not call onCreatePlaylist when disabled', () => {
@@ -439,9 +471,7 @@ describe('CreatePlaylistPage', () => {
 
   describe('back button', () => {
     it('renders back button when onBack prop is provided', () => {
-      const { getByTestId } = render(
-        <CreatePlaylistPage onBack={mockOnBack} />
-      );
+      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
 
       expect(getByTestId('back-button')).toBeTruthy();
     });
@@ -453,9 +483,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('calls onBack when back button is pressed', () => {
-      const { getByTestId } = render(
-        <CreatePlaylistPage onBack={mockOnBack} />
-      );
+      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
 
       const backButton = getByTestId('back-button');
       fireEvent.press(backButton);
@@ -466,9 +494,7 @@ describe('CreatePlaylistPage', () => {
 
   describe('accessibility and usability', () => {
     it('applies custom className when provided', () => {
-      const { getByTestId } = render(
-        <CreatePlaylistPage className="custom-class" />
-      );
+      const { getByTestId } = render(<CreatePlaylistPage className="custom-class" />);
 
       const scrollView = getByTestId('create-playlist-scroll-view');
       expect(scrollView).toBeTruthy();
@@ -478,13 +504,13 @@ describe('CreatePlaylistPage', () => {
       const { getByTestId } = render(<CreatePlaylistPage />);
 
       const input = getByTestId('playlist-name-input');
-      
+
       fireEvent.changeText(input, 'A');
       expect(input.props.value).toBe('A');
-      
+
       fireEvent.changeText(input, 'AB');
       expect(input.props.value).toBe('AB');
-      
+
       fireEvent.changeText(input, 'ABC');
       expect(input.props.value).toBe('ABC');
     });
@@ -500,12 +526,12 @@ describe('CreatePlaylistPage', () => {
       const { getByTestId } = render(<CreatePlaylistPage />);
 
       const albumsOption = getByTestId('entity-type-albums');
-      
+
       // Rapid toggle
       fireEvent.press(albumsOption);
       fireEvent.press(albumsOption);
       fireEvent.press(albumsOption);
-      
+
       expect(albumsOption).toBeTruthy();
     });
   });
@@ -557,7 +583,7 @@ describe('CreatePlaylistPage', () => {
 
       const input = getByTestId('playlist-name-input');
       const longName = 'A'.repeat(100);
-      
+
       fireEvent.changeText(input, longName);
       expect(input.props.value).toBe(longName);
     });
@@ -572,9 +598,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('integrates with Button components', () => {
-      const { getByTestId } = render(
-        <CreatePlaylistPage onBack={mockOnBack} />
-      );
+      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
 
       expect(getByTestId('create-playlist-button')).toBeTruthy();
       expect(getByTestId('back-button')).toBeTruthy();
@@ -586,10 +610,10 @@ describe('CreatePlaylistPage', () => {
       );
 
       expect(getByTestId('back-button')).toBeTruthy();
-      
+
       // Rerender without onBack
       rerender(<CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />);
-      
+
       expect(() => getByTestId('back-button')).toThrow();
     });
   });

@@ -10,11 +10,11 @@ interface GradientCardProps extends ClassNameProps {
   children: React.ReactNode;
 }
 
-export const GradientCard: React.FC<GradientCardProps> = ({ 
-  colors, 
-  style, 
-  children, 
-  className 
+export const GradientCard: React.FC<GradientCardProps> = ({
+  colors,
+  style,
+  children,
+  className,
 }) => {
   // TailwindCSS classes
   const getCardClasses = () => {

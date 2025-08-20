@@ -40,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
       outline: 'bg-transparent border-gray-600',
     };
     const disabledClasses = disabled ? 'bg-gray-800 opacity-50' : '';
-    
+
     return `${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className || ''}`.trim();
   };
 
@@ -50,18 +50,22 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   // Fallback to StyleSheet if TailwindCSS classes don't work
-  const buttonStyle = className ? undefined : [styles.base, styles[variant], disabled && styles.disabled, style];
-  const buttonTextStyle = textClassName ? undefined : [styles.baseText, styles[`${variant}Text`], textStyle];
+  const buttonStyle = className
+    ? undefined
+    : [styles.base, styles[variant], disabled && styles.disabled, style];
+  const buttonTextStyle = textClassName
+    ? undefined
+    : [styles.baseText, styles[`${variant}Text`], textStyle];
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       className={className ? getButtonClasses() : undefined}
       style={buttonStyle}
-      onPress={handlePress} 
-      disabled={disabled} 
+      onPress={handlePress}
+      disabled={disabled}
       testID={testID}
     >
-      <Text 
+      <Text
         className={textClassName !== undefined ? getTextClasses() : undefined}
         style={buttonTextStyle}
       >

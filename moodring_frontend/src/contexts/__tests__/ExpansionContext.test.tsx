@@ -21,15 +21,10 @@ const TestComponent: React.FC<{
       >
         <Text>Toggle {testId}</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        testID={`collapse-all`}
-        onPress={collapseAll}
-      >
+      <TouchableOpacity testID={`collapse-all`} onPress={collapseAll}>
         <Text>Collapse All</Text>
       </TouchableOpacity>
-      <Text testID={`status-${testId}`}>
-        {expanded ? 'Expanded' : 'Collapsed'}
-      </Text>
+      <Text testID={`status-${testId}`}>{expanded ? 'Expanded' : 'Collapsed'}</Text>
     </>
   );
 };
@@ -45,12 +40,7 @@ describe('ExpansionContext', () => {
     it('provides expansion context to child components', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
         </ExpansionProvider>
       );
 
@@ -76,12 +66,7 @@ describe('ExpansionContext', () => {
     it('initially has no expanded cards', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
         </ExpansionProvider>
       );
 
@@ -91,12 +76,7 @@ describe('ExpansionContext', () => {
     it('expands a card when toggled', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
         </ExpansionProvider>
       );
 
@@ -111,12 +91,7 @@ describe('ExpansionContext', () => {
     it('collapses an expanded card when toggled again', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
         </ExpansionProvider>
       );
 
@@ -132,18 +107,8 @@ describe('ExpansionContext', () => {
     it('allows only one card to be expanded at a time', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
-          <TestComponent
-            sectionType="top-tracks"
-            cardType="track"
-            index={0}
-            testId="test-2"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
+          <TestComponent sectionType="top-tracks" cardType="track" index={0} testId="test-2" />
         </ExpansionProvider>
       );
 
@@ -161,18 +126,8 @@ describe('ExpansionContext', () => {
     it('collapses all cards when collapseAll is called', () => {
       const { getAllByTestId, getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test-1"
-          />
-          <TestComponent
-            sectionType="top-tracks"
-            cardType="track"
-            index={0}
-            testId="test-2"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test-1" />
+          <TestComponent sectionType="top-tracks" cardType="track" index={0} testId="test-2" />
         </ExpansionProvider>
       );
 
@@ -190,12 +145,7 @@ describe('ExpansionContext', () => {
     it('distinguishes between different section types', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="recent"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="recent" />
           <TestComponent
             sectionType="saved-playlists"
             cardType="playlist"
@@ -219,18 +169,8 @@ describe('ExpansionContext', () => {
     it('distinguishes between different indices within same section', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="track-0"
-          />
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={1}
-            testId="track-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="track-0" />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={1} testId="track-1" />
         </ExpansionProvider>
       );
 
@@ -250,12 +190,7 @@ describe('ExpansionContext', () => {
     it('correctly identifies expanded state for matching section, type, and index', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="saved-albums"
-            cardType="album"
-            index={2}
-            testId="album"
-          />
+          <TestComponent sectionType="saved-albums" cardType="album" index={2} testId="album" />
         </ExpansionProvider>
       );
 
@@ -270,18 +205,8 @@ describe('ExpansionContext', () => {
     it('returns false for non-matching section type', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="recent"
-          />
-          <TestComponent
-            sectionType="top-tracks"
-            cardType="track"
-            index={0}
-            testId="top"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="recent" />
+          <TestComponent sectionType="top-tracks" cardType="track" index={0} testId="top" />
         </ExpansionProvider>
       );
 
@@ -294,12 +219,7 @@ describe('ExpansionContext', () => {
     it('returns false for non-matching card type', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="saved-tracks"
-            cardType="track"
-            index={0}
-            testId="track"
-          />
+          <TestComponent sectionType="saved-tracks" cardType="track" index={0} testId="track" />
           <TestComponent
             sectionType="saved-playlists"
             cardType="playlist"
@@ -318,18 +238,8 @@ describe('ExpansionContext', () => {
     it('returns false for non-matching index', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="track-0"
-          />
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={1}
-            testId="track-1"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="track-0" />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={1} testId="track-1" />
         </ExpansionProvider>
       );
 
@@ -344,12 +254,7 @@ describe('ExpansionContext', () => {
     it('handles rapid successive toggles correctly', () => {
       const { getByTestId } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test" />
         </ExpansionProvider>
       );
 
@@ -365,12 +270,7 @@ describe('ExpansionContext', () => {
     it('maintains state when provider is re-rendered with same children', () => {
       const { getByTestId, rerender } = render(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test" />
         </ExpansionProvider>
       );
 
@@ -381,12 +281,7 @@ describe('ExpansionContext', () => {
       // Re-render provider with same children
       rerender(
         <ExpansionProvider>
-          <TestComponent
-            sectionType="recent-tracks"
-            cardType="track"
-            index={0}
-            testId="test"
-          />
+          <TestComponent sectionType="recent-tracks" cardType="track" index={0} testId="test" />
         </ExpansionProvider>
       );
 

@@ -5,7 +5,7 @@ module.exports = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': [
       'babel-jest',
-      { 
+      {
         presets: [
           [
             'babel-preset-expo',
@@ -14,7 +14,7 @@ module.exports = {
               reanimated: false,
             },
           ],
-          '@babel/preset-typescript'
+          '@babel/preset-typescript',
         ],
         plugins: [
           // NativeWind babel plugin excluded from Jest environment for compatibility
