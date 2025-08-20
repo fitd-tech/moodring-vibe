@@ -351,16 +351,24 @@ describe('Dashboard', () => {
     expect(screen.queryByTestId('track-card-Saved Song 1')).toBeNull();
   });
 
-  it('renders SavedTracksList when savedTracks array is empty but isResetting is true', () => {
+  it('shows loading spinner but not section heading when savedTracks array is empty and isResetting is true', () => {
     render(
       <ExpansionTestWrapper>
         <Dashboard {...defaultProps} savedTracks={[]} isResetting={true} />
       </ExpansionTestWrapper>
     );
 
-    // SavedTracksList should be rendered when isResetting is true even with empty savedTracks
-    expect(screen.getByText('SAVED TRACKS')).toBeTruthy();
+    // Main app title should always be visible
+    expect(screen.getByText('MOODRING')).toBeTruthy();
+    
+    // During loading state with empty tracks, section heading should NOT be shown
+    expect(screen.queryByText('SAVED TRACKS')).toBeNull();
+    
+    // No track cards should be rendered
     expect(screen.queryByTestId('track-card-Saved Song 1')).toBeNull();
+    
+    // Loading spinner should be present (from SavedTracksList loading state)
+    expect(screen.getByText('Loading...')).toBeTruthy();
   });
 
   it('handles null currentlyPlaying', () => {

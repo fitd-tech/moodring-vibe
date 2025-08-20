@@ -73,8 +73,7 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>SAVED TRACKS</Text>
-      {isResetting && (
+      {isResetting && tracks.length === 0 && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={theme.colors.text.primary} />
           <Text style={styles.loadingText}>Loading...</Text>
@@ -82,6 +81,13 @@ export const SavedTracksList: React.FC<SavedTracksListProps> = ({
       )}
       {tracks.length > 0 && (
         <>
+          <Text style={styles.title}>SAVED TRACKS</Text>
+          {isResetting && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={theme.colors.text.primary} />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          )}
           {displayedTracks.map((track, index) => (
             <TrackCard
               key={`${track.song_id || track.name}-${track.added_at}-${index}`}
