@@ -7,7 +7,7 @@ import './styles/globals.css';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useSpotifyActivity } from './src/hooks/useSpotifyActivity';
 import { authService } from './src/services/authService';
-import { LoginScreen, Dashboard, LoadingSpinner } from './src/components';
+import { LoginScreen, Dashboard, LoadingSpinner, CreatePlaylistPage } from './src/components';
 import { TagsDashboard } from './src/components/dashboard/TagsDashboard';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -67,13 +67,13 @@ const AppContent: React.FC = () => {
     loadMoreSavedAlbums,
     resetToFreshState,
   } = useSpotifyActivity();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'tags'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'tags' | 'create-playlist'>('dashboard');
 
   const redirectUri = 'moodring://auth';
 
   // Navigation handlers
   const handleCreatePlaylist = () => {
-    // TODO: Implement create playlist functionality
+    setCurrentView('create-playlist');
   };
 
   const handleBrowseTags = () => {
@@ -88,6 +88,17 @@ const AppContent: React.FC = () => {
 
   const handleSettings = () => {
     // TODO: Implement settings functionality
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('dashboard');
+  };
+
+  const handlePlaylistCreated = (playlistName: string, entityTypes: string[], selectedTags: string[]) => {
+    // TODO: Implement actual playlist creation logic
+    console.log('Creating playlist:', { playlistName, entityTypes, selectedTags });
+    // For now, just navigate back to dashboard
+    setCurrentView('dashboard');
   };
 
 
@@ -152,6 +163,15 @@ const AppContent: React.FC = () => {
           onCreatePlaylist={handleCreatePlaylist}
           onHome={handleHome}
           onSettings={handleSettings}
+        />
+      );
+    }
+
+    if (currentView === 'create-playlist') {
+      return (
+        <CreatePlaylistPage
+          onBack={handleBackToHome}
+          onCreatePlaylist={handlePlaylistCreated}
         />
       );
     }
