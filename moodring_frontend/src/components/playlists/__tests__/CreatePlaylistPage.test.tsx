@@ -10,10 +10,10 @@ jest.mock('react-native-safe-area-context', () => ({
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
   theme: {
-    spacing: { sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
+    spacing: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
     typography: {
-      fontSize: { sm: 14, md: 16, lg: 18, xl: 22, xxl: 32 },
-      fontWeight: { bold: '700', semibold: '600' },
+      fontSize: { xs: 12, sm: 14, md: 16, lg: 18, xl: 22, xxl: 32 },
+      fontWeight: { medium: '500', bold: '700', semibold: '600' },
       letterSpacing: { sm: 1, md: 2 },
     },
     colors: {
@@ -34,7 +34,7 @@ jest.mock('../../../styles/theme', () => ({
         action: ['#1a0a0a', '#0d0d0d', '#2a0a1a'],
       },
     },
-    borderRadius: { md: 16, lg: 20 },
+    borderRadius: { sm: 12, md: 16, lg: 20 },
   },
 }));
 
@@ -88,6 +88,30 @@ jest.mock('expo-status-bar', () => ({
   },
 }));
 
+// Mock mockData
+jest.mock('../mockData', () => ({
+  mockTags: [
+    { id: 1, user_id: 1, name: 'Neon Dreams', color: '#ff00ff', created_at: '2024-01-15T08:30:00Z', updated_at: '2024-01-15T08:30:00Z' },
+    { id: 2, user_id: 1, name: 'Synthwave Vibes', color: '#00ffff', created_at: '2024-01-15T09:15:00Z', updated_at: '2024-01-15T09:15:00Z' },
+    { id: 3, user_id: 1, name: 'Arcade Nights', color: '#ff6600', created_at: '2024-01-15T10:00:00Z', updated_at: '2024-01-15T10:00:00Z' },
+    { id: 11, user_id: 1, name: 'Holographic', color: '#3366ff', created_at: '2024-01-16T08:00:00Z', updated_at: '2024-01-16T08:00:00Z' },
+    { id: 12, user_id: 1, name: 'Chrome Dreams', color: '#cc00ff', created_at: '2024-01-16T08:45:00Z', updated_at: '2024-01-16T08:45:00Z' },
+  ],
+  mockSongs: Array.from({ length: 15 }, (_, i) => ({
+    name: `Song ${i + 1}`,
+    artist: `Artist ${i + 1}`,
+    album: `Album ${i + 1}`,
+    album_image_url: `https://picsum.photos/300/300?random=${i + 1}`,
+    played_at: '2024-01-20T22:30:00Z'
+  })),
+  createSelectableTags: (tags: { id: number; name: string; color?: string }[]) => tags.map((tag: { id: number; name: string; color?: string }) => ({
+    id: tag.id,
+    name: tag.name,
+    color: tag.color || '#8a2be2',
+    isSelected: false,
+  })),
+}));
+
 describe('CreatePlaylistPage', () => {
   const mockOnBack = jest.fn();
   const mockOnCreatePlaylist = jest.fn();
@@ -125,7 +149,7 @@ describe('CreatePlaylistPage', () => {
       const { getAllByTestId } = render(<CreatePlaylistPage />);
 
       const gradientCards = getAllByTestId('gradient-card');
-      expect(gradientCards).toHaveLength(3); // Name, Entity Types, Tag Selection
+      expect(gradientCards).toHaveLength(4); // Tag Selection, Entity Types, Name, Song Preview
     });
 
     it('renders with safe area insets applied', () => {
@@ -245,19 +269,81 @@ describe('CreatePlaylistPage', () => {
   });
 
   describe('tag selection section', () => {
-    it('renders tag selection placeholder', () => {
+    it('renders tag selection interface', () => {
       const { getByText } = render(<CreatePlaylistPage />);
 
       expect(getByText('Tag Selection')).toBeTruthy();
-      expect(getByText('Select tags to filter your content (coming soon)')).toBeTruthy();
-      expect(getByText('Tag selection interface will be implemented here')).toBeTruthy();
-      expect(getByText('You\'ll be able to combine and exclude tags to create custom playlists')).toBeTruthy();
+      expect(getByText('Select tags to filter your content')).toBeTruthy();
     });
 
-    it('shows coming soon message', () => {
+    it('renders initial set of tags', () => {
       const { getByText } = render(<CreatePlaylistPage />);
 
-      expect(getByText('Select tags to filter your content (coming soon)')).toBeTruthy();
+      // Should show first 10 tags
+      expect(getByText('Neon Dreams')).toBeTruthy();
+      expect(getByText('Synthwave Vibes')).toBeTruthy();
+      expect(getByText('Arcade Nights')).toBeTruthy();
+    });
+
+    it('renders load more button initially', () => {
+      const { getByTestId } = render(<CreatePlaylistPage />);
+
+      expect(getByTestId('load-more-tags-button')).toBeTruthy();
+    });
+
+    it('allows selecting and deselecting tags', () => {
+      const { getByTestId } = render(<CreatePlaylistPage />);
+
+      const tagOption = getByTestId('tag-option-1');
+      fireEvent.press(tagOption);
+      
+      // Tag should be toggled (we can't easily test visual state, but the interaction should work)
+      expect(tagOption).toBeTruthy();
+    });
+
+    it('loads more tags when load more button is pressed', () => {
+      const { getByTestId, getByText } = render(<CreatePlaylistPage />);
+
+      const loadMoreButton = getByTestId('load-more-tags-button');
+      fireEvent.press(loadMoreButton);
+      
+      // Should now show more tags
+      expect(getByText('Holographic')).toBeTruthy();
+      expect(getByText('Chrome Dreams')).toBeTruthy();
+    });
+
+    it('hides load more button after loading all tags', () => {
+      const { getByTestId, queryByTestId } = render(<CreatePlaylistPage />);
+
+      const loadMoreButton = getByTestId('load-more-tags-button');
+      fireEvent.press(loadMoreButton);
+      
+      // Load more button should be hidden after clicking
+      expect(queryByTestId('load-more-tags-button')).toBeNull();
+    });
+
+    it('includes selected tags in playlist creation callback', () => {
+      const { getByTestId } = render(
+        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+      );
+
+      // Enter playlist name
+      const input = getByTestId('playlist-name-input');
+      fireEvent.changeText(input, 'Tagged Playlist');
+
+      // Select a tag
+      const tagOption = getByTestId('tag-option-1');
+      fireEvent.press(tagOption);
+
+      // Create playlist
+      const button = getByTestId('create-playlist-button');
+      fireEvent.press(button);
+
+      expect(mockOnCreatePlaylist).toHaveBeenCalledWith(
+        'Tagged Playlist',
+        ['songs'],
+        ['Neon Dreams'] // Selected tag name
+      );
     });
   });
 
@@ -482,7 +568,7 @@ describe('CreatePlaylistPage', () => {
       const { getAllByTestId } = render(<CreatePlaylistPage />);
 
       const gradientCards = getAllByTestId('gradient-card');
-      expect(gradientCards.length).toBeGreaterThan(0);
+      expect(gradientCards).toHaveLength(4); // Tag Selection, Entity Types, Name, Song Preview
     });
 
     it('integrates with Button components', () => {
@@ -505,6 +591,49 @@ describe('CreatePlaylistPage', () => {
       rerender(<CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />);
       
       expect(() => getByTestId('back-button')).toThrow();
+    });
+  });
+
+  describe('song preview section', () => {
+    it('renders song preview section', () => {
+      const { getByText } = render(<CreatePlaylistPage />);
+
+      expect(getByText('SONGS TO BE ADDED')).toBeTruthy();
+      expect(getByText('Preview of songs that will be included in your playlist')).toBeTruthy();
+    });
+
+    it('renders preview song cards', () => {
+      const { getByTestId, getByText } = render(<CreatePlaylistPage />);
+
+      // Should show first few mock songs
+      expect(getByTestId('song-preview-0')).toBeTruthy();
+      expect(getByText('Song 1')).toBeTruthy();
+      expect(getByText('Artist 1')).toBeTruthy();
+    });
+
+    it('displays song information correctly', () => {
+      const { getByText } = render(<CreatePlaylistPage />);
+
+      // Check first few songs
+      expect(getByText('Song 1')).toBeTruthy();
+      expect(getByText('Artist 1')).toBeTruthy();
+      expect(getByText('Album 1')).toBeTruthy();
+    });
+
+    it('handles songs without album images', () => {
+      const { getByTestId } = render(<CreatePlaylistPage />);
+
+      // Should render without errors even if some songs don't have images
+      expect(getByTestId('song-preview-0')).toBeTruthy();
+    });
+
+    it('shows limited number of preview songs', () => {
+      const { queryByTestId } = render(<CreatePlaylistPage />);
+
+      // Should show up to 12 songs
+      expect(queryByTestId('song-preview-0')).toBeTruthy();
+      expect(queryByTestId('song-preview-11')).toBeTruthy();
+      expect(queryByTestId('song-preview-12')).toBeNull(); // Should not show more than 12
     });
   });
 

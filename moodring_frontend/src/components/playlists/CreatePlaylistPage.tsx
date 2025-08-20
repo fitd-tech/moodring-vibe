@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import { theme } from '../../styles/theme';
 import { Button } from '../shared/Button';
 import { GradientCard } from '../shared/GradientCard';
 import { ClassNameProps } from '../../../nativewind-env';
+import { mockTags, mockSongs, createSelectableTags, TagSelectionState } from './mockData';
 
 interface EntityType {
   type: 'songs' | 'albums' | 'playlists';
@@ -38,7 +40,11 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     { type: 'albums', label: 'Albums', enabled: false },
     { type: 'playlists', label: 'Playlists', enabled: false },
   ]);
-  const [selectedTags] = useState<string[]>([]);
+  const [selectableTags, setSelectableTags] = useState<TagSelectionState[]>(
+    createSelectableTags(mockTags.slice(0, 10))
+  );
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [displayedSongs] = useState(mockSongs.slice(0, 12));
 
   const handleEntityTypeToggle = (type: 'songs' | 'albums' | 'playlists') => {
     setEntityTypes(prev =>
@@ -50,13 +56,30 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     );
   };
 
+  const handleTagToggle = (tagId: number) => {
+    setSelectableTags(prev => prev.map(tag => 
+      tag.id === tagId ? { ...tag, isSelected: !tag.isSelected } : tag
+    ));
+  };
+
+  const handleLoadMoreTags = () => {
+    if (!showAllTags) {
+      setSelectableTags(createSelectableTags(mockTags.slice(0, 30)));
+      setShowAllTags(true);
+    }
+  };
+
   const handleCreatePlaylist = () => {
     if (playlistName.trim() && onCreatePlaylist) {
       const enabledEntityTypes = entityTypes
         .filter(entity => entity.enabled)
         .map(entity => entity.type);
       
-      onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTags);
+      const selectedTagNames = selectableTags
+        .filter(tag => tag.isSelected)
+        .map(tag => tag.name);
+      
+      onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
     }
   };
 
@@ -74,25 +97,67 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         </View>
 
         <View style={styles.content}>
-          {/* Playlist Name Section */}
+          {/* Tag Selection Section - Now First */}
           <GradientCard
-            colors={theme.colors.gradients.track}
+            colors={theme.colors.gradients.action}
             style={styles.section}
           >
-            <Text style={styles.sectionTitle}>Playlist Name</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter playlist name..."
-              placeholderTextColor={theme.colors.text.muted}
-              value={playlistName}
-              onChangeText={setPlaylistName}
-              maxLength={100}
-              testID="playlist-name-input"
-              className="bg-transparent text-white placeholder-gray-400 border-2 border-gray-600 rounded-lg p-4 text-lg"
-            />
+            <Text style={styles.sectionTitle}>Tag Selection</Text>
+            <Text style={styles.sectionDescription}>
+              Select tags to filter your content
+            </Text>
+            <View style={styles.tagGrid}>
+              {selectableTags.map(tag => (
+                <TouchableOpacity
+                  key={tag.id}
+                  style={[
+                    styles.tagOption,
+                    tag.isSelected && styles.tagOptionSelected,
+                  ]}
+                  onPress={() => handleTagToggle(tag.id)}
+                  testID={`tag-option-${tag.id}`}
+                  className={`border-2 rounded-lg px-4 py-3 m-1 ${
+                    tag.isSelected
+                      ? 'border-purple-400 bg-purple-400/30'
+                      : 'border-gray-500 bg-transparent'
+                  }`}
+                >
+                  <View style={styles.tagContent}>
+                    <View 
+                      style={[
+                        styles.tagColorIndicator, 
+                        { backgroundColor: tag.color }
+                      ]} 
+                    />
+                    <Text
+                      style={[
+                        styles.tagLabel,
+                        tag.isSelected && styles.tagLabelSelected,
+                      ]}
+                      className={`text-sm font-medium ${
+                        tag.isSelected ? 'text-purple-200' : 'text-gray-300'
+                      }`}
+                    >
+                      {tag.name}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {!showAllTags && (
+              <Button
+                title="LOAD 20 MORE"
+                onPress={handleLoadMoreTags}
+                variant="outline"
+                style={styles.loadMoreButton}
+                testID="load-more-tags-button"
+                className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
+                textClassName="text-purple-300 text-md font-semibold"
+              />
+            )}
           </GradientCard>
 
-          {/* Entity Type Selection Section */}
+          {/* Entity Type Selection Section - Now Second */}
           <GradientCard
             colors={theme.colors.gradients.features}
             style={styles.section}
@@ -133,23 +198,22 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             </View>
           </GradientCard>
 
-          {/* Tag Selection Section */}
+          {/* Playlist Name Section - Now Third */}
           <GradientCard
-            colors={theme.colors.gradients.action}
+            colors={theme.colors.gradients.track}
             style={styles.section}
           >
-            <Text style={styles.sectionTitle}>Tag Selection</Text>
-            <Text style={styles.sectionDescription}>
-              Select tags to filter your content (coming soon)
-            </Text>
-            <View style={styles.tagSelectionPlaceholder}>
-              <Text style={styles.placeholderText}>
-                Tag selection interface will be implemented here
-              </Text>
-              <Text style={styles.placeholderSubtext}>
-                You'll be able to combine and exclude tags to create custom playlists
-              </Text>
-            </View>
+            <Text style={styles.sectionTitle}>Playlist Name</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter playlist name..."
+              placeholderTextColor={theme.colors.text.muted}
+              value={playlistName}
+              onChangeText={setPlaylistName}
+              maxLength={100}
+              testID="playlist-name-input"
+              className="bg-transparent text-white placeholder-gray-400 border-2 border-gray-600 rounded-lg p-4 text-lg"
+            />
           </GradientCard>
 
           {/* Create Button */}
@@ -180,6 +244,38 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               />
             )}
           </View>
+
+          {/* Song Preview Section */}
+          <GradientCard
+            colors={theme.colors.gradients.track}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>SONGS TO BE ADDED</Text>
+            <Text style={styles.sectionDescription}>
+              Preview of songs that will be included in your playlist
+            </Text>
+            <View style={styles.songPreviewContainer}>
+              {displayedSongs.map((song, index) => (
+                <View key={index} style={styles.songPreviewCard} testID={`song-preview-${index}`}>
+                  <View style={styles.songAlbumArt}>
+                    {song.album_image_url ? (
+                      <Image 
+                        source={{ uri: song.album_image_url }} 
+                        style={styles.songAlbumImage} 
+                      />
+                    ) : (
+                      <View style={styles.songAlbumPlaceholder} />
+                    )}
+                  </View>
+                  <View style={styles.songInfo}>
+                    <Text style={styles.songTitle} numberOfLines={1}>{song.name}</Text>
+                    <Text style={styles.songArtist} numberOfLines={1}>{song.artist}</Text>
+                    <Text style={styles.songAlbum} numberOfLines={1}>{song.album}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </GradientCard>
         </View>
       </ScrollView>
 
@@ -296,5 +392,93 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginTop: theme.spacing.lg,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -theme.spacing.xs,
+  },
+  tagOption: {
+    borderWidth: 2,
+    borderColor: theme.colors.ui.border,
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    margin: theme.spacing.xs,
+    backgroundColor: 'transparent',
+  },
+  tagOptionSelected: {
+    borderColor: theme.colors.accent.purple,
+    backgroundColor: 'rgba(138, 43, 226, 0.3)',
+  },
+  tagContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tagColorIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: theme.spacing.sm,
+  },
+  tagLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.secondary,
+  },
+  tagLabelSelected: {
+    color: theme.colors.accent.purple,
+  },
+  loadMoreButton: {
+    alignSelf: 'center',
+    marginTop: theme.spacing.lg,
+  },
+  songPreviewContainer: {
+    gap: theme.spacing.md,
+  },
+  songPreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.ui.overlay,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.ui.border,
+  },
+  songAlbumArt: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.sm,
+    marginRight: theme.spacing.md,
+    overflow: 'hidden',
+  },
+  songAlbumImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.borderRadius.sm,
+  },
+  songAlbumPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: theme.colors.ui.overlay,
+    borderRadius: theme.borderRadius.sm,
+  },
+  songInfo: {
+    flex: 1,
+  },
+  songTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: 2,
+  },
+  songArtist: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: 2,
+  },
+  songAlbum: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.muted,
   },
 });
