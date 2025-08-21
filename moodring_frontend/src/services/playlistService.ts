@@ -81,6 +81,130 @@ export class PlaylistService {
     }
   }
 
+  // Helper method to fetch ALL saved tracks from Spotify with pagination
+  private async getAllSavedTracks(spotifyToken: string): Promise<Track[]> {
+    try {
+      const allTracks: Track[] = [];
+      let offset = 0;
+      const limit = 50; // Spotify API limit per request
+      let hasMore = true;
+
+      while (hasMore) {
+        const tracks = offset === 0 
+          ? await spotifyApi.getSavedTracks(spotifyToken, limit)
+          : await spotifyApi.getMoreSavedTracks(spotifyToken, offset);
+        
+        if (!tracks || tracks.length === 0) {
+          hasMore = false;
+        } else {
+          allTracks.push(...tracks.map(savedTrack => ({
+            name: savedTrack.name,
+            artist: savedTrack.artist,
+            album: savedTrack.album,
+            album_image_url: savedTrack.album_image_url,
+            played_at: savedTrack.added_at, // Use added_at as played_at for consistency
+          })));
+          
+          offset += limit;
+          
+          // Stop if we got fewer tracks than requested (last page)
+          if (tracks.length < limit) {
+            hasMore = false;
+          }
+        }
+      }
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Fetched ${allTracks.length} total saved tracks from Spotify`);
+      }
+
+      return allTracks;
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[PlaylistService] Error fetching all saved tracks:', error);
+      }
+      throw error;
+    }
+  }
+
+  // Helper method to fetch ALL saved albums from Spotify with pagination
+  private async getAllSavedAlbums(spotifyToken: string): Promise<SavedAlbum[]> {
+    try {
+      const allAlbums: SavedAlbum[] = [];
+      let offset = 0;
+      const limit = 20; // Spotify API limit per request for albums
+      let hasMore = true;
+
+      while (hasMore) {
+        const albums = offset === 0 
+          ? await spotifyApi.getSavedAlbums(spotifyToken, limit)
+          : await spotifyApi.getMoreSavedAlbums(spotifyToken, offset);
+        
+        if (!albums || albums.length === 0) {
+          hasMore = false;
+        } else {
+          allAlbums.push(...albums);
+          offset += limit;
+          
+          // Stop if we got fewer albums than requested (last page)
+          if (albums.length < limit) {
+            hasMore = false;
+          }
+        }
+      }
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Fetched ${allAlbums.length} total saved albums from Spotify`);
+      }
+
+      return allAlbums;
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[PlaylistService] Error fetching all saved albums:', error);
+      }
+      throw error;
+    }
+  }
+
+  // Helper method to fetch ALL saved playlists from Spotify with pagination
+  private async getAllSavedPlaylists(spotifyToken: string): Promise<SavedPlaylist[]> {
+    try {
+      const allPlaylists: SavedPlaylist[] = [];
+      let offset = 0;
+      const limit = 20; // Spotify API limit per request for playlists
+      let hasMore = true;
+
+      while (hasMore) {
+        const playlists = offset === 0 
+          ? await spotifyApi.getSavedPlaylists(spotifyToken, limit)
+          : await spotifyApi.getMoreSavedPlaylists(spotifyToken, offset);
+        
+        if (!playlists || playlists.length === 0) {
+          hasMore = false;
+        } else {
+          allPlaylists.push(...playlists);
+          offset += limit;
+          
+          // Stop if we got fewer playlists than requested (last page)
+          if (playlists.length < limit) {
+            hasMore = false;
+          }
+        }
+      }
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Fetched ${allPlaylists.length} total saved playlists from Spotify`);
+      }
+
+      return allPlaylists;
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[PlaylistService] Error fetching all saved playlists:', error);
+      }
+      throw error;
+    }
+  }
+
   // Get songs with specific tags for filtering
   async getSongsWithTags(
     userId: number,
@@ -104,16 +228,26 @@ export class PlaylistService {
         return [];
       }
 
-      // We need to get track details from Spotify for these song IDs
-      // Since we store song IDs in a custom format, we need to fetch user's library
-      // and match against our stored IDs
-      const savedTracks = await spotifyApi.getSavedTracks(spotifyToken, 50);
+      if (__DEV__) {
+        console.log(`[PlaylistService] Looking for ${allSongIds.length} tagged song IDs:`, allSongIds);
+      }
+
+      // Fetch ALL saved tracks from Spotify (not just first 50)
+      const allSavedTracks = await this.getAllSavedTracks(spotifyToken);
       
+      if (__DEV__) {
+        console.log(`[PlaylistService] Searching through ${allSavedTracks.length} total saved tracks`);
+      }
+
       // Filter tracks that match our tagged song IDs
-      const filteredTracks = savedTracks.filter(track => {
+      const filteredTracks = allSavedTracks.filter(track => {
         const generatedId = taggingService.generateSongId(track.name, track.artist);
         return allSongIds.includes(generatedId);
       });
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Found ${filteredTracks.length} matching tracks for selected tags`);
+      }
 
       return filteredTracks;
     } catch (error) {
@@ -147,13 +281,25 @@ export class PlaylistService {
         return [];
       }
 
-      // Get user's saved albums and filter
-      const savedAlbums = await spotifyApi.getSavedAlbums(spotifyToken, 50);
+      if (__DEV__) {
+        console.log(`[PlaylistService] Looking for ${allAlbumIds.length} tagged album IDs`);
+      }
+
+      // Fetch ALL saved albums from Spotify (not just first 20)
+      const allSavedAlbums = await this.getAllSavedAlbums(spotifyToken);
       
-      const filteredAlbums = savedAlbums.filter(album => {
+      if (__DEV__) {
+        console.log(`[PlaylistService] Searching through ${allSavedAlbums.length} total saved albums`);
+      }
+      
+      const filteredAlbums = allSavedAlbums.filter(album => {
         const generatedId = taggingService.generateAlbumId(album.name, album.album_id);
         return allAlbumIds.includes(generatedId);
       });
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Found ${filteredAlbums.length} matching albums for selected tags`);
+      }
 
       return filteredAlbums;
     } catch (error) {
@@ -187,13 +333,25 @@ export class PlaylistService {
         return [];
       }
 
-      // Get user's saved playlists and filter
-      const savedPlaylists = await spotifyApi.getSavedPlaylists(spotifyToken, 50);
+      if (__DEV__) {
+        console.log(`[PlaylistService] Looking for ${allPlaylistIds.length} tagged playlist IDs`);
+      }
+
+      // Fetch ALL saved playlists from Spotify (not just first 20)
+      const allSavedPlaylists = await this.getAllSavedPlaylists(spotifyToken);
       
-      const filteredPlaylists = savedPlaylists.filter(playlist => {
+      if (__DEV__) {
+        console.log(`[PlaylistService] Searching through ${allSavedPlaylists.length} total saved playlists`);
+      }
+      
+      const filteredPlaylists = allSavedPlaylists.filter(playlist => {
         const generatedId = taggingService.generatePlaylistId(playlist.name, playlist.playlist_id);
         return allPlaylistIds.includes(generatedId);
       });
+
+      if (__DEV__) {
+        console.log(`[PlaylistService] Found ${filteredPlaylists.length} matching playlists for selected tags`);
+      }
 
       return filteredPlaylists;
     } catch (error) {

@@ -71,6 +71,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   ]);
   const [selectableTags, setSelectableTags] = useState<TagSelectionState[]>([]);
   const [filteredSongs, setFilteredSongs] = useState<Track[]>([]);
+  const [allFilteredSongs, setAllFilteredSongs] = useState<Track[]>([]);
+  const [hasMoreSongs, setHasMoreSongs] = useState(false);
+  const [currentSongOffset, setCurrentSongOffset] = useState(0);
   const [hasMoreTags, setHasMoreTags] = useState(false);
   const [totalTags, setTotalTags] = useState(0);
   const [currentTagOffset, setCurrentTagOffset] = useState(0);
@@ -166,6 +169,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
 
     if (selectedTagIds.length === 0 || enabledContentTypes.length === 0) {
       setFilteredSongs([]);
+      setAllFilteredSongs([]);
+      setHasMoreSongs(false);
+      setCurrentSongOffset(0);
       return;
     }
 
@@ -185,13 +191,20 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         spotifyToken
       );
       
-      setFilteredSongs(songs.slice(0, 12)); // Limit preview to 12 songs
+      // Store all songs and show first 20
+      setAllFilteredSongs(songs);
+      setFilteredSongs(songs.slice(0, 20));
+      setHasMoreSongs(songs.length > 20);
+      setCurrentSongOffset(20);
     } catch (error) {
       if (__DEV__) {
         console.error('[CreatePlaylistPage] Error filtering songs:', error);
       }
       setErrors(prev => ({ ...prev, songs: 'Failed to load songs. Please try again.' }));
       setFilteredSongs([]);
+      setAllFilteredSongs([]);
+      setHasMoreSongs(false);
+      setCurrentSongOffset(0);
     } finally {
       setLoading(prev => ({ ...prev, songs: false }));
     }
@@ -209,8 +222,21 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     );
   };
 
+  const loadMoreSongs = () => {
+    if (!hasMoreSongs || allFilteredSongs.length === 0) return;
+
+    const nextBatch = allFilteredSongs.slice(currentSongOffset, currentSongOffset + 20);
+    setFilteredSongs(prev => [...prev, ...nextBatch]);
+    setCurrentSongOffset(prev => prev + 20);
+    setHasMoreSongs(currentSongOffset + 20 < allFilteredSongs.length);
+  };
+
   const handleLoadMoreTags = () => {
     loadMoreTags();
+  };
+
+  const handleLoadMoreSongs = () => {
+    loadMoreSongs();
   };
 
   const handleCreatePlaylist = async () => {
@@ -487,9 +513,21 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                   </View>
                 ))}
                 
+                {hasMoreSongs && (
+                  <Button
+                    title="LOAD 20 MORE"
+                    onPress={handleLoadMoreSongs}
+                    variant="outline"
+                    style={styles.loadMoreButton}
+                    testID="load-more-songs-button"
+                    className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
+                    textClassName="text-purple-300 text-md font-semibold"
+                  />
+                )}
+                
                 {filteredSongs.length > 0 && (
                   <Text style={styles.songCountText}>
-                    Showing first {filteredSongs.length} songs
+                    Showing {filteredSongs.length} of {allFilteredSongs.length} songs
                   </Text>
                 )}
               </View>
