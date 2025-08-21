@@ -37,7 +37,6 @@ mod tests {
     use serde_json::json;
     use std::env;
 
-
     #[test]
     fn test_spotify_auth_endpoint_success() {
         use std::env;
@@ -119,7 +118,7 @@ mod tests {
         // Store original values to restore later
         let original_client_id = env::var("SPOTIFY_CLIENT_ID").ok();
         let original_client_secret = env::var("SPOTIFY_CLIENT_SECRET").ok();
-        
+
         // Remove environment variables
         env::remove_var("SPOTIFY_CLIENT_ID");
         env::remove_var("SPOTIFY_CLIENT_SECRET");
@@ -142,7 +141,7 @@ mod tests {
         // Test request structure is still valid
         assert!(auth_request["code"].is_string());
         assert!(auth_request["code_verifier"].is_string());
-        
+
         // Restore original environment variables if they existed
         if let Some(id) = original_client_id {
             env::set_var("SPOTIFY_CLIENT_ID", id);

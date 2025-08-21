@@ -230,3 +230,37 @@ export interface AnimatedValues {
 
 // Union type for tracks that can be displayed in TracksList
 export type Track = RecentTrack | TopTrack | SavedTrack;
+
+// Playlist generation and filtering interfaces
+export interface FilteredContent {
+  songs: Track[];
+  albums: SavedAlbum[];
+  playlists: SavedPlaylist[];
+}
+
+export interface PlaylistGenerationRequest {
+  name: string;
+  userId: number;
+  selectedTagIds: number[];
+  contentTypes: ('songs' | 'albums' | 'playlists')[];
+}
+
+export interface PlaylistGenerationResponse {
+  playlistId: string;
+  name: string;
+  trackCount: number;
+  tracks: Track[];
+}
+
+export interface TagPaginationResponse {
+  tags: Tag[];
+  hasMore: boolean;
+  total: number;
+}
+
+export interface TagSelectionState {
+  id: number;
+  name: string;
+  color: string;
+  isSelected: boolean;
+}

@@ -271,7 +271,6 @@ mod tests {
     use rocket::http::{ContentType, Status};
     use serde_json::json;
 
-
     #[test]
     fn test_get_user_tags_endpoint_structure() {
         // Test endpoint parameter structure and validation

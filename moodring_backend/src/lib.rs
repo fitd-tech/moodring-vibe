@@ -637,7 +637,7 @@ mod tests {
         // Store original values to restore later
         let original_client_id = env::var("SPOTIFY_CLIENT_ID").ok();
         let original_client_secret = env::var("SPOTIFY_CLIENT_SECRET").ok();
-        
+
         // Remove variables for this test
         env::remove_var("SPOTIFY_CLIENT_ID");
         env::remove_var("SPOTIFY_CLIENT_SECRET");
@@ -658,7 +658,7 @@ mod tests {
             client_secret.is_err(),
             "SPOTIFY_CLIENT_SECRET should not be set for this test"
         );
-        
+
         // Restore original environment variables if they existed
         if let Some(id) = original_client_id {
             env::set_var("SPOTIFY_CLIENT_ID", id);

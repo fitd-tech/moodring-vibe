@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../styles/theme';
 import { Button } from '../shared/Button';
 import { GradientCard } from '../shared/GradientCard';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ClassNameProps } from '../../../nativewind-env';
-import { mockTags, mockSongs, createSelectableTags, TagSelectionState } from './mockData';
+import { TagSelectionState, Track } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { playlistService } from '../../services/playlistService';
 
 interface EntityType {
   type: 'songs' | 'albums' | 'playlists';
   label: string;
   enabled: boolean;
+}
+
+interface LoadingStates {
+  tags: boolean;
+  songs: boolean;
+  creating: boolean;
+}
+
+interface ErrorStates {
+  tags: string | null;
+  songs: string | null;
+  creating: string | null;
 }
 
 interface CreatePlaylistPageProps extends ClassNameProps {
@@ -37,6 +52,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   className,
 }) => {
   const insets = useSafeAreaInsets();
+  const { user, authToken } = useAuth();
 
   const [playlistName, setPlaylistName] = useState('');
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
@@ -44,11 +60,133 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     { type: 'albums', label: 'Albums', enabled: false },
     { type: 'playlists', label: 'Playlists', enabled: false },
   ]);
-  const [selectableTags, setSelectableTags] = useState<TagSelectionState[]>(
-    createSelectableTags(mockTags.slice(0, 10))
-  );
-  const [showAllTags, setShowAllTags] = useState(false);
-  const [displayedSongs] = useState(mockSongs.slice(0, 12));
+  const [selectableTags, setSelectableTags] = useState<TagSelectionState[]>([]);
+  const [filteredSongs, setFilteredSongs] = useState<Track[]>([]);
+  const [hasMoreTags, setHasMoreTags] = useState(false);
+  const [totalTags, setTotalTags] = useState(0);
+  const [currentTagOffset, setCurrentTagOffset] = useState(0);
+  const [loading, setLoading] = useState<LoadingStates>({
+    tags: true,
+    songs: false,
+    creating: false,
+  });
+  const [errors, setErrors] = useState<ErrorStates>({
+    tags: null,
+    songs: null,
+    creating: null,
+  });
+
+  // Load initial tags
+  useEffect(() => {
+    loadInitialTags();
+  }, [user]);
+
+  // Update filtered songs when tags or entity types change
+  useEffect(() => {
+    updateFilteredSongs();
+  }, [selectableTags, entityTypes]);
+
+  const loadInitialTags = async () => {
+    if (!user) return;
+
+    setLoading(prev => ({ ...prev, tags: true }));
+    setErrors(prev => ({ ...prev, tags: null }));
+
+    try {
+      const response = await playlistService.getUserTagsPaginated(user.id, 10, 0);
+      const tagSelectionStates = response.tags.map(tag => ({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color || '#8a2be2',
+        isSelected: false,
+      }));
+      
+      setSelectableTags(tagSelectionStates);
+      setHasMoreTags(response.hasMore);
+      setTotalTags(response.total);
+      setCurrentTagOffset(10);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[CreatePlaylistPage] Error loading tags:', error);
+      }
+      setErrors(prev => ({ ...prev, tags: 'Failed to load tags. Please try again.' }));
+    } finally {
+      setLoading(prev => ({ ...prev, tags: false }));
+    }
+  };
+
+  const loadMoreTags = async () => {
+    if (!user || !hasMoreTags) return;
+
+    setLoading(prev => ({ ...prev, tags: true }));
+    setErrors(prev => ({ ...prev, tags: null }));
+
+    try {
+      const response = await playlistService.getUserTagsPaginated(
+        user.id,
+        20,
+        currentTagOffset
+      );
+      const newTagSelectionStates = response.tags.map(tag => ({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color || '#8a2be2',
+        isSelected: false,
+      }));
+      
+      setSelectableTags(prev => [...prev, ...newTagSelectionStates]);
+      setHasMoreTags(response.hasMore);
+      setCurrentTagOffset(prev => prev + 20);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[CreatePlaylistPage] Error loading more tags:', error);
+      }
+      setErrors(prev => ({ ...prev, tags: 'Failed to load more tags. Please try again.' }));
+    } finally {
+      setLoading(prev => ({ ...prev, tags: false }));
+    }
+  };
+
+  const updateFilteredSongs = async () => {
+    if (!user || !authToken) return;
+
+    const selectedTagIds = selectableTags.filter(tag => tag.isSelected).map(tag => tag.id);
+    const enabledContentTypes = entityTypes
+      .filter(entity => entity.enabled)
+      .map(entity => entity.type);
+
+    if (selectedTagIds.length === 0 || enabledContentTypes.length === 0) {
+      setFilteredSongs([]);
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, songs: true }));
+    setErrors(prev => ({ ...prev, songs: null }));
+
+    try {
+      const spotifyToken = user.spotify_access_token;
+      if (!spotifyToken) {
+        throw new Error('Spotify token not available');
+      }
+
+      const songs = await playlistService.getFilteredContent(
+        user.id,
+        selectedTagIds,
+        enabledContentTypes,
+        spotifyToken
+      );
+      
+      setFilteredSongs(songs.slice(0, 12)); // Limit preview to 12 songs
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[CreatePlaylistPage] Error filtering songs:', error);
+      }
+      setErrors(prev => ({ ...prev, songs: 'Failed to load songs. Please try again.' }));
+      setFilteredSongs([]);
+    } finally {
+      setLoading(prev => ({ ...prev, songs: false }));
+    }
+  };
 
   const handleEntityTypeToggle = (type: 'songs' | 'albums' | 'playlists') => {
     setEntityTypes(prev =>
@@ -63,25 +201,59 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   };
 
   const handleLoadMoreTags = () => {
-    if (!showAllTags) {
-      setSelectableTags(createSelectableTags(mockTags.slice(0, 30)));
-      setShowAllTags(true);
+    loadMoreTags();
+  };
+
+  const handleCreatePlaylist = async () => {
+    if (!playlistName.trim() || !user || !authToken) return;
+
+    const selectedTagIds = selectableTags.filter(tag => tag.isSelected).map(tag => tag.id);
+    const enabledEntityTypes = entityTypes
+      .filter(entity => entity.enabled)
+      .map(entity => entity.type);
+
+    if (selectedTagIds.length === 0 || enabledEntityTypes.length === 0) return;
+
+    setLoading(prev => ({ ...prev, creating: true }));
+    setErrors(prev => ({ ...prev, creating: null }));
+
+    try {
+      const spotifyToken = user.spotify_access_token;
+      if (!spotifyToken) {
+        throw new Error('Spotify token not available');
+      }
+
+      const playlistRequest = {
+        name: playlistName.trim(),
+        userId: user.id,
+        selectedTagIds,
+        contentTypes: enabledEntityTypes,
+      };
+
+      const result = await playlistService.createPlaylistOnSpotify(playlistRequest, spotifyToken);
+      
+      if (onCreatePlaylist) {
+        const selectedTagNames = selectableTags.filter(tag => tag.isSelected).map(tag => tag.name);
+        onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
+      }
+
+      if (__DEV__) {
+        console.log('[CreatePlaylistPage] Playlist created:', result);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[CreatePlaylistPage] Error creating playlist:', error);
+      }
+      setErrors(prev => ({ ...prev, creating: 'Failed to create playlist. Please try again.' }));
+    } finally {
+      setLoading(prev => ({ ...prev, creating: false }));
     }
   };
 
-  const handleCreatePlaylist = () => {
-    if (playlistName.trim() && onCreatePlaylist) {
-      const enabledEntityTypes = entityTypes
-        .filter(entity => entity.enabled)
-        .map(entity => entity.type);
-
-      const selectedTagNames = selectableTags.filter(tag => tag.isSelected).map(tag => tag.name);
-
-      onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
-    }
-  };
-
-  const isCreateDisabled = !playlistName.trim() || !entityTypes.some(entity => entity.enabled);
+  const isCreateDisabled = !playlistName.trim() || 
+    !entityTypes.some(entity => entity.enabled) || 
+    !selectableTags.some(tag => tag.isSelected) ||
+    loading.creating;
 
   return (
     <View style={styles.wrapper} className={className}>
@@ -99,43 +271,70 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           <GradientCard colors={theme.colors.gradients.action} style={styles.section}>
             <Text style={styles.sectionTitle}>Tag Selection</Text>
             <Text style={styles.sectionDescription}>Select tags to filter your content</Text>
-            <View style={styles.tagGrid}>
-              {selectableTags.map(tag => (
-                <TouchableOpacity
-                  key={tag.id}
-                  style={[styles.tagOption, tag.isSelected && styles.tagOptionSelected]}
-                  onPress={() => handleTagToggle(tag.id)}
-                  testID={`tag-option-${tag.id}`}
-                  className={`border-2 rounded-lg px-4 py-3 m-1 ${
-                    tag.isSelected
-                      ? 'border-purple-400 bg-purple-400/30'
-                      : 'border-gray-500 bg-transparent'
-                  }`}
-                >
-                  <View style={styles.tagContent}>
-                    <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />
-                    <Text
-                      style={[styles.tagLabel, tag.isSelected && styles.tagLabelSelected]}
-                      className={`text-sm font-medium ${
-                        tag.isSelected ? 'text-purple-200' : 'text-gray-300'
+            
+            {errors.tags && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errors.tags}</Text>
+              </View>
+            )}
+            
+            {loading.tags && selectableTags.length === 0 ? (
+              <View style={styles.loadingContainer}>
+                <LoadingSpinner size="small" />
+                <Text style={styles.loadingText}>Loading tags...</Text>
+              </View>
+            ) : selectableTags.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateText}>No tags found</Text>
+                <Text style={styles.emptyStateSubtext}>Create some tags first to generate playlists</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.tagGrid}>
+                  {selectableTags.map(tag => (
+                    <TouchableOpacity
+                      key={tag.id}
+                      style={[styles.tagOption, tag.isSelected && styles.tagOptionSelected]}
+                      onPress={() => handleTagToggle(tag.id)}
+                      testID={`tag-option-${tag.id}`}
+                      className={`border-2 rounded-lg px-4 py-3 m-1 ${
+                        tag.isSelected
+                          ? 'border-purple-400 bg-purple-400/30'
+                          : 'border-gray-500 bg-transparent'
                       }`}
                     >
-                      {tag.name}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {!showAllTags && (
-              <Button
-                title="LOAD 20 MORE"
-                onPress={handleLoadMoreTags}
-                variant="outline"
-                style={styles.loadMoreButton}
-                testID="load-more-tags-button"
-                className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
-                textClassName="text-purple-300 text-md font-semibold"
-              />
+                      <View style={styles.tagContent}>
+                        <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />
+                        <Text
+                          style={[styles.tagLabel, tag.isSelected && styles.tagLabelSelected]}
+                          className={`text-sm font-medium ${
+                            tag.isSelected ? 'text-purple-200' : 'text-gray-300'
+                          }`}
+                        >
+                          {tag.name}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                
+                {hasMoreTags && (
+                  <Button
+                    title={loading.tags ? "LOADING..." : "LOAD 20 MORE"}
+                    onPress={handleLoadMoreTags}
+                    disabled={loading.tags}
+                    variant="outline"
+                    style={styles.loadMoreButton}
+                    testID="load-more-tags-button"
+                    className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
+                    textClassName="text-purple-300 text-md font-semibold"
+                  />
+                )}
+                
+                <Text style={styles.tagCountText}>
+                  Showing {selectableTags.length} of {totalTags} tags
+                </Text>
+              </>
             )}
           </GradientCard>
 
@@ -188,8 +387,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
 
           {/* Create Button */}
           <View style={styles.createButtonContainer}>
+            {errors.creating && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errors.creating}</Text>
+              </View>
+            )}
+            
             <Button
-              title="CREATE PLAYLIST"
+              title={loading.creating ? "CREATING..." : "CREATE PLAYLIST"}
               onPress={handleCreatePlaylist}
               disabled={isCreateDisabled}
               variant="primary"
@@ -221,30 +426,65 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             <Text style={styles.sectionDescription}>
               Preview of songs that will be included in your playlist
             </Text>
-            <View style={styles.songPreviewContainer}>
-              {displayedSongs.map((song, index) => (
-                <View key={index} style={styles.songPreviewCard} testID={`song-preview-${index}`}>
-                  <View style={styles.songAlbumArt}>
-                    {song.album_image_url ? (
-                      <Image source={{ uri: song.album_image_url }} style={styles.songAlbumImage} />
-                    ) : (
-                      <View style={styles.songAlbumPlaceholder} />
-                    )}
+            
+            {errors.songs && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errors.songs}</Text>
+              </View>
+            )}
+            
+            {loading.songs ? (
+              <View style={styles.loadingContainer}>
+                <LoadingSpinner size="small" />
+                <Text style={styles.loadingText}>Loading songs...</Text>
+              </View>
+            ) : filteredSongs.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateText}>
+                  {selectableTags.some(tag => tag.isSelected) 
+                    ? 'No songs found with selected tags'
+                    : 'Select tags and content types to see songs'
+                  }
+                </Text>
+                <Text style={styles.emptyStateSubtext}>
+                  {selectableTags.some(tag => tag.isSelected)
+                    ? 'Try selecting different tags or content types'
+                    : 'Choose which tags and content types to include in your playlist'
+                  }
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.songPreviewContainer}>
+                {filteredSongs.map((song, index) => (
+                  <View key={index} style={styles.songPreviewCard} testID={`song-preview-${index}`}>
+                    <View style={styles.songAlbumArt}>
+                      {song.album_image_url ? (
+                        <Image source={{ uri: song.album_image_url }} style={styles.songAlbumImage} />
+                      ) : (
+                        <View style={styles.songAlbumPlaceholder} />
+                      )}
+                    </View>
+                    <View style={styles.songInfo}>
+                      <Text style={styles.songTitle} numberOfLines={1}>
+                        {song.name}
+                      </Text>
+                      <Text style={styles.songArtist} numberOfLines={1}>
+                        {song.artist}
+                      </Text>
+                      <Text style={styles.songAlbum} numberOfLines={1}>
+                        {song.album}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.songInfo}>
-                    <Text style={styles.songTitle} numberOfLines={1}>
-                      {song.name}
-                    </Text>
-                    <Text style={styles.songArtist} numberOfLines={1}>
-                      {song.artist}
-                    </Text>
-                    <Text style={styles.songAlbum} numberOfLines={1}>
-                      {song.album}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+                ))}
+                
+                {filteredSongs.length > 0 && (
+                  <Text style={styles.songCountText}>
+                    Showing first {filteredSongs.length} songs
+                  </Text>
+                )}
+              </View>
+            )}
           </GradientCard>
         </View>
       </ScrollView>
@@ -450,5 +690,58 @@ const styles = StyleSheet.create({
   songAlbum: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.muted,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.md,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 0, 0, 0.3)',
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: '#ff6b6b',
+    textAlign: 'center',
+  },
+  emptyStateContainer: {
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  emptyStateSubtext: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  tagCountText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  songCountText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
+    fontStyle: 'italic',
   },
 });

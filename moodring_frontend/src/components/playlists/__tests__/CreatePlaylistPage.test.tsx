@@ -79,6 +79,19 @@ jest.mock('../../shared/Button', () => ({
   },
 }));
 
+// Mock LoadingSpinner component
+jest.mock('../../shared/LoadingSpinner', () => ({
+  LoadingSpinner: ({ size }: { size?: string }) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View,
+      { testID: 'loading-spinner' },
+      React.createElement(Text, {}, `Loading (${size || 'default'})`)
+    );
+  },
+}));
+
 // Mock StatusBar
 jest.mock('expo-status-bar', () => ({
   StatusBar: () => {
@@ -88,64 +101,89 @@ jest.mock('expo-status-bar', () => ({
   },
 }));
 
-// Mock mockData
-jest.mock('../mockData', () => ({
-  mockTags: [
-    {
+// Mock Auth Context
+jest.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
       id: 1,
-      user_id: 1,
-      name: 'Neon Dreams',
-      color: '#ff00ff',
-      created_at: '2024-01-15T08:30:00Z',
-      updated_at: '2024-01-15T08:30:00Z',
+      spotify_id: 'test_user',
+      email: 'test@example.com',
+      display_name: 'Test User',
+      spotify_access_token: 'test_token',
+      spotify_refresh_token: 'test_refresh_token',
+      token_expires_at: '2024-12-31T23:59:59Z',
+      profile_image_url: null,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
     },
-    {
-      id: 2,
-      user_id: 1,
-      name: 'Synthwave Vibes',
-      color: '#00ffff',
-      created_at: '2024-01-15T09:15:00Z',
-      updated_at: '2024-01-15T09:15:00Z',
-    },
-    {
-      id: 3,
-      user_id: 1,
-      name: 'Arcade Nights',
-      color: '#ff6600',
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-01-15T10:00:00Z',
-    },
-    {
-      id: 11,
-      user_id: 1,
-      name: 'Holographic',
-      color: '#3366ff',
-      created_at: '2024-01-16T08:00:00Z',
-      updated_at: '2024-01-16T08:00:00Z',
-    },
-    {
-      id: 12,
-      user_id: 1,
-      name: 'Chrome Dreams',
-      color: '#cc00ff',
-      created_at: '2024-01-16T08:45:00Z',
-      updated_at: '2024-01-16T08:45:00Z',
-    },
-  ],
-  mockSongs: Array.from({ length: 15 }, (_, i) => ({
-    name: `Song ${i + 1}`,
-    artist: `Artist ${i + 1}`,
-    album: `Album ${i + 1}`,
-    album_image_url: `https://picsum.photos/300/300?random=${i + 1}`,
-    played_at: '2024-01-20T22:30:00Z',
-  })),
-  createSelectableTags: (tags: { id: number; name: string; color?: string }[]) =>
-    tags.map((tag: { id: number; name: string; color?: string }) => ({
-      id: tag.id,
-      name: tag.name,
-      color: tag.color || '#8a2be2',
-      isSelected: false,
-    })),
+    authToken: 'test_auth_token',
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+// Mock Playlist Service
+jest.mock('../../../services/playlistService', () => ({
+  playlistService: {
+    getUserTagsPaginated: jest.fn().mockResolvedValue({
+      tags: [
+        {
+          id: 1,
+          user_id: 1,
+          name: 'Neon Dreams',
+          color: '#ff00ff',
+          created_at: '2024-01-15T08:30:00Z',
+          updated_at: '2024-01-15T08:30:00Z',
+        },
+        {
+          id: 2,
+          user_id: 1,
+          name: 'Synthwave Vibes',
+          color: '#00ffff',
+          created_at: '2024-01-15T09:15:00Z',
+          updated_at: '2024-01-15T09:15:00Z',
+        },
+        {
+          id: 3,
+          user_id: 1,
+          name: 'Arcade Nights',
+          color: '#ff6600',
+          created_at: '2024-01-15T10:00:00Z',
+          updated_at: '2024-01-15T10:00:00Z',
+        },
+      ],
+      hasMore: true,
+      total: 5,
+    }),
+    getFilteredContent: jest.fn().mockResolvedValue([
+      {
+        name: 'Song 1',
+        artist: 'Artist 1',
+        album: 'Album 1',
+        album_image_url: 'https://picsum.photos/300/300?random=1',
+        played_at: '2024-01-20T22:30:00Z',
+      },
+      {
+        name: 'Song 2',
+        artist: 'Artist 2',
+        album: 'Album 2',
+        album_image_url: 'https://picsum.photos/300/300?random=2',
+        played_at: '2024-01-20T21:30:00Z',
+      },
+    ]),
+    createPlaylistOnSpotify: jest.fn().mockResolvedValue({
+      playlistId: 'test_playlist_id',
+      name: 'Test Playlist',
+      trackCount: 2,
+      tracks: [],
+    }),
+  },
+}));
+
+// Mock types
+jest.mock('../../../types', () => ({
+  TagSelectionState: {},
+  Track: {},
 }));
 
 describe('CreatePlaylistPage', () => {
@@ -312,13 +350,13 @@ describe('CreatePlaylistPage', () => {
       expect(getByText('Select tags to filter your content')).toBeTruthy();
     });
 
-    it('renders initial set of tags', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+    it('renders initial set of tags', async () => {
+      const { findByText } = render(<CreatePlaylistPage />);
 
-      // Should show first 10 tags
-      expect(getByText('Neon Dreams')).toBeTruthy();
-      expect(getByText('Synthwave Vibes')).toBeTruthy();
-      expect(getByText('Arcade Nights')).toBeTruthy();
+      // Should show first 3 tags from mock
+      await expect(findByText('Neon Dreams')).resolves.toBeTruthy();
+      await expect(findByText('Synthwave Vibes')).resolves.toBeTruthy();
+      await expect(findByText('Arcade Nights')).resolves.toBeTruthy();
     });
 
     it('renders load more button initially', () => {
@@ -337,29 +375,25 @@ describe('CreatePlaylistPage', () => {
       expect(tagOption).toBeTruthy();
     });
 
-    it('loads more tags when load more button is pressed', () => {
-      const { getByTestId, getByText } = render(<CreatePlaylistPage />);
+    it('loads more tags when load more button is pressed', async () => {
+      const { findByTestId } = render(<CreatePlaylistPage />);
 
-      const loadMoreButton = getByTestId('load-more-tags-button');
+      const loadMoreButton = await findByTestId('load-more-tags-button');
       fireEvent.press(loadMoreButton);
 
-      // Should now show more tags
-      expect(getByText('Holographic')).toBeTruthy();
-      expect(getByText('Chrome Dreams')).toBeTruthy();
+      // Should call the service to load more tags
+      expect(require('../../../services/playlistService').playlistService.getUserTagsPaginated).toHaveBeenCalledTimes(2);
     });
 
-    it('hides load more button after loading all tags', () => {
-      const { getByTestId, queryByTestId } = render(<CreatePlaylistPage />);
+    it('shows tag count information', async () => {
+      const { findByText } = render(<CreatePlaylistPage />);
 
-      const loadMoreButton = getByTestId('load-more-tags-button');
-      fireEvent.press(loadMoreButton);
-
-      // Load more button should be hidden after clicking
-      expect(queryByTestId('load-more-tags-button')).toBeNull();
+      // Should show tag count from mock response
+      await expect(findByText('Showing 3 of 5 tags')).resolves.toBeTruthy();
     });
 
-    it('includes selected tags in playlist creation callback', () => {
-      const { getByTestId } = render(
+    it('includes selected tags in playlist creation callback', async () => {
+      const { getByTestId, findByTestId } = render(
         <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
@@ -367,14 +401,16 @@ describe('CreatePlaylistPage', () => {
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Tagged Playlist');
 
-      // Select a tag
-      const tagOption = getByTestId('tag-option-1');
+      // Wait for tags to load and select a tag
+      const tagOption = await findByTestId('tag-option-1');
       fireEvent.press(tagOption);
 
       // Create playlist
       const button = getByTestId('create-playlist-button');
       fireEvent.press(button);
 
+      // Should eventually call the callback
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(mockOnCreatePlaylist).toHaveBeenCalledWith(
         'Tagged Playlist',
         ['songs'],
@@ -390,10 +426,12 @@ describe('CreatePlaylistPage', () => {
       expect(getByTestId('create-playlist-button')).toBeTruthy();
     });
 
-    it('is disabled when playlist name is empty', () => {
+    it('is disabled when playlist name is empty', async () => {
       const { getByTestId } = render(<CreatePlaylistPage />);
 
       const button = getByTestId('create-playlist-button');
+      // Wait a bit for initial state to settle
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(button.props.disabled).toBe(true);
     });
 
@@ -626,78 +664,81 @@ describe('CreatePlaylistPage', () => {
       expect(getByText('Preview of songs that will be included in your playlist')).toBeTruthy();
     });
 
-    it('renders preview song cards', () => {
-      const { getByTestId, getByText } = render(<CreatePlaylistPage />);
-
-      // Should show first few mock songs
-      expect(getByTestId('song-preview-0')).toBeTruthy();
-      expect(getByText('Song 1')).toBeTruthy();
-      expect(getByText('Artist 1')).toBeTruthy();
-    });
-
-    it('displays song information correctly', () => {
+    it('shows empty state when no tags are selected', () => {
       const { getByText } = render(<CreatePlaylistPage />);
 
-      // Check first few songs
-      expect(getByText('Song 1')).toBeTruthy();
-      expect(getByText('Artist 1')).toBeTruthy();
-      expect(getByText('Album 1')).toBeTruthy();
+      expect(getByText('Select tags and content types to see songs')).toBeTruthy();
     });
 
-    it('handles songs without album images', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+    it('shows filtered songs when tags are selected', async () => {
+      const { findByTestId, findByText } = render(<CreatePlaylistPage />);
 
-      // Should render without errors even if some songs don't have images
-      expect(getByTestId('song-preview-0')).toBeTruthy();
+      // Wait for tags to load and select a tag
+      const tagOption = await findByTestId('tag-option-1');
+      fireEvent.press(tagOption);
+
+      // Should show filtered songs
+      await expect(findByText('Song 1')).resolves.toBeTruthy();
+      await expect(findByText('Artist 1')).resolves.toBeTruthy();
     });
 
-    it('shows limited number of preview songs', () => {
-      const { queryByTestId } = render(<CreatePlaylistPage />);
+    it('shows loading state while filtering songs', async () => {
+      const { findByTestId, getByText } = render(<CreatePlaylistPage />);
 
-      // Should show up to 12 songs
-      expect(queryByTestId('song-preview-0')).toBeTruthy();
-      expect(queryByTestId('song-preview-11')).toBeTruthy();
-      expect(queryByTestId('song-preview-12')).toBeNull(); // Should not show more than 12
+      // Select a tag to trigger filtering
+      const tagOption = await findByTestId('tag-option-1');
+      fireEvent.press(tagOption);
+
+      // Should show loading state briefly
+      expect(getByText('Loading songs...')).toBeTruthy();
     });
   });
 
   describe('functional workflows', () => {
-    it('supports complete playlist creation workflow', () => {
-      const { getByTestId } = render(
+    it('supports complete playlist creation workflow', async () => {
+      const { findByTestId } = render(
         <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       // Step 1: Enter playlist name
-      const input = getByTestId('playlist-name-input');
+      const input = await findByTestId('playlist-name-input');
       fireEvent.changeText(input, 'My Awesome Playlist');
 
-      // Step 2: Select entity types
-      const albumsOption = getByTestId('entity-type-albums');
-      const playlistsOption = getByTestId('entity-type-playlists');
+      // Step 2: Wait for tags to load and select a tag
+      const tagOption = await findByTestId('tag-option-1');
+      fireEvent.press(tagOption);
+
+      // Step 3: Select entity types
+      const albumsOption = await findByTestId('entity-type-albums');
+      const playlistsOption = await findByTestId('entity-type-playlists');
       fireEvent.press(albumsOption);
       fireEvent.press(playlistsOption);
 
-      // Step 3: Create playlist
-      const button = getByTestId('create-playlist-button');
+      // Step 4: Create playlist
+      const button = await findByTestId('create-playlist-button');
       fireEvent.press(button);
 
+      // Should eventually call the callback
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(mockOnCreatePlaylist).toHaveBeenCalledWith(
         'My Awesome Playlist',
         ['songs', 'albums', 'playlists'],
-        []
+        ['Neon Dreams']
       );
     });
 
-    it('prevents creation with invalid input', () => {
-      const { getByTestId } = render(
+    it('prevents creation with invalid input', async () => {
+      const { findByTestId } = render(
         <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       // No playlist name, deselect all entity types
-      const songsOption = getByTestId('entity-type-songs');
+      const songsOption = await findByTestId('entity-type-songs');
       fireEvent.press(songsOption);
 
-      const button = getByTestId('create-playlist-button');
+      const button = await findByTestId('create-playlist-button');
+      // Wait for state to settle
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(button.props.disabled).toBe(true);
 
       fireEvent.press(button);
