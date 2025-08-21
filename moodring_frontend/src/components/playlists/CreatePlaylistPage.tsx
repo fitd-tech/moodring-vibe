@@ -117,6 +117,10 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       setHasMoreTags(response.hasMore);
       setTotalTags(response.total);
       setCurrentTagOffset(10);
+      
+      if (__DEV__) {
+        console.log('[CreatePlaylistPage] Loaded tags:', tagSelectionStates.length, tagSelectionStates);
+      }
     } catch (error) {
       if (__DEV__) {
         console.error('[CreatePlaylistPage] Error loading tags:', error);
@@ -167,7 +171,19 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       .filter(entity => entity.enabled)
       .map(entity => entity.type);
 
+    if (__DEV__) {
+      console.log('[CreatePlaylistPage] updateFilteredSongs called:', {
+        selectedTagIds,
+        enabledContentTypes,
+        selectableTagsCount: selectableTags.length,
+        selectedTagsCount: selectableTags.filter(tag => tag.isSelected).length
+      });
+    }
+
     if (selectedTagIds.length === 0 || enabledContentTypes.length === 0) {
+      if (__DEV__) {
+        console.log('[CreatePlaylistPage] No tags selected or no content types enabled, clearing songs');
+      }
       setFilteredSongs([]);
       setAllFilteredSongs([]);
       setHasMoreSongs(false);
@@ -304,8 +320,8 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         <View style={styles.content}>
           {/* Tag Selection Section - Now First */}
           <GradientCard colors={theme.colors.gradients.action} style={styles.section}>
-            <Text style={styles.sectionTitle}>Tag Selection</Text>
-            <Text style={styles.sectionDescription}>Select tags to filter your content</Text>
+            <Text style={styles.sectionTitle}>Select Tags</Text>
+            <Text style={styles.sectionDescription}>Choose which tags to include in your playlist. Selected: {selectableTags.filter(tag => tag.isSelected).length} of {selectableTags.length}</Text>
             
             {errors.tags && (
               <View style={styles.errorContainer}>
@@ -526,9 +542,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                 )}
                 
                 {filteredSongs.length > 0 && (
-                  <Text style={styles.songCountText}>
-                    Showing {filteredSongs.length} of {allFilteredSongs.length} songs
-                  </Text>
+                  <>
+                    <Text style={styles.songCountText}>
+                      Showing {filteredSongs.length} of {allFilteredSongs.length} songs from your Spotify library
+                    </Text>
+                    <Text style={styles.songInfoText}>
+                      Only songs you've saved to Spotify are shown. Save more tagged songs to see them here.
+                    </Text>
+                  </>
                 )}
               </View>
             )}
@@ -817,5 +838,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme.spacing.md,
     fontStyle: 'italic',
+  },
+  songInfoText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    lineHeight: 16,
+    paddingHorizontal: theme.spacing.md,
   },
 });
