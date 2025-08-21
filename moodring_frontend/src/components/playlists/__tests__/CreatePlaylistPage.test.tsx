@@ -27,14 +27,17 @@ jest.mock('../../../styles/theme', () => ({
         overlay: 'rgba(255, 255, 255, 0.1)',
         border: 'rgba(255, 255, 255, 0.1)',
       },
-      accent: { purple: '#8a2be2' },
+      accent: { purple: '#8a2be2', orange: '#ff6600', yellow: '#ffff00' },
       gradients: {
         track: ['#4a1458', '#2d0a35', '#1a0a2a'],
         features: ['#4a1458', '#2d0a35', '#1a0a2a'],
         action: ['#1a0a0a', '#0d0d0d', '#2a0a1a'],
       },
+      shadow: {
+        default: '#000',
+      },
     },
-    borderRadius: { sm: 12, md: 16, lg: 20 },
+    borderRadius: { sm: 12, md: 16, lg: 20, full: 40 },
   },
 }));
 
@@ -189,6 +192,18 @@ jest.mock('../../../types', () => ({
 describe('CreatePlaylistPage', () => {
   const mockOnBack = jest.fn();
   const mockOnCreatePlaylist = jest.fn();
+  const mockOnHome = jest.fn();
+  const mockOnBrowseTags = jest.fn();
+  const mockOnSettings = jest.fn();
+  const mockOnLogout = jest.fn();
+
+  // Default props for all tests
+  const defaultProps = {
+    onHome: mockOnHome,
+    onBrowseTags: mockOnBrowseTags,
+    onSettings: mockOnSettings,
+    onLogout: mockOnLogout,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -196,7 +211,7 @@ describe('CreatePlaylistPage', () => {
 
   describe('basic rendering', () => {
     it('renders the page title and subtitle correctly', () => {
-      const { getByText, getAllByText } = render(<CreatePlaylistPage />);
+      const { getByText, getAllByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const titleElements = getAllByText('CREATE PLAYLIST');
       expect(titleElements.length).toBeGreaterThan(0); // Should find both title and button
@@ -204,7 +219,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('renders all main sections', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Playlist Name')).toBeTruthy();
       expect(getByText('Include Content Types')).toBeTruthy();
@@ -212,7 +227,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('renders with correct test IDs', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByTestId('create-playlist-scroll-view')).toBeTruthy();
       expect(getByTestId('playlist-name-input')).toBeTruthy();
@@ -220,14 +235,14 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('renders gradient cards for each section', () => {
-      const { getAllByTestId } = render(<CreatePlaylistPage />);
+      const { getAllByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const gradientCards = getAllByTestId('gradient-card');
       expect(gradientCards).toHaveLength(4); // Tag Selection, Entity Types, Name, Song Preview
     });
 
     it('renders with safe area insets applied', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const scrollView = getByTestId('create-playlist-scroll-view');
       expect(scrollView).toBeTruthy();
@@ -236,14 +251,14 @@ describe('CreatePlaylistPage', () => {
 
   describe('playlist name input', () => {
     it('renders playlist name input with placeholder', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       expect(input.props.placeholder).toBe('Enter playlist name...');
     });
 
     it('updates playlist name when text is entered', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'My Test Playlist');
@@ -252,14 +267,14 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('respects maximum length limit', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       expect(input.props.maxLength).toBe(100);
     });
 
     it('handles empty input correctly', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, '');
@@ -268,7 +283,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('handles special characters in playlist name', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Test & Special "Characters" [2024]');
@@ -279,7 +294,7 @@ describe('CreatePlaylistPage', () => {
 
   describe('entity type selection', () => {
     it('renders all entity type options', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByTestId('entity-type-songs')).toBeTruthy();
       expect(getByTestId('entity-type-albums')).toBeTruthy();
@@ -287,21 +302,21 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('has songs enabled by default', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Songs')).toBeTruthy();
       // Songs should be enabled by default (checked in toggle functionality)
     });
 
     it('has albums and playlists disabled by default', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Albums')).toBeTruthy();
       expect(getByText('Playlists')).toBeTruthy();
     });
 
     it('toggles entity type selection when pressed', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const albumsOption = getByTestId('entity-type-albums');
       fireEvent.press(albumsOption);
@@ -312,7 +327,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('allows multiple entity types to be selected', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const albumsOption = getByTestId('entity-type-albums');
       const playlistsOption = getByTestId('entity-type-playlists');
@@ -325,7 +340,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('can deselect entity types', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const songsOption = getByTestId('entity-type-songs');
 
@@ -336,7 +351,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('displays correct descriptions for entity types', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Select which types of content to include in your playlist')).toBeTruthy();
     });
@@ -344,14 +359,14 @@ describe('CreatePlaylistPage', () => {
 
   describe('tag selection section', () => {
     it('renders tag selection interface', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Tag Selection')).toBeTruthy();
       expect(getByText('Select tags to filter your content')).toBeTruthy();
     });
 
     it('renders initial set of tags', async () => {
-      const { findByText } = render(<CreatePlaylistPage />);
+      const { findByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       // Should show first 3 tags from mock
       await expect(findByText('Neon Dreams')).resolves.toBeTruthy();
@@ -360,13 +375,13 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('renders load more button initially', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByTestId('load-more-tags-button')).toBeTruthy();
     });
 
     it('allows selecting and deselecting tags', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const tagOption = getByTestId('tag-option-1');
       fireEvent.press(tagOption);
@@ -376,7 +391,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('loads more tags when load more button is pressed', async () => {
-      const { findByTestId } = render(<CreatePlaylistPage />);
+      const { findByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const loadMoreButton = await findByTestId('load-more-tags-button');
       fireEvent.press(loadMoreButton);
@@ -386,7 +401,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('shows tag count information', async () => {
-      const { findByText } = render(<CreatePlaylistPage />);
+      const { findByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       // Should show tag count from mock response
       await expect(findByText('Showing 3 of 5 tags')).resolves.toBeTruthy();
@@ -394,7 +409,7 @@ describe('CreatePlaylistPage', () => {
 
     it('includes selected tags in playlist creation callback', async () => {
       const { getByTestId, findByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       // Enter playlist name
@@ -421,13 +436,13 @@ describe('CreatePlaylistPage', () => {
 
   describe('create playlist button', () => {
     it('renders create playlist button', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByTestId('create-playlist-button')).toBeTruthy();
     });
 
     it('is disabled when playlist name is empty', async () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const button = getByTestId('create-playlist-button');
       // Wait a bit for initial state to settle
@@ -436,7 +451,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('is enabled when playlist name is provided and entity types are selected', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Test Playlist');
@@ -446,7 +461,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('is disabled when no entity types are selected', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Test Playlist');
@@ -461,7 +476,7 @@ describe('CreatePlaylistPage', () => {
 
     it('calls onCreatePlaylist with correct parameters when pressed', () => {
       const { getByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       const input = getByTestId('playlist-name-input');
@@ -483,7 +498,7 @@ describe('CreatePlaylistPage', () => {
 
     it('trims whitespace from playlist name', () => {
       const { getByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       const input = getByTestId('playlist-name-input');
@@ -497,7 +512,7 @@ describe('CreatePlaylistPage', () => {
 
     it('does not call onCreatePlaylist when disabled', () => {
       const { getByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       const button = getByTestId('create-playlist-button');
@@ -509,19 +524,19 @@ describe('CreatePlaylistPage', () => {
 
   describe('back button', () => {
     it('renders back button when onBack prop is provided', () => {
-      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} onBack={mockOnBack} />);
 
       expect(getByTestId('back-button')).toBeTruthy();
     });
 
     it('does not render back button when onBack prop is not provided', () => {
-      const { queryByTestId } = render(<CreatePlaylistPage />);
+      const { queryByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(queryByTestId('back-button')).toBeNull();
     });
 
     it('calls onBack when back button is pressed', () => {
-      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} onBack={mockOnBack} />);
 
       const backButton = getByTestId('back-button');
       fireEvent.press(backButton);
@@ -532,14 +547,14 @@ describe('CreatePlaylistPage', () => {
 
   describe('accessibility and usability', () => {
     it('applies custom className when provided', () => {
-      const { getByTestId } = render(<CreatePlaylistPage className="custom-class" />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} className="custom-class" />);
 
       const scrollView = getByTestId('create-playlist-scroll-view');
       expect(scrollView).toBeTruthy();
     });
 
     it('handles keyboard input correctly', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
 
@@ -554,14 +569,14 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('provides proper feedback for disabled state', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const button = getByTestId('create-playlist-button');
       expect(button.props.disabled).toBe(true);
     });
 
     it('handles rapid interactions without errors', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const albumsOption = getByTestId('entity-type-albums');
 
@@ -576,7 +591,7 @@ describe('CreatePlaylistPage', () => {
 
   describe('edge cases', () => {
     it('handles undefined callback functions gracefully', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       fireEvent.changeText(input, 'Test');
@@ -590,7 +605,7 @@ describe('CreatePlaylistPage', () => {
 
     it('handles empty string playlist name correctly', () => {
       const { getByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       const input = getByTestId('playlist-name-input');
@@ -601,7 +616,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('maintains state consistency during rapid state changes', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       const songsOption = getByTestId('entity-type-songs');
@@ -617,7 +632,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('handles maximum length input correctly', () => {
-      const { getByTestId } = render(<CreatePlaylistPage />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const input = getByTestId('playlist-name-input');
       const longName = 'A'.repeat(100);
@@ -629,14 +644,14 @@ describe('CreatePlaylistPage', () => {
 
   describe('component integration', () => {
     it('integrates with GradientCard components', () => {
-      const { getAllByTestId } = render(<CreatePlaylistPage />);
+      const { getAllByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
       const gradientCards = getAllByTestId('gradient-card');
       expect(gradientCards).toHaveLength(4); // Tag Selection, Entity Types, Name, Song Preview
     });
 
     it('integrates with Button components', () => {
-      const { getByTestId } = render(<CreatePlaylistPage onBack={mockOnBack} />);
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} onBack={mockOnBack} />);
 
       expect(getByTestId('create-playlist-button')).toBeTruthy();
       expect(getByTestId('back-button')).toBeTruthy();
@@ -644,13 +659,13 @@ describe('CreatePlaylistPage', () => {
 
     it('handles props correctly across all states', () => {
       const { getByTestId, rerender } = render(
-        <CreatePlaylistPage onBack={mockOnBack} onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onBack={mockOnBack} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       expect(getByTestId('back-button')).toBeTruthy();
 
       // Rerender without onBack
-      rerender(<CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />);
+      rerender(<CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />);
 
       expect(() => getByTestId('back-button')).toThrow();
     });
@@ -658,20 +673,20 @@ describe('CreatePlaylistPage', () => {
 
   describe('song preview section', () => {
     it('renders song preview section', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('SONGS TO BE ADDED')).toBeTruthy();
       expect(getByText('Preview of songs that will be included in your playlist')).toBeTruthy();
     });
 
     it('shows empty state when no tags are selected', () => {
-      const { getByText } = render(<CreatePlaylistPage />);
+      const { getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       expect(getByText('Select tags and content types to see songs')).toBeTruthy();
     });
 
     it('shows filtered songs when tags are selected', async () => {
-      const { findByTestId, findByText } = render(<CreatePlaylistPage />);
+      const { findByTestId, findByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       // Wait for tags to load and select a tag
       const tagOption = await findByTestId('tag-option-1');
@@ -683,7 +698,7 @@ describe('CreatePlaylistPage', () => {
     });
 
     it('shows loading state while filtering songs', async () => {
-      const { findByTestId, getByText } = render(<CreatePlaylistPage />);
+      const { findByTestId, getByText } = render(<CreatePlaylistPage {...defaultProps} />);
 
       // Select a tag to trigger filtering
       const tagOption = await findByTestId('tag-option-1');
@@ -697,7 +712,7 @@ describe('CreatePlaylistPage', () => {
   describe('functional workflows', () => {
     it('supports complete playlist creation workflow', async () => {
       const { findByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       // Step 1: Enter playlist name
@@ -729,7 +744,7 @@ describe('CreatePlaylistPage', () => {
 
     it('prevents creation with invalid input', async () => {
       const { findByTestId } = render(
-        <CreatePlaylistPage onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
       );
 
       // No playlist name, deselect all entity types

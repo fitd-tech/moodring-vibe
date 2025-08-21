@@ -14,6 +14,7 @@ import { theme } from '../../styles/theme';
 import { Button } from '../shared/Button';
 import { GradientCard } from '../shared/GradientCard';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { ProfileMenu } from '../dashboard/ProfileMenu';
 import { ClassNameProps } from '../../../nativewind-env';
 import { TagSelectionState, Track } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -44,11 +45,19 @@ interface CreatePlaylistPageProps extends ClassNameProps {
     _entityTypes: string[],
     _selectedTags: string[]
   ) => void;
+  onHome?: () => void;
+  onBrowseTags?: () => void;
+  onSettings?: () => void;
+  onLogout: () => void;
 }
 
 export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   onBack,
   onCreatePlaylist,
+  onHome,
+  onBrowseTags,
+  onSettings,
+  onLogout,
   className,
 }) => {
   const insets = useSafeAreaInsets();
@@ -489,6 +498,28 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         </View>
       </ScrollView>
 
+      {/* Fixed position ProfileMenu outside ScrollView */}
+      {user && (
+        <View
+          style={[
+            styles.fixedProfileMenuContainer,
+            {
+              top: insets.top + theme.spacing.sm,
+              right: theme.spacing.xl,
+            },
+          ]}
+        >
+          <ProfileMenu
+            user={user}
+            onCreatePlaylist={undefined} // Current page is already Create Playlist
+            onHome={onHome}
+            onBrowseTags={onBrowseTags}
+            onSettings={onSettings}
+            onLogout={onLogout}
+          />
+        </View>
+      )}
+
       <StatusBar style="light" />
     </View>
   );
@@ -498,6 +529,11 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
+    position: 'relative',
+  },
+  fixedProfileMenuContainer: {
+    position: 'absolute',
+    zIndex: 1000,
   },
   container: {
     flex: 1,
