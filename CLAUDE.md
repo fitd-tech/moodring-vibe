@@ -79,6 +79,26 @@ Moodring is a multi-platform app that integrates with Spotify to provide a new w
 - **Database preservation**: Never kill database servers or persistent services
 - **Test file protection**: Never modify test files without explicit permission
 
+### iOS Simulator Interaction Policy
+- **Primary method**: ALWAYS use `describe-elements` tool from ios-simulator MCP server before any tap/swipe operations
+- **Accessibility-first approach**: Leverage iOS accessibility infrastructure for reliable element detection and coordinate determination  
+- **Coordinate accuracy**: Use exact coordinates provided by describe-elements (in points) with proper device scaling conversion to pixels
+- **Screenshot usage**: Screenshots serve ONLY as visual verification after accessibility-based interaction, never as primary coordinate source
+- **Fallback hierarchy**: describe-elements → accessibility inspector → screenshot analysis (emergency use only)
+- **Device scaling factors**: iPhone 15 Pro Max uses 3x scaling (points to pixels), verify scaling for other device types
+- **TodoWrite integration**: All simulator interaction tasks must include accessibility validation steps in checklists
+- **Mandatory validation**: Confirm element accessibility properties match expected interaction target before any tap/swipe
+- **Error handling**: Document any elements not detected by describe-elements and use fallback procedures
+- **Troubleshooting**: If coordinates fail, use describe-elements again rather than attempting mathematical conversions
+
+**TodoWrite Template for iOS Simulator Interactions:**
+1. **Element Discovery** - Use describe-elements to identify target interactive elements
+2. **Accessibility Verification** - Confirm element properties match expected interaction target  
+3. **Coordinate Validation** - Verify points-to-pixels conversion for device type (3x for iPhone 15 Pro Max)
+4. **Interaction Execution** - Execute tap/swipe using accessibility-provided coordinates  
+5. **Visual Verification** - Capture screenshot to confirm interaction succeeded
+6. **Fallback Documentation** - Document any elements not detected by accessibility tools
+
 ### Spotify Data Freshness Policy
 - **Strategic cache invalidation**: Implement intelligent caching with smart invalidation rather than constant API fetching
 - **Navigation-based state reset**: Reset Spotify activity state when navigating between major app sections (Home ↔ Browse Tags) to ensure users see current listening context
