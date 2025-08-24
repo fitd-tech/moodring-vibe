@@ -5,6 +5,7 @@ import {
   SpotifySavedTracksResponse,
   SpotifyPlaylistsResponse,
   SpotifyAlbumsResponse,
+  SpotifyTrack,
   CurrentlyPlaying,
   RecentTrack,
   TopTrack,
@@ -546,6 +547,74 @@ export class SpotifyApiService {
       }
       if (__DEV__) {
         console.warn('More saved albums fetch error:', error);
+      }
+      return [];
+    }
+  }
+
+  // Fetch tracks by their Spotify IDs (for tagged songs with stored Spotify IDs)
+  async getTracksByIds(token: string, trackIds: string[]): Promise<SavedTrack[]> {
+    try {
+      if (trackIds.length === 0) {
+        return [];
+      }
+
+      // Spotify API allows up to 50 tracks per request
+      const batches: string[][] = [];
+      for (let i = 0; i < trackIds.length; i += 50) {
+        batches.push(trackIds.slice(i, i + 50));
+      }
+
+      const allTracks: SavedTrack[] = [];
+
+      for (const batch of batches) {
+        const idsParam = batch.join(',');
+        const response = await fetch(
+          `https://api.spotify.com/v1/tracks?ids=${encodeURIComponent(idsParam)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = (await response.json()) as { tracks: SpotifyTrack[] };
+
+          // Filter out null tracks (removed from Spotify)
+          const validTracks = data.tracks.filter(track => track !== null);
+
+          const mappedTracks = validTracks.map(track => ({
+            name: track.name,
+            artist: track.artists[0]?.name || 'Unknown Artist',
+            album: track.album.name,
+            album_image_url: this.getImageUrl(track.album.images),
+            song_id: track.id,
+            added_at: new Date().toISOString(), // Default since we don't have actual added_at
+          }));
+
+          allTracks.push(...mappedTracks);
+        } else if (response.status === 401) {
+          throw new Error('TOKEN_EXPIRED');
+        } else {
+          if (__DEV__) {
+            console.warn(`[SpotifyApi] Failed to fetch tracks batch: ${response.status}`);
+          }
+        }
+      }
+
+      if (__DEV__) {
+        console.log(`[SpotifyApi] Fetched ${allTracks.length}/${trackIds.length} tracks by IDs`);
+      }
+
+      return allTracks;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.error('[SpotifyApi] Error fetching tracks by IDs:', error);
       }
       return [];
     }

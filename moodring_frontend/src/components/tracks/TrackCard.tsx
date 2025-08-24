@@ -124,7 +124,12 @@ export const TrackCard: React.FC<TrackCardProps> = ({
                 <Text style={styles.loadingText}>Loading tags...</Text>
               </View>
             ) : (
-              <TaggingInterface tags={tags} songId={songId} onTagsChanged={loadSongTags} />
+              <TaggingInterface
+                tags={tags}
+                songId={songId}
+                spotifyTrackId={track.song_id}
+                onTagsChanged={loadSongTags}
+              />
             )}
           </Animated.View>
         )}

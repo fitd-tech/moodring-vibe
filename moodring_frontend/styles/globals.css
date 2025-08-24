@@ -1,12 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* TailwindCSS v4 Configuration */
 @config {
-  content: [
-    "./App.tsx",
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./index.ts"
-  ];
+  content:
+    [ './App.tsx',
+    './src/**/*.{js,jsx,ts,tsx}',
+    './index.ts'];
 
   /* 90's Retro Theme Configuration */
   --color-background-primary: #1a0a1a;
@@ -167,7 +166,8 @@
 }
 
 @keyframes retro-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

@@ -426,11 +426,13 @@ mod tests {
                 user_id: 1,
                 song_id: "spotify:track:4iV5W9uYEdYUVa79Axb7Rh".to_string(),
                 tag_id: 10,
+                spotify_track_id: Some("4iV5W9uYEdYUVa79Axb7Rh".to_string()),
             },
             NewSongTag {
                 user_id: 42,
                 song_id: "spotify:track:0VjIjW4GlULA4PmvEZMxfL".to_string(),
                 tag_id: 123,
+                spotify_track_id: Some("0VjIjW4GlULA4PmvEZMxfL".to_string()),
             },
         ];
 
@@ -710,6 +712,7 @@ mod tests {
             song_id: "spotify:track:test123".to_string(),
             tag_id: 10,
             created_at: chrono::Utc::now().naive_utc(),
+            spotify_track_id: Some("4iV5W9uYEdYUVa79Axb7Rh".to_string()),
         };
 
         let song_tag_json = serde_json::to_value(&mock_song_tag).unwrap();

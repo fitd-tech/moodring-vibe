@@ -112,14 +112,18 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         color: tag.color || '#8a2be2',
         isSelected: false,
       }));
-      
+
       setSelectableTags(tagSelectionStates);
       setHasMoreTags(response.hasMore);
       setTotalTags(response.total);
       setCurrentTagOffset(10);
-      
+
       if (__DEV__) {
-        console.log('[CreatePlaylistPage] Loaded tags:', tagSelectionStates.length, tagSelectionStates);
+        console.log(
+          '[CreatePlaylistPage] Loaded tags:',
+          tagSelectionStates.length,
+          tagSelectionStates
+        );
       }
     } catch (error) {
       if (__DEV__) {
@@ -138,18 +142,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     setErrors(prev => ({ ...prev, tags: null }));
 
     try {
-      const response = await playlistService.getUserTagsPaginated(
-        user.id,
-        20,
-        currentTagOffset
-      );
+      const response = await playlistService.getUserTagsPaginated(user.id, 20, currentTagOffset);
       const newTagSelectionStates = response.tags.map(tag => ({
         id: tag.id,
         name: tag.name,
         color: tag.color || '#8a2be2',
         isSelected: false,
       }));
-      
+
       setSelectableTags(prev => [...prev, ...newTagSelectionStates]);
       setHasMoreTags(response.hasMore);
       setCurrentTagOffset(prev => prev + 20);
@@ -176,13 +176,15 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         selectedTagIds,
         enabledContentTypes,
         selectableTagsCount: selectableTags.length,
-        selectedTagsCount: selectableTags.filter(tag => tag.isSelected).length
+        selectedTagsCount: selectableTags.filter(tag => tag.isSelected).length,
       });
     }
 
     if (selectedTagIds.length === 0 || enabledContentTypes.length === 0) {
       if (__DEV__) {
-        console.log('[CreatePlaylistPage] No tags selected or no content types enabled, clearing songs');
+        console.log(
+          '[CreatePlaylistPage] No tags selected or no content types enabled, clearing songs'
+        );
       }
       setFilteredSongs([]);
       setAllFilteredSongs([]);
@@ -206,7 +208,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         enabledContentTypes,
         spotifyToken
       );
-      
+
       // Store all songs and show first 20
       setAllFilteredSongs(songs);
       setFilteredSongs(songs.slice(0, 20));
@@ -282,7 +284,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       };
 
       const result = await playlistService.createPlaylistOnSpotify(playlistRequest, spotifyToken);
-      
+
       if (onCreatePlaylist) {
         const selectedTagNames = selectableTags.filter(tag => tag.isSelected).map(tag => tag.name);
         onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
@@ -301,8 +303,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     }
   };
 
-  const isCreateDisabled = !playlistName.trim() || 
-    !entityTypes.some(entity => entity.enabled) || 
+  const isCreateDisabled =
+    !playlistName.trim() ||
+    !entityTypes.some(entity => entity.enabled) ||
     !selectableTags.some(tag => tag.isSelected) ||
     loading.creating;
 
@@ -321,14 +324,17 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           {/* Tag Selection Section - Now First */}
           <GradientCard colors={theme.colors.gradients.action} style={styles.section}>
             <Text style={styles.sectionTitle}>Select Tags</Text>
-            <Text style={styles.sectionDescription}>Choose which tags to include in your playlist. Selected: {selectableTags.filter(tag => tag.isSelected).length} of {selectableTags.length}</Text>
-            
+            <Text style={styles.sectionDescription}>
+              Choose which tags to include in your playlist. Selected:{' '}
+              {selectableTags.filter(tag => tag.isSelected).length} of {selectableTags.length}
+            </Text>
+
             {errors.tags && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errors.tags}</Text>
               </View>
             )}
-            
+
             {loading.tags && selectableTags.length === 0 ? (
               <View style={styles.loadingContainer}>
                 <LoadingSpinner size="small" />
@@ -337,7 +343,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             ) : selectableTags.length === 0 ? (
               <View style={styles.emptyStateContainer}>
                 <Text style={styles.emptyStateText}>No tags found</Text>
-                <Text style={styles.emptyStateSubtext}>Create some tags first to generate playlists</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Create some tags first to generate playlists
+                </Text>
               </View>
             ) : (
               <>
@@ -368,10 +376,10 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     </TouchableOpacity>
                   ))}
                 </View>
-                
+
                 {hasMoreTags && (
                   <Button
-                    title={loading.tags ? "LOADING..." : "LOAD 20 MORE"}
+                    title={loading.tags ? 'LOADING...' : 'LOAD 20 MORE'}
                     onPress={handleLoadMoreTags}
                     disabled={loading.tags}
                     variant="outline"
@@ -381,7 +389,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     textClassName="text-purple-300 text-md font-semibold"
                   />
                 )}
-                
+
                 <Text style={styles.tagCountText}>
                   Showing {selectableTags.length} of {totalTags} tags
                 </Text>
@@ -443,9 +451,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                 <Text style={styles.errorText}>{errors.creating}</Text>
               </View>
             )}
-            
+
             <Button
-              title={loading.creating ? "CREATING..." : "CREATE PLAYLIST"}
+              title={loading.creating ? 'CREATING...' : 'CREATE PLAYLIST'}
               onPress={handleCreatePlaylist}
               disabled={isCreateDisabled}
               variant="primary"
@@ -477,13 +485,13 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             <Text style={styles.sectionDescription}>
               Preview of songs that will be included in your playlist
             </Text>
-            
+
             {errors.songs && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errors.songs}</Text>
               </View>
             )}
-            
+
             {loading.songs ? (
               <View style={styles.loadingContainer}>
                 <LoadingSpinner size="small" />
@@ -492,16 +500,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             ) : filteredSongs.length === 0 ? (
               <View style={styles.emptyStateContainer}>
                 <Text style={styles.emptyStateText}>
-                  {selectableTags.some(tag => tag.isSelected) 
+                  {selectableTags.some(tag => tag.isSelected)
                     ? 'No songs found with selected tags'
-                    : 'Select tags and content types to see songs'
-                  }
+                    : 'Select tags and content types to see songs'}
                 </Text>
                 <Text style={styles.emptyStateSubtext}>
                   {selectableTags.some(tag => tag.isSelected)
                     ? 'Try selecting different tags or content types'
-                    : 'Choose which tags and content types to include in your playlist'
-                  }
+                    : 'Choose which tags and content types to include in your playlist'}
                 </Text>
               </View>
             ) : (
@@ -510,7 +516,10 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                   <View key={index} style={styles.songPreviewCard} testID={`song-preview-${index}`}>
                     <View style={styles.songAlbumArt}>
                       {song.album_image_url ? (
-                        <Image source={{ uri: song.album_image_url }} style={styles.songAlbumImage} />
+                        <Image
+                          source={{ uri: song.album_image_url }}
+                          style={styles.songAlbumImage}
+                        />
                       ) : (
                         <View style={styles.songAlbumPlaceholder} />
                       )}
@@ -528,7 +537,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     </View>
                   </View>
                 ))}
-                
+
                 {hasMoreSongs && (
                   <Button
                     title="LOAD 20 MORE"
@@ -540,14 +549,16 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     textClassName="text-purple-300 text-md font-semibold"
                   />
                 )}
-                
+
                 {filteredSongs.length > 0 && (
                   <>
                     <Text style={styles.songCountText}>
-                      Showing {filteredSongs.length} of {allFilteredSongs.length} songs from your Spotify library
+                      Showing {filteredSongs.length} of {allFilteredSongs.length} songs from your
+                      Spotify library
                     </Text>
                     <Text style={styles.songInfoText}>
-                      Only songs you've saved to Spotify are shown. Save more tagged songs to see them here.
+                      Only songs you've saved to Spotify are shown. Save more tagged songs to see
+                      them here.
                     </Text>
                   </>
                 )}

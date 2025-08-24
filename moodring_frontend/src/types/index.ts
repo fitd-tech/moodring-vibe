@@ -213,12 +213,14 @@ export interface SongTag {
   song_id: string;
   tag_id: number;
   created_at: string;
+  spotify_track_id?: string;
 }
 
 export interface NewSongTag {
   user_id: number;
   tag_id: number;
   song_id?: string;
+  spotify_track_id?: string;
 }
 
 export interface AnimatedValues {

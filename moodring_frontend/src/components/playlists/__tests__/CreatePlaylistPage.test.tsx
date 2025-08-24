@@ -397,7 +397,9 @@ describe('CreatePlaylistPage', () => {
       fireEvent.press(loadMoreButton);
 
       // Should call the service to load more tags
-      expect(require('../../../services/playlistService').playlistService.getUserTagsPaginated).toHaveBeenCalledTimes(2);
+      expect(
+        require('../../../services/playlistService').playlistService.getUserTagsPaginated
+      ).toHaveBeenCalledTimes(2);
     });
 
     it('shows tag count information', async () => {
@@ -547,7 +549,9 @@ describe('CreatePlaylistPage', () => {
 
   describe('accessibility and usability', () => {
     it('applies custom className when provided', () => {
-      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} className="custom-class" />);
+      const { getByTestId } = render(
+        <CreatePlaylistPage {...defaultProps} className="custom-class" />
+      );
 
       const scrollView = getByTestId('create-playlist-scroll-view');
       expect(scrollView).toBeTruthy();
@@ -659,7 +663,11 @@ describe('CreatePlaylistPage', () => {
 
     it('handles props correctly across all states', () => {
       const { getByTestId, rerender } = render(
-        <CreatePlaylistPage {...defaultProps} onBack={mockOnBack} onCreatePlaylist={mockOnCreatePlaylist} />
+        <CreatePlaylistPage
+          {...defaultProps}
+          onBack={mockOnBack}
+          onCreatePlaylist={mockOnCreatePlaylist}
+        />
       );
 
       expect(getByTestId('back-button')).toBeTruthy();

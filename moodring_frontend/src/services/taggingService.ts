@@ -56,12 +56,18 @@ export class TaggingService {
     return this.makeApiCall<Tag[]>(url);
   }
 
-  async addTagToSong(songId: string, userId: number, tagId: number): Promise<SongTag> {
+  async addTagToSong(
+    songId: string,
+    userId: number,
+    tagId: number,
+    spotifyTrackId?: string
+  ): Promise<SongTag> {
     const url = `${this.getBackendUrl()}/songs/${encodeURIComponent(songId)}/tags`;
     const songTagData: NewSongTag = {
       user_id: userId,
       tag_id: tagId,
       song_id: songId,
+      spotify_track_id: spotifyTrackId,
     };
 
     return this.makeApiCall<SongTag>(url, {
@@ -81,6 +87,42 @@ export class TaggingService {
   async getSongsWithTag(userId: number, tagId: number): Promise<string[]> {
     const url = `${this.getBackendUrl()}/users/${userId}/tags/${tagId}/songs`;
     return this.makeApiCall<string[]>(url);
+  }
+
+  // Get Spotify track IDs for songs that have specific tags
+  async getSpotifyTrackIdsWithTags(userId: number, tagIds: number[]): Promise<string[]> {
+    try {
+      if (tagIds.length === 0) {
+        return [];
+      }
+
+      // Get all song tag entries for the specified tags
+      const allSpotifyTrackIds: string[] = [];
+
+      for (const tagId of tagIds) {
+        const url = `${this.getBackendUrl()}/users/${userId}/tags/${tagId}/spotify-tracks`;
+        try {
+          const spotifyTrackIds = await this.makeApiCall<string[]>(url);
+          allSpotifyTrackIds.push(...spotifyTrackIds);
+        } catch {
+          // If endpoint doesn't exist yet, fallback to getting normalized IDs
+          // and skip this tag (TODO: TEMP - Remove when backend supports spotify-tracks endpoint)
+          if (__DEV__) {
+            console.warn(
+              `[TaggingService] spotify-tracks endpoint not implemented for tag ${tagId}, skipping`
+            );
+          }
+        }
+      }
+
+      // Remove duplicates
+      return [...new Set(allSpotifyTrackIds.filter(id => id && id.length > 0))];
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[TaggingService] Error getting Spotify track IDs with tags:', error);
+      }
+      return [];
+    }
   }
 
   // Utility method to generate a song ID from track information

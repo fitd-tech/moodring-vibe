@@ -38,6 +38,7 @@ pub struct SongTag {
     pub song_id: String,
     pub tag_id: i32,
     pub created_at: NaiveDateTime,
+    pub spotify_track_id: Option<String>,
 }
 
 #[derive(Insertable, Deserialize, Clone, Debug)]
@@ -47,6 +48,7 @@ pub struct NewSongTag {
     pub user_id: i32,
     pub song_id: String,
     pub tag_id: i32,
+    pub spotify_track_id: Option<String>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -799,6 +801,7 @@ mod tests {
             user_id: 1, // Valid user ID
             song_id: "spotify:track:test123".to_string(),
             tag_id: 1, // Valid tag ID
+            spotify_track_id: Some("test123".to_string()),
         };
 
         // Verify song tag structure
@@ -932,6 +935,7 @@ mod tests {
             user_id: 1,
             song_id: "spotify:track:4iV5W9uYEdYUVa79Axb7Rh".to_string(),
             tag_id: 1,
+            spotify_track_id: Some("4iV5W9uYEdYUVa79Axb7Rh".to_string()),
         };
 
         assert!(!valid_song_tag.song_id.is_empty());
@@ -951,6 +955,7 @@ mod tests {
             user_id: 1,
             song_id: "a".repeat(1000), // Very long ID
             tag_id: 1,
+            spotify_track_id: Some("a".repeat(22)), // Spotify ID is 22 chars
         };
         assert!(long_song_id.song_id.len() > 500);
     }

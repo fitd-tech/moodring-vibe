@@ -7,10 +7,11 @@ import { useAuth } from '../../../contexts/AuthContext';
 interface UseTaggingProps {
   tags: Tag[];
   songId: string;
+  spotifyTrackId?: string;
   onTagsChanged: () => void;
 }
 
-export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => {
+export const useTagging = ({ tags, songId, spotifyTrackId, onTagsChanged }: UseTaggingProps) => {
   const { user } = useAuth();
   const [newTagName, setNewTagName] = useState('');
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -62,7 +63,7 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
       const newTag = await taggingService.createTag(user.id, tagData);
 
       // Add tag to song
-      await taggingService.addTagToSong(songId, user.id, newTag.id);
+      await taggingService.addTagToSong(songId, user.id, newTag.id, spotifyTrackId);
 
       setNewTagName('');
       setShowAvailableTags(false);
@@ -87,7 +88,7 @@ export const useTagging = ({ tags, songId, onTagsChanged }: UseTaggingProps) => 
 
     setIsLoading(true);
     try {
-      await taggingService.addTagToSong(songId, user.id, tag.id);
+      await taggingService.addTagToSong(songId, user.id, tag.id, spotifyTrackId);
       setShowAvailableTags(false);
       onTagsChanged();
     } catch {

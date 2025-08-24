@@ -12,6 +12,16 @@ const mockedTaggingService = taggingService as jest.Mocked<typeof taggingService
 describe('PlaylistService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock the new getSpotifyTrackIdsWithTags method to return empty array by default
+    mockedTaggingService.getSpotifyTrackIdsWithTags = jest.fn().mockResolvedValue([]);
+
+    // Mock the new getTracksByIds method to return empty array by default
+    mockedSpotifyApi.getTracksByIds = jest.fn().mockResolvedValue([]);
+
+    // Mock additional methods used in getAllAvailableTracks
+    mockedSpotifyApi.getRecentTracks = jest.fn().mockResolvedValue([]);
+    mockedSpotifyApi.getTopTracks = jest.fn().mockResolvedValue([]);
   });
 
   describe('getSongsWithTags', () => {
@@ -25,7 +35,8 @@ describe('PlaylistService', () => {
         .mockResolvedValueOnce(['song1', 'song2'])
         .mockResolvedValueOnce(['song3', 'song4']);
 
-      mockedTaggingService.generateSongId = jest.fn()
+      mockedTaggingService.generateSongId = jest
+        .fn()
         .mockReturnValueOnce('song1')
         .mockReturnValueOnce('song2')
         .mockReturnValueOnce('song3')
@@ -84,7 +95,8 @@ describe('PlaylistService', () => {
 
       // Mock tagged album IDs
       mockedTaggingService.getSongsWithTag.mockResolvedValueOnce(['album_id1', 'album_id2']);
-      mockedTaggingService.generateAlbumId = jest.fn()
+      mockedTaggingService.generateAlbumId = jest
+        .fn()
         .mockReturnValueOnce('album_id1')
         .mockReturnValueOnce('album_id2');
 
@@ -129,7 +141,8 @@ describe('PlaylistService', () => {
 
       // Mock tagged playlist IDs
       mockedTaggingService.getSongsWithTag.mockResolvedValueOnce(['playlist_id1', 'playlist_id2']);
-      mockedTaggingService.generatePlaylistId = jest.fn()
+      mockedTaggingService.generatePlaylistId = jest
+        .fn()
         .mockReturnValueOnce('playlist_id1')
         .mockReturnValueOnce('playlist_id2');
 
@@ -178,7 +191,8 @@ describe('PlaylistService', () => {
         .mockResolvedValueOnce(['song1', 'song2', 'song3'])
         .mockResolvedValueOnce(['song4', 'song5']);
 
-      mockedTaggingService.generateSongId = jest.fn()
+      mockedTaggingService.generateSongId = jest
+        .fn()
         .mockReturnValueOnce('song1')
         .mockReturnValueOnce('song2')
         .mockReturnValueOnce('song3')
@@ -207,7 +221,12 @@ describe('PlaylistService', () => {
       mockedSpotifyApi.getSavedTracks.mockResolvedValueOnce(firstPageTracks);
       mockedSpotifyApi.getMoreSavedTracks.mockResolvedValueOnce(secondPageTracks);
 
-      const result = await playlistService.getFilteredContent(userId, tagIds, contentTypes, spotifyToken);
+      const result = await playlistService.getFilteredContent(
+        userId,
+        tagIds,
+        contentTypes,
+        spotifyToken
+      );
 
       // Should return all 5 tagged songs, regardless of pagination
       expect(result).toHaveLength(5);

@@ -63,7 +63,7 @@ export class PlaylistService {
     try {
       // Get all tags first to calculate pagination
       const allTags = await taggingService.getUserTags(userId);
-      
+
       // Apply pagination
       const paginatedTags = allTags.slice(offset, offset + limit);
       const hasMore = offset + limit < allTags.length;
@@ -90,23 +90,26 @@ export class PlaylistService {
       let hasMore = true;
 
       while (hasMore) {
-        const tracks = offset === 0 
-          ? await spotifyApi.getSavedTracks(spotifyToken, limit)
-          : await spotifyApi.getMoreSavedTracks(spotifyToken, offset);
-        
+        const tracks =
+          offset === 0
+            ? await spotifyApi.getSavedTracks(spotifyToken, limit)
+            : await spotifyApi.getMoreSavedTracks(spotifyToken, offset);
+
         if (!tracks || tracks.length === 0) {
           hasMore = false;
         } else {
-          allTracks.push(...tracks.map(savedTrack => ({
-            name: savedTrack.name,
-            artist: savedTrack.artist,
-            album: savedTrack.album,
-            album_image_url: savedTrack.album_image_url,
-            played_at: savedTrack.added_at, // Use added_at as played_at for consistency
-          })));
-          
+          allTracks.push(
+            ...tracks.map(savedTrack => ({
+              name: savedTrack.name,
+              artist: savedTrack.artist,
+              album: savedTrack.album,
+              album_image_url: savedTrack.album_image_url,
+              played_at: savedTrack.added_at, // Use added_at as played_at for consistency
+            }))
+          );
+
           offset += limit;
-          
+
           // Stop if we got fewer tracks than requested (last page)
           if (tracks.length < limit) {
             hasMore = false;
@@ -115,7 +118,9 @@ export class PlaylistService {
       }
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Fetched ${allTracks.length} total saved tracks from Spotify`);
+        console.log(
+          `[PlaylistService] Fetched ${allTracks.length} total saved tracks from Spotify`
+        );
       }
 
       return allTracks;
@@ -136,16 +141,17 @@ export class PlaylistService {
       let hasMore = true;
 
       while (hasMore) {
-        const albums = offset === 0 
-          ? await spotifyApi.getSavedAlbums(spotifyToken, limit)
-          : await spotifyApi.getMoreSavedAlbums(spotifyToken, offset);
-        
+        const albums =
+          offset === 0
+            ? await spotifyApi.getSavedAlbums(spotifyToken, limit)
+            : await spotifyApi.getMoreSavedAlbums(spotifyToken, offset);
+
         if (!albums || albums.length === 0) {
           hasMore = false;
         } else {
           allAlbums.push(...albums);
           offset += limit;
-          
+
           // Stop if we got fewer albums than requested (last page)
           if (albums.length < limit) {
             hasMore = false;
@@ -154,7 +160,9 @@ export class PlaylistService {
       }
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Fetched ${allAlbums.length} total saved albums from Spotify`);
+        console.log(
+          `[PlaylistService] Fetched ${allAlbums.length} total saved albums from Spotify`
+        );
       }
 
       return allAlbums;
@@ -175,16 +183,17 @@ export class PlaylistService {
       let hasMore = true;
 
       while (hasMore) {
-        const playlists = offset === 0 
-          ? await spotifyApi.getSavedPlaylists(spotifyToken, limit)
-          : await spotifyApi.getMoreSavedPlaylists(spotifyToken, offset);
-        
+        const playlists =
+          offset === 0
+            ? await spotifyApi.getSavedPlaylists(spotifyToken, limit)
+            : await spotifyApi.getMoreSavedPlaylists(spotifyToken, offset);
+
         if (!playlists || playlists.length === 0) {
           hasMore = false;
         } else {
           allPlaylists.push(...playlists);
           offset += limit;
-          
+
           // Stop if we got fewer playlists than requested (last page)
           if (playlists.length < limit) {
             hasMore = false;
@@ -193,7 +202,9 @@ export class PlaylistService {
       }
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Fetched ${allPlaylists.length} total saved playlists from Spotify`);
+        console.log(
+          `[PlaylistService] Fetched ${allPlaylists.length} total saved playlists from Spotify`
+        );
       }
 
       return allPlaylists;
@@ -230,7 +241,7 @@ export class PlaylistService {
             console.warn('[PlaylistService] Failed to fetch top tracks:', error);
           }
           return [];
-        })
+        }),
       ]);
 
       // Combine all tracks and remove duplicates based on name + artist
@@ -256,7 +267,7 @@ export class PlaylistService {
           artist: track.artist,
           album: track.album,
           album_image_url: track.album_image_url,
-          played_at: track.played_at
+          played_at: track.played_at,
         });
       });
 
@@ -267,12 +278,14 @@ export class PlaylistService {
           artist: track.artist,
           album: track.album,
           album_image_url: track.album_image_url,
-          played_at: new Date().toISOString() // TopTracks don't have played_at, use current time
+          played_at: new Date().toISOString(), // TopTracks don't have played_at, use current time
         });
       });
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Combined tracks from all sources: ${savedTracks.length} saved + ${recentTracks.length} recent + ${topTracks.length} top = ${allTracks.length} total unique tracks`);
+        console.log(
+          `[PlaylistService] Combined tracks from all sources: ${savedTracks.length} saved + ${recentTracks.length} recent + ${topTracks.length} top = ${allTracks.length} total unique tracks`
+        );
       }
 
       return allTracks;
@@ -285,17 +298,55 @@ export class PlaylistService {
   }
 
   // Get songs with specific tags for filtering
-  async getSongsWithTags(
-    userId: number,
-    tagIds: number[],
-    spotifyToken: string
-  ): Promise<Track[]> {
+  async getSongsWithTags(userId: number, tagIds: number[], spotifyToken: string): Promise<Track[]> {
     try {
       if (tagIds.length === 0) {
         return [];
       }
 
-      // Get all song IDs that have any of the specified tags
+      if (__DEV__) {
+        console.log(`[PlaylistService] Getting songs for tags:`, tagIds);
+      }
+
+      // First, try to get Spotify track IDs for the tagged songs
+      const spotifyTrackIds = await taggingService.getSpotifyTrackIdsWithTags(userId, tagIds);
+
+      if (spotifyTrackIds.length > 0) {
+        if (__DEV__) {
+          console.log(
+            `[PlaylistService] Found ${spotifyTrackIds.length} Spotify track IDs, fetching directly from Spotify API`
+          );
+        }
+
+        // Fetch tracks directly from Spotify API using track IDs
+        const tracksFromSpotify = await spotifyApi.getTracksByIds(spotifyToken, spotifyTrackIds);
+
+        // Convert to Track format for consistency with the rest of the system
+        const convertedTracks: Track[] = tracksFromSpotify.map(track => ({
+          name: track.name,
+          artist: track.artist,
+          album: track.album,
+          album_image_url: track.album_image_url,
+          played_at: track.added_at,
+        }));
+
+        if (__DEV__) {
+          console.log(
+            `[PlaylistService] Successfully fetched ${convertedTracks.length} tracks from Spotify API`
+          );
+        }
+
+        return convertedTracks;
+      }
+
+      // Fallback to old method if no Spotify track IDs are available
+      if (__DEV__) {
+        console.log(
+          `[PlaylistService] No Spotify track IDs found, falling back to search through local tracks`
+        );
+      }
+
+      // Get all song IDs that have any of the specified tags (normalized IDs)
       const songIdSets = await Promise.all(
         tagIds.map(tagId => taggingService.getSongsWithTag(userId, tagId))
       );
@@ -308,37 +359,53 @@ export class PlaylistService {
       }
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Looking for ${allSongIds.length} tagged song IDs:`, allSongIds);
+        console.log(
+          `[PlaylistService] Looking for ${allSongIds.length} tagged song IDs (normalized):`,
+          allSongIds
+        );
       }
 
       // Fetch ALL available tracks from all sources (saved, recent, top)
       const allAvailableTracks = await this.getAllAvailableTracks(spotifyToken);
-      
+
       if (__DEV__) {
-        console.log(`[PlaylistService] Searching through ${allAvailableTracks.length} total available tracks from all sources`);
+        console.log(
+          `[PlaylistService] Searching through ${allAvailableTracks.length} total available tracks from all sources`
+        );
       }
 
       // Filter tracks that match our tagged song IDs
       const filteredTracks = allAvailableTracks.filter(track => {
         const generatedId = taggingService.generateSongId(track.name, track.artist);
         const isMatch = allSongIds.includes(generatedId);
-        
+
         if (__DEV__ && isMatch) {
-          console.log(`[PlaylistService] ✅ Found matching track: "${track.name}" by "${track.artist}" (ID: ${generatedId})`);
+          console.log(
+            `[PlaylistService] ✅ Found matching track: "${track.name}" by "${track.artist}" (ID: ${generatedId})`
+          );
         }
-        
+
         return isMatch;
       });
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Found ${filteredTracks.length} matching tracks for ${allSongIds.length} tagged song IDs`);
-        console.log(`[PlaylistService] Searched through ${allAvailableTracks.length} total available tracks from all sources`);
-        
+        console.log(
+          `[PlaylistService] Found ${filteredTracks.length} matching tracks for ${allSongIds.length} tagged song IDs`
+        );
+        console.log(
+          `[PlaylistService] Searched through ${allAvailableTracks.length} total available tracks from all sources`
+        );
+
         // Log any tagged song IDs that weren't found for debugging
         if (filteredTracks.length < allSongIds.length) {
-          const foundIds = filteredTracks.map(track => taggingService.generateSongId(track.name, track.artist));
+          const foundIds = filteredTracks.map(track =>
+            taggingService.generateSongId(track.name, track.artist)
+          );
           const missingIds = allSongIds.filter(id => !foundIds.includes(id));
-          console.log(`[PlaylistService] ⚠️ Tagged song IDs not found in Spotify data:`, missingIds);
+          console.log(
+            `[PlaylistService] ⚠️ Tagged song IDs not found in Spotify data:`,
+            missingIds
+          );
         }
       }
 
@@ -380,18 +447,22 @@ export class PlaylistService {
 
       // Fetch ALL saved albums from Spotify (not just first 20)
       const allSavedAlbums = await this.getAllSavedAlbums(spotifyToken);
-      
+
       if (__DEV__) {
-        console.log(`[PlaylistService] Searching through ${allSavedAlbums.length} total saved albums`);
+        console.log(
+          `[PlaylistService] Searching through ${allSavedAlbums.length} total saved albums`
+        );
       }
-      
+
       const filteredAlbums = allSavedAlbums.filter(album => {
         const generatedId = taggingService.generateAlbumId(album.name, album.album_id);
         return allAlbumIds.includes(generatedId);
       });
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Found ${filteredAlbums.length} matching albums for selected tags`);
+        console.log(
+          `[PlaylistService] Found ${filteredAlbums.length} matching albums for selected tags`
+        );
       }
 
       return filteredAlbums;
@@ -420,7 +491,9 @@ export class PlaylistService {
       );
 
       // Get playlist IDs (filter for entries that start with 'playlist_')
-      const allPlaylistIds = [...new Set(playlistIdSets.flat().filter(id => id.startsWith('playlist_')))];
+      const allPlaylistIds = [
+        ...new Set(playlistIdSets.flat().filter(id => id.startsWith('playlist_'))),
+      ];
 
       if (allPlaylistIds.length === 0) {
         return [];
@@ -432,18 +505,22 @@ export class PlaylistService {
 
       // Fetch ALL saved playlists from Spotify (not just first 20)
       const allSavedPlaylists = await this.getAllSavedPlaylists(spotifyToken);
-      
+
       if (__DEV__) {
-        console.log(`[PlaylistService] Searching through ${allSavedPlaylists.length} total saved playlists`);
+        console.log(
+          `[PlaylistService] Searching through ${allSavedPlaylists.length} total saved playlists`
+        );
       }
-      
+
       const filteredPlaylists = allSavedPlaylists.filter(playlist => {
         const generatedId = taggingService.generatePlaylistId(playlist.name, playlist.playlist_id);
         return allPlaylistIds.includes(generatedId);
       });
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Found ${filteredPlaylists.length} matching playlists for selected tags`);
+        console.log(
+          `[PlaylistService] Found ${filteredPlaylists.length} matching playlists for selected tags`
+        );
       }
 
       return filteredPlaylists;
@@ -463,7 +540,7 @@ export class PlaylistService {
   ): Promise<Track[]> {
     try {
       const taggedAlbums = await this.getAlbumsWithTags(userId, tagIds, spotifyToken);
-      
+
       if (taggedAlbums.length === 0) {
         return [];
       }
@@ -495,7 +572,7 @@ export class PlaylistService {
   ): Promise<Track[]> {
     try {
       const taggedPlaylists = await this.getPlaylistsWithTags(userId, tagIds, spotifyToken);
-      
+
       if (taggedPlaylists.length === 0) {
         return [];
       }
@@ -552,8 +629,9 @@ export class PlaylistService {
       }
 
       // Remove duplicates based on name and artist
-      const uniqueTracks = allTracks.filter((track, index, self) => 
-        index === self.findIndex(t => t.name === track.name && t.artist === track.artist)
+      const uniqueTracks = allTracks.filter(
+        (track, index, self) =>
+          index === self.findIndex(t => t.name === track.name && t.artist === track.artist)
       );
 
       return uniqueTracks;

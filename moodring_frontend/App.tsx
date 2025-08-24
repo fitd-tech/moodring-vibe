@@ -174,8 +174,8 @@ const AppContent: React.FC = () => {
 
     if (currentView === 'create-playlist') {
       return (
-        <CreatePlaylistPage 
-          onBack={handleBackToHome} 
+        <CreatePlaylistPage
+          onBack={handleBackToHome}
           onCreatePlaylist={handlePlaylistCreated}
           onHome={handleHome}
           onBrowseTags={handleBrowseTags}

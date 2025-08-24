@@ -331,7 +331,8 @@ describe('useTagging', () => {
       expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith(
         'test_song',
         testUser.id,
-        mockTags[0].id
+        mockTags[0].id,
+        undefined
       );
       expect(result.current.newTagName).toBe('');
       expect(result.current.showAvailableTags).toBe(false);
@@ -522,7 +523,8 @@ describe('useTagging', () => {
       expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith(
         'test_song',
         testUser.id,
-        tagToAdd.id
+        tagToAdd.id,
+        undefined
       );
       expect(result.current.showAvailableTags).toBe(false);
       expect(mockOnTagsChanged).toHaveBeenCalledTimes(1);

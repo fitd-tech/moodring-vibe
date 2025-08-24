@@ -7,6 +7,7 @@ diesel::table! {
         song_id -> Varchar,
         tag_id -> Int4,
         created_at -> Timestamp,
+        spotify_track_id -> Nullable<Varchar>,
     }
 }
 
@@ -16,6 +17,17 @@ diesel::table! {
         user_id -> Int4,
         name -> Varchar,
         color -> Nullable<Varchar>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    temp_songs (id) {
+        id -> Int4,
+        title -> Varchar,
+        artist -> Varchar,
+        genre -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -40,4 +52,4 @@ diesel::joinable!(song_tags -> tags (tag_id));
 diesel::joinable!(song_tags -> users (user_id));
 diesel::joinable!(tags -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(song_tags, tags, users,);
+diesel::allow_tables_to_appear_in_same_query!(song_tags, tags, temp_songs, users,);

@@ -131,7 +131,7 @@ describe('TaggingInterface', () => {
         name: 'new tag',
         user_id: 1,
       });
-      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith('test_song', 1, 1);
+      expect(mockTaggingService.addTagToSong).toHaveBeenCalledWith('test_song', 1, 1, undefined);
       expect(mockOnTagsChanged).toHaveBeenCalled();
     });
   });

@@ -111,6 +111,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ currentlyPlaying }) => {
                 currentlyPlaying?.song_id ||
                 `${currentlyPlaying?.name || 'unknown'}__${currentlyPlaying?.artist || 'unknown'}`
               }
+              spotifyTrackId={currentlyPlaying?.song_id}
               onTagsChanged={() => {}}
             />
             <TouchableOpacity style={styles.collapseButton} onPress={toggleExpansion}>

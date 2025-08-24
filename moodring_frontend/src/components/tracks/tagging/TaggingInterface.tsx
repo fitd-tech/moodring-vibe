@@ -10,12 +10,14 @@ import { TagSuggestions } from './TagSuggestions';
 interface TaggingInterfaceProps {
   tags: Tag[];
   songId: string;
+  spotifyTrackId?: string;
   onTagsChanged: () => void;
 }
 
 export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
   tags,
   songId,
+  spotifyTrackId,
   onTagsChanged,
 }) => {
   const {
@@ -28,7 +30,7 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
     handleCreateAndAddTag,
     handleAddExistingTag,
     getUnusedTags,
-  } = useTagging({ tags, songId, onTagsChanged });
+  } = useTagging({ tags, songId, spotifyTrackId, onTagsChanged });
 
   return (
     <View style={styles.container}>
