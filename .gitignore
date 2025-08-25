@@ -26,6 +26,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Package management backups
+*.backup*
+package*.backup*
+
 # React Native / Expo
 .expo/
 dist/

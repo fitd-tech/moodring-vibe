@@ -51,7 +51,28 @@ export const useSpotifyData = (
   const fetchSavedTracks = async (token: string, activeUser: BackendUser, limit: number = 10) => {
     try {
       // Verify token has required scope before attempting fetch
-      const scopes = await spotifyApi.verifyTokenScopes(token);
+      let scopes: string[] = [];
+      try {
+        scopes = await spotifyApi.verifyTokenScopes(token);
+      } catch (scopeError) {
+        if (scopeError instanceof Error && scopeError.message === 'TOKEN_EXPIRED') {
+          // Try to refresh token and retry scope verification
+          const result = await handleTokenExpiredError(scopeError, activeUser, async (refreshedToken) => {
+            const refreshedScopes = await spotifyApi.verifyTokenScopes(refreshedToken);
+            if (!refreshedScopes.includes('user-library-read')) {
+              return [];
+            }
+            return await spotifyApi.getSavedTracks(refreshedToken, limit);
+          });
+          return result || [];
+        } else {
+          if (__DEV__) {
+            console.warn('[SpotifyData] Failed to verify scopes for saved tracks:', scopeError);
+          }
+          return [];
+        }
+      }
+
       if (!scopes.includes('user-library-read')) {
         // Return empty array instead of throwing error to prevent app crashes
         return [];
@@ -79,7 +100,31 @@ export const useSpotifyData = (
   ) => {
     try {
       // Verify token has required scope before attempting fetch
-      const scopes = await spotifyApi.verifyTokenScopes(token);
+      let scopes: string[] = [];
+      try {
+        scopes = await spotifyApi.verifyTokenScopes(token);
+      } catch (scopeError) {
+        if (scopeError instanceof Error && scopeError.message === 'TOKEN_EXPIRED') {
+          // Try to refresh token and retry scope verification
+          const result = await handleTokenExpiredError(scopeError, activeUser, async (refreshedToken) => {
+            const refreshedScopes = await spotifyApi.verifyTokenScopes(refreshedToken);
+            if (!refreshedScopes.includes('playlist-read-private')) {
+              if (__DEV__) {
+                console.warn('[SpotifyData] Missing playlist-read-private scope after token refresh');
+              }
+              return [];
+            }
+            return await spotifyApi.getSavedPlaylists(refreshedToken, limit);
+          });
+          return result || [];
+        } else {
+          if (__DEV__) {
+            console.warn('[SpotifyData] Failed to verify scopes for playlists:', scopeError);
+          }
+          return [];
+        }
+      }
+
       if (!scopes.includes('playlist-read-private')) {
         if (__DEV__) {
           console.warn('[SpotifyData] Missing playlist-read-private scope');
@@ -124,7 +169,28 @@ export const useSpotifyData = (
   const fetchSavedAlbums = async (token: string, activeUser: BackendUser, limit: number = 20) => {
     try {
       // Verify token has required scope before attempting fetch
-      const scopes = await spotifyApi.verifyTokenScopes(token);
+      let scopes: string[] = [];
+      try {
+        scopes = await spotifyApi.verifyTokenScopes(token);
+      } catch (scopeError) {
+        if (scopeError instanceof Error && scopeError.message === 'TOKEN_EXPIRED') {
+          // Try to refresh token and retry scope verification
+          const result = await handleTokenExpiredError(scopeError, activeUser, async (refreshedToken) => {
+            const refreshedScopes = await spotifyApi.verifyTokenScopes(refreshedToken);
+            if (!refreshedScopes.includes('user-library-read')) {
+              return [];
+            }
+            return await spotifyApi.getSavedAlbums(refreshedToken, limit);
+          });
+          return result || [];
+        } else {
+          if (__DEV__) {
+            console.warn('[SpotifyData] Failed to verify scopes for saved albums:', scopeError);
+          }
+          return [];
+        }
+      }
+
       if (!scopes.includes('user-library-read')) {
         // Return empty array instead of throwing error to prevent app crashes
         return [];

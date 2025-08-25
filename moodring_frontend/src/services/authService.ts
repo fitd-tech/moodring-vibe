@@ -31,26 +31,104 @@ export class AuthService {
     }
   }
 
-  async refreshSpotifyToken(userId: number): Promise<BackendAuthResponse> {
+  async refreshSpotifyToken(userId: number, retryAttempt = 0): Promise<BackendAuthResponse> {
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second base delay
+    
     try {
       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/auth/refresh/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Token refresh failed: ${response.status} - ${errorText}`);
+      
+      if (__DEV__) {
+        console.log(`[AuthService] Refreshing token for user ${userId} (attempt ${retryAttempt + 1}/${maxRetries + 1})...`);
       }
 
-      const authData = await response.json();
-      return authData;
+      // Create timeout mechanism compatible with React Native
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, 10000); // 10 second timeout
+
+      try {
+        const response = await fetch(`${backendUrl}/auth/refresh/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // Use React Native compatible AbortController
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          // Parse the error to determine if it's retryable
+          const isRetryable = this.isRetryableError(response.status, errorText);
+          
+          if (__DEV__) {
+            console.warn(`[AuthService] Token refresh failed with backend ${response.status} error (retryable: ${isRetryable}):`, errorText);
+          }
+
+          // If retryable and we haven't exhausted retries, wait and retry
+          if (isRetryable && retryAttempt < maxRetries) {
+            const delay = baseDelay * Math.pow(2, retryAttempt); // Exponential backoff
+            if (__DEV__) {
+              console.log(`[AuthService] Retrying token refresh in ${delay}ms...`);
+            }
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return this.refreshSpotifyToken(userId, retryAttempt + 1);
+          }
+
+          throw new Error(`Token refresh failed with backend ${response.status} error: ${errorText}`);
+        }
+
+        const authData = await response.json();
+        if (__DEV__) {
+          console.log(`[AuthService] Token refresh successful for user ${userId} after ${retryAttempt + 1} attempt(s)`);
+        }
+        return authData;
+      } finally {
+        // Always clear timeout regardless of outcome
+        clearTimeout(timeoutId);
+      }
     } catch (err) {
+      // Handle timeout and network errors
+      if (err instanceof Error) {
+        if (err.name === 'AbortError' || err.name === 'TimeoutError' || err.message.includes('timeout')) {
+          if (__DEV__) {
+            console.warn(`[AuthService] Token refresh timeout (attempt ${retryAttempt + 1})`);
+          }
+          if (retryAttempt < maxRetries) {
+            const delay = baseDelay * Math.pow(2, retryAttempt);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return this.refreshSpotifyToken(userId, retryAttempt + 1);
+          }
+        }
+      }
+
+      if (__DEV__) {
+        console.error(`[AuthService] Token refresh failed after ${retryAttempt + 1} attempt(s):`, err);
+      }
       throw new Error(`Failed to refresh token: ${err}`);
     }
+  }
+
+  private isRetryableError(status: number, errorText: string): boolean {
+    // 500 Internal Server Error - often temporary
+    if (status === 500) return true;
+    
+    // 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
+    if (status >= 502 && status <= 504) return true;
+    
+    // Specific Spotify errors that are often temporary
+    if (errorText.includes('Failed to remove token')) return true;
+    if (errorText.includes('server_error')) return true;
+    if (errorText.includes('temporarily_unavailable')) return true;
+    
+    // Network/connection errors
+    if (errorText.includes('network')) return true;
+    if (errorText.includes('timeout')) return true;
+    
+    return false;
   }
 
   async saveAuthData(authData: BackendAuthResponse): Promise<void> {

@@ -34,44 +34,75 @@ export class SpotifyApiService {
       });
 
       if (response.ok) {
-        // Unfortunately, Spotify doesn't directly return scopes in the user profile
-        // But we can test specific endpoints to verify scopes
-        const userLibraryResponse = await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Make all scope test requests in parallel to avoid token state issues
+        const scopeTestPromises = [
+          fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch('https://api.spotify.com/v1/me/playlists?limit=1', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ];
 
-        const playlistsResponse = await fetch('https://api.spotify.com/v1/me/playlists?limit=1', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const [userLibraryResponse, playlistsResponse] = await Promise.allSettled(scopeTestPromises);
 
         const scopes: string[] = ['user-read-private', 'user-read-email'];
 
-        if (userLibraryResponse.status === 200) {
-          scopes.push('user-library-read');
-        } else if (userLibraryResponse.status === 403) {
+        // Handle user library scope check
+        if (userLibraryResponse.status === 'fulfilled') {
+          if (userLibraryResponse.value.status === 200) {
+            scopes.push('user-library-read');
+          } else if (userLibraryResponse.value.status === 403) {
+            if (__DEV__) {
+              console.warn('[SpotifyApi] Token missing user-library-read scope');
+            }
+          } else if (userLibraryResponse.value.status === 401) {
+            if (__DEV__) {
+              console.warn('[SpotifyApi] Token expired during user library scope check');
+            }
+            throw new Error('TOKEN_EXPIRED');
+          }
+        } else {
           if (__DEV__) {
-            console.warn('[SpotifyApi] Token missing user-library-read scope');
+            console.warn('[SpotifyApi] User library scope check failed:', userLibraryResponse.reason);
           }
         }
 
-        if (playlistsResponse.status === 200) {
-          scopes.push('playlist-read-private');
-          scopes.push('playlist-read-collaborative'); // Assume collaborative access if playlists are accessible
-        } else if (playlistsResponse.status === 403) {
+        // Handle playlists scope check
+        if (playlistsResponse.status === 'fulfilled') {
+          if (playlistsResponse.value.status === 200) {
+            scopes.push('playlist-read-private');
+            scopes.push('playlist-read-collaborative'); // Assume collaborative access if playlists are accessible
+          } else if (playlistsResponse.value.status === 403) {
+            if (__DEV__) {
+              console.warn('[SpotifyApi] Token missing playlist-read-private scope');
+            }
+          } else if (playlistsResponse.value.status === 401) {
+            if (__DEV__) {
+              console.warn('[SpotifyApi] Token expired during playlist scope check');
+            }
+            throw new Error('TOKEN_EXPIRED');
+          }
+        } else {
           if (__DEV__) {
-            console.warn('[SpotifyApi] Token missing playlist-read-private scope');
+            console.warn('[SpotifyApi] Playlist scope check failed:', playlistsResponse.reason);
           }
         }
 
         if (__DEV__) {
-          console.log('[SpotifyApi] Verified token scopes:', scopes);
+          console.log('[SpotifyApi] Verified token scopes successfully:', scopes);
         }
 
         return scopes;
+      } else if (response.status === 401) {
+        if (__DEV__) {
+          console.warn('[SpotifyApi] Token expired during scope verification');
+        }
+        throw new Error('TOKEN_EXPIRED');
       } else {
         if (__DEV__) {
           console.warn('[SpotifyApi] Failed to verify token scopes:', response.status);
@@ -79,6 +110,9 @@ export class SpotifyApiService {
         return [];
       }
     } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
       if (__DEV__) {
         console.error('[SpotifyApi] Error verifying token scopes:', error);
       }

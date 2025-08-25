@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshPromise, setRefreshPromise] = useState<Promise<{ user: BackendUser; token: string } | null> | null>(null);
 
   const logout = async () => {
     await authService.clearStoredAuthData();
@@ -35,21 +36,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUserToken = async (userId: number) => {
-    try {
-      const refreshedAuth = await authService.refreshSpotifyToken(userId);
-      setUser(refreshedAuth.user);
-      setAuthToken(refreshedAuth.access_token);
-      await authService.saveAuthData(refreshedAuth);
-      return {
-        user: refreshedAuth.user,
-        token: refreshedAuth.access_token,
-      };
-    } catch (error) {
+    // If there's already a refresh in progress, wait for it
+    if (refreshPromise) {
       if (__DEV__) {
-        console.warn('Token refresh failed:', error);
+        console.log(`[AuthContext] Token refresh already in progress for user ${userId}, waiting...`);
       }
-      return null;
+      return await refreshPromise;
     }
+
+    // Create and store the refresh promise to prevent concurrent refreshes
+    const promise = (async () => {
+      try {
+        if (__DEV__) {
+          console.log(`[AuthContext] Starting new token refresh for user ${userId}`);
+        }
+        const refreshedAuth = await authService.refreshSpotifyToken(userId);
+        setUser(refreshedAuth.user);
+        setAuthToken(refreshedAuth.access_token);
+        await authService.saveAuthData(refreshedAuth);
+        
+        return {
+          user: refreshedAuth.user,
+          token: refreshedAuth.access_token,
+        };
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('[AuthContext] Token refresh failed:', error);
+        }
+        return null;
+      } finally {
+        // Clear the promise when done (success or failure)
+        setRefreshPromise(null);
+      }
+    })();
+
+    setRefreshPromise(promise);
+    return await promise;
   };
 
   useEffect(() => {

@@ -129,31 +129,43 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
     tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
-            .map_err(|e| format!("Failed to get connection: {e}"))?;
+            .map_err(|e| {
+                eprintln!("[Auth] Failed to get database connection for user {}: {}", user_id, e);
+                format!("Failed to get connection: {e}")
+            })?;
 
         // Get user with refresh token
         let user_record = users
             .filter(id.eq(user_id))
             .first::<User>(&mut conn)
-            .map_err(|e| format!("Failed to find user: {e}"))?;
+            .map_err(|e| {
+                eprintln!("[Auth] Failed to find user {} for token refresh: {}", user_id, e);
+                format!("Failed to find user: {e}")
+            })?;
 
         let refresh_token = user_record
             .spotify_refresh_token
-            .ok_or("No refresh token available")?;
+            .as_ref()
+            .ok_or_else(|| {
+                eprintln!("[Auth] No refresh token available for user {}", user_id);
+                "No refresh token available".to_string()
+            })?;
 
         let client_id = env::var("SPOTIFY_CLIENT_ID").map_err(|_| "SPOTIFY_CLIENT_ID not set")?;
         let client_secret =
             env::var("SPOTIFY_CLIENT_SECRET").map_err(|_| "SPOTIFY_CLIENT_SECRET not set")?;
 
         // Refresh the token
+        println!("[Auth] Refreshing Spotify token for user {}", user_id);
         let token_response = match tokio::task::block_in_place(|| {
             let rt = tokio::runtime::Handle::current();
             rt.block_on(async {
                 let client = reqwest::Client::new();
+                // Fixed: Remove client_id from form data when using Authorization header
+                // According to Spotify API docs, use either Authorization header OR form data, not both
                 let params = [
                     ("grant_type", "refresh_token"),
-                    ("refresh_token", &refresh_token),
-                    ("client_id", &client_id),
+                    ("refresh_token", refresh_token),
                 ];
 
                 let response = match client
@@ -171,12 +183,16 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
                     .await
                 {
                     Ok(resp) => resp,
-                    Err(e) => return Err(format!("Failed to send refresh request: {e}")),
+                    Err(e) => {
+                        eprintln!("[Auth] Failed to send refresh request for user {}: {}", user_id, e);
+                        return Err(format!("Failed to send refresh request: {e}"));
+                    }
                 };
 
                 let status_code = response.status();
                 if !status_code.is_success() {
                     let error_text = response.text().await.unwrap_or("Unknown error".to_string());
+                    eprintln!("[Auth] Spotify refresh API error for user {}: {} - {}", user_id, status_code, error_text);
                     return Err(format!(
                         "Spotify refresh API error {status_code}: {error_text}"
                     ));
@@ -184,15 +200,24 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
 
                 let token_result = response.json::<SpotifyTokenResponse>().await;
                 match token_result {
-                    Ok(tokens) => Ok(tokens),
-                    Err(json_err) => Err(format!(
-                        "Failed to parse Spotify refresh response: {json_err}"
-                    )),
+                    Ok(tokens) => {
+                        println!("[Auth] Successfully refreshed token for user {}", user_id);
+                        Ok(tokens)
+                    }
+                    Err(json_err) => {
+                        eprintln!("[Auth] Failed to parse Spotify refresh response for user {}: {}", user_id, json_err);
+                        Err(format!(
+                            "Failed to parse Spotify refresh response: {json_err}"
+                        ))
+                    }
                 }
             })
         }) {
             Ok(tokens) => tokens,
-            Err(e) => return Err(format!("Token refresh failed: {e}")),
+            Err(e) => {
+                eprintln!("[Auth] Token refresh failed for user {}: {}", user_id, e);
+                return Err(format!("Token refresh failed: {e}"));
+            }
         };
 
         // Update user with new token
@@ -202,12 +227,17 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
         let updated_user = diesel::update(users.filter(id.eq(user_id)))
             .set((
                 spotify_access_token.eq(Some(token_response.access_token.clone())),
-                spotify_refresh_token.eq(token_response.refresh_token.or(Some(refresh_token))),
+                spotify_refresh_token.eq(token_response.refresh_token.or_else(|| Some(refresh_token.to_string()))),
                 token_expires_at.eq(Some(expires_at)),
                 updated_at.eq(chrono::Utc::now().naive_utc()),
             ))
             .get_result::<User>(&mut conn)
-            .map_err(|e| format!("Failed to update user with new token: {e}"))?;
+            .map_err(|e| {
+                eprintln!("[Auth] Failed to update user {} with new token: {}", user_id, e);
+                format!("Failed to update user with new token: {e}")
+            })?;
+
+        println!("[Auth] Successfully updated user {} with new token, expires at: {:?}", user_id, expires_at);
 
         let jwt_token = format!("user_token_{}", updated_user.id);
         Ok(AuthResponse {

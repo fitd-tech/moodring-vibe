@@ -142,6 +142,12 @@ declare module 'react-native' {
     [key: string]: any;
   }
 
+  // SafeAreaView has been removed to avoid deprecated react-native SafeAreaView
+  // Use SafeAreaView from 'react-native-safe-area-context' directly instead
+}
+
+// react-native-safe-area-context component type overrides
+declare module 'react-native-safe-area-context' {
   interface SafeAreaViewProps {
     className?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

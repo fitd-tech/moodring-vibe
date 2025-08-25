@@ -2,10 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { CreatePlaylistPage } from '../CreatePlaylistPage';
 
-// Mock react-native-safe-area-context
-jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 40, bottom: 20, left: 0, right: 0 }),
-}));
+// react-native-safe-area-context is already mocked in jest.setup.js
 
 // Mock theme
 jest.mock('../../../styles/theme', () => ({
