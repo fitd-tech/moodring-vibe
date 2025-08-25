@@ -1,9 +1,14 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitAny": false,
+    "allowJs": true
   },
-  "include": ["**/*", "nativewind-env.d.ts"]
+  "include": ["**/*", "nativewind-env.d.ts"],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

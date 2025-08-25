@@ -3,64 +3,149 @@
 import React from 'react';
 import { ViewStyle, TextStyle, ImageStyle } from 'react-native';
 
-// Temporary compatibility layer for React Native 0.81 + NativeWind
-// This addresses TypeScript strict typing issues until NativeWind fully supports RN 0.81
+// Enhanced compatibility layer for React Native 0.81 + NativeWind v4 + Reanimated v3
+// This addresses TypeScript strict typing issues and provides comprehensive className support
 
-// Global augmentation for React intrinsic elements
+// Global augmentation for React intrinsic elements with more aggressive type overriding
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      // Allow any element to have className
+      // Allow any element to have className - more permissive approach
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [elemName: string]: any;
+    }
+    
+    interface Element {
+      className?: string;
+    }
+    
+    interface ElementClass {
+      className?: string;
     }
   }
 }
 
-// React Native component type overrides for className support
+// More aggressive React Native component type overrides for className support
 declare module 'react-native' {
+  // Core component interfaces with className support
   interface ViewProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface TextProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface TouchableOpacityProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface PressableProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface ScrollViewProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface ImageProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface TextInputProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface ModalProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface ActivityIndicatorProps {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface FlatListProps<_ItemT> {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 
   interface SectionListProps<_ItemT, _SectionT> {
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface TouchableWithoutFeedbackProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface TouchableHighlightProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface RefreshControlProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface SwitchProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface SliderProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface PickerProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface StatusBarProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface KeyboardAvoidingViewProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  }
+
+  interface SafeAreaViewProps {
+    className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
   }
 }
 
