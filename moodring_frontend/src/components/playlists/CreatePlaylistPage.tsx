@@ -19,6 +19,7 @@ import { ClassNameProps } from '../../../nativewind-env';
 import { TagSelectionState, Track } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { playlistService } from '../../services/playlistService';
+import { taggingService } from '../../services/taggingService';
 
 interface EntityType {
   type: 'songs' | 'albums' | 'playlists';
@@ -220,8 +221,27 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           enabledContentTypes,
           spotifyToken
         );
-        const excludedSongIds = new Set(excludedSongs.map(song => song.song_id).filter(Boolean));
-        songs = songs.filter(song => !excludedSongIds.has(song.song_id));
+        
+        // Create a Set of excluded song identifiers using the same logic as taggingService.generateSongId
+        const excludedSongIdentifiers = new Set(
+          excludedSongs.map(song => taggingService.generateSongId(song.name, song.artist))
+        );
+        
+        // Filter out songs that match excluded identifiers
+        songs = songs.filter(song => {
+          const songIdentifier = taggingService.generateSongId(song.name, song.artist);
+          return !excludedSongIdentifiers.has(songIdentifier);
+        });
+        
+        if (__DEV__) {
+          console.log(`[CreatePlaylistPage] Exclusion filtering:`, {
+            originalSongCount: songs.length + excludedSongs.length,
+            excludedSongCount: excludedSongs.length,
+            finalSongCount: songs.length,
+            excludedSongIdentifiers: Array.from(excludedSongIdentifiers),
+            excludedSongTitles: excludedSongs.map(s => `"${s.name}" by ${s.artist}`)
+          });
+        }
       }
 
       // Store all songs and show first 20
@@ -258,6 +278,11 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             tag.selectionState === 'none' ? 'include' :
             tag.selectionState === 'include' ? 'exclude' :
             'none';
+            
+          if (__DEV__) {
+            console.log(`[CreatePlaylistPage] Tag "${tag.name}" (ID: ${tagId}) state changed: ${tag.selectionState} → ${nextState}`);
+          }
+          
           return { ...tag, selectionState: nextState };
         }
         return tag;

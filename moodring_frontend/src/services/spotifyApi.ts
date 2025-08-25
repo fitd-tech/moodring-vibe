@@ -142,6 +142,7 @@ export class SpotifyApiService {
           album: item.track.album.name,
           album_image_url: this.getImageUrl(item.track.album.images),
           played_at: item.played_at,
+          song_id: item.track.id,
         }));
       } else if (response.status === 401) {
         throw new Error('TOKEN_EXPIRED');
@@ -180,6 +181,7 @@ export class SpotifyApiService {
           album: item.track.album.name,
           album_image_url: this.getImageUrl(item.track.album.images),
           played_at: item.played_at,
+          song_id: item.track.id,
         }));
       } else if (response.status === 401) {
         throw new Error('TOKEN_EXPIRED');

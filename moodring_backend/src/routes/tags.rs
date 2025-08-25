@@ -156,8 +156,18 @@ pub async fn add_tag_to_song(
 
     let pool = pool.inner().clone();
     let mut new_song_tag_data = new_song_tag.into_inner();
+
+    // Debug logging to trace spotify_track_id field
+    println!("DEBUG: Received new_song_tag data: {new_song_tag_data:?}");
+    println!(
+        "DEBUG: spotify_track_id field: {:?}",
+        new_song_tag_data.spotify_track_id
+    );
+
     // Use the song_id from the URL path, not from the POST body
     new_song_tag_data.song_id = song_id.to_string();
+
+    println!("DEBUG: After setting song_id, data: {new_song_tag_data:?}");
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
