@@ -110,7 +110,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         id: tag.id,
         name: tag.name,
         color: tag.color || '#8a2be2',
-        isSelected: false,
+        selectionState: 'none' as const,
       }));
 
       setSelectableTags(tagSelectionStates);
@@ -147,7 +147,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         id: tag.id,
         name: tag.name,
         color: tag.color || '#8a2be2',
-        isSelected: false,
+        selectionState: 'none' as const,
       }));
 
       setSelectableTags(prev => [...prev, ...newTagSelectionStates]);
@@ -166,21 +166,24 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   const updateFilteredSongs = async () => {
     if (!user || !authToken) return;
 
-    const selectedTagIds = selectableTags.filter(tag => tag.isSelected).map(tag => tag.id);
+    const includedTagIds = selectableTags.filter(tag => tag.selectionState === 'include').map(tag => tag.id);
+    const excludedTagIds = selectableTags.filter(tag => tag.selectionState === 'exclude').map(tag => tag.id);
     const enabledContentTypes = entityTypes
       .filter(entity => entity.enabled)
       .map(entity => entity.type);
 
     if (__DEV__) {
       console.log('[CreatePlaylistPage] updateFilteredSongs called:', {
-        selectedTagIds,
+        includedTagIds,
+        excludedTagIds,
         enabledContentTypes,
         selectableTagsCount: selectableTags.length,
-        selectedTagsCount: selectableTags.filter(tag => tag.isSelected).length,
+        includedTagsCount: selectableTags.filter(tag => tag.selectionState === 'include').length,
+        excludedTagsCount: selectableTags.filter(tag => tag.selectionState === 'exclude').length,
       });
     }
 
-    if (selectedTagIds.length === 0 || enabledContentTypes.length === 0) {
+    if (includedTagIds.length === 0 || enabledContentTypes.length === 0) {
       if (__DEV__) {
         console.log(
           '[CreatePlaylistPage] No tags selected or no content types enabled, clearing songs'
@@ -202,12 +205,24 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
         throw new Error('Spotify token not available');
       }
 
-      const songs = await playlistService.getFilteredContent(
+      let songs = await playlistService.getFilteredContent(
         user.id,
-        selectedTagIds,
+        includedTagIds,
         enabledContentTypes,
         spotifyToken
       );
+
+      // Filter out songs with excluded tags
+      if (excludedTagIds.length > 0) {
+        const excludedSongs = await playlistService.getFilteredContent(
+          user.id,
+          excludedTagIds,
+          enabledContentTypes,
+          spotifyToken
+        );
+        const excludedSongIds = new Set(excludedSongs.map(song => song.song_id).filter(Boolean));
+        songs = songs.filter(song => !excludedSongIds.has(song.song_id));
+      }
 
       // Store all songs and show first 20
       setAllFilteredSongs(songs);
@@ -236,7 +251,17 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
 
   const handleTagToggle = (tagId: number) => {
     setSelectableTags(prev =>
-      prev.map(tag => (tag.id === tagId ? { ...tag, isSelected: !tag.isSelected } : tag))
+      prev.map(tag => {
+        if (tag.id === tagId) {
+          // Cycle through states: none → include → exclude → none
+          const nextState = 
+            tag.selectionState === 'none' ? 'include' :
+            tag.selectionState === 'include' ? 'exclude' :
+            'none';
+          return { ...tag, selectionState: nextState };
+        }
+        return tag;
+      })
     );
   };
 
@@ -260,7 +285,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   const handleCreatePlaylist = async () => {
     if (!playlistName.trim() || !user || !authToken) return;
 
-    const selectedTagIds = selectableTags.filter(tag => tag.isSelected).map(tag => tag.id);
+    const selectedTagIds = selectableTags.filter(tag => tag.selectionState === 'include').map(tag => tag.id);
     const enabledEntityTypes = entityTypes
       .filter(entity => entity.enabled)
       .map(entity => entity.type);
@@ -286,7 +311,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       const result = await playlistService.createPlaylistOnSpotify(playlistRequest, spotifyToken);
 
       if (onCreatePlaylist) {
-        const selectedTagNames = selectableTags.filter(tag => tag.isSelected).map(tag => tag.name);
+        const selectedTagNames = selectableTags.filter(tag => tag.selectionState === 'include').map(tag => tag.name);
         onCreatePlaylist(playlistName.trim(), enabledEntityTypes, selectedTagNames);
       }
 
@@ -306,7 +331,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   const isCreateDisabled =
     !playlistName.trim() ||
     !entityTypes.some(entity => entity.enabled) ||
-    !selectableTags.some(tag => tag.isSelected) ||
+    !selectableTags.some(tag => tag.selectionState === 'include') ||
     loading.creating;
 
   return (
@@ -325,8 +350,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
           <GradientCard colors={theme.colors.gradients.action} style={styles.section}>
             <Text style={styles.sectionTitle}>Select Tags</Text>
             <Text style={styles.sectionDescription}>
-              Choose which tags to include in your playlist. Selected:{' '}
-              {selectableTags.filter(tag => tag.isSelected).length} of {selectableTags.length}
+              Choose tags to include or exclude from your playlist. Include:{' '}
+              {selectableTags.filter(tag => tag.selectionState === 'include').length}, Exclude:{' '}
+              {selectableTags.filter(tag => tag.selectionState === 'exclude').length}, Total: {selectableTags.length}
             </Text>
 
             {errors.tags && (
@@ -353,24 +379,38 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                   {selectableTags.map(tag => (
                     <TouchableOpacity
                       key={tag.id}
-                      style={[styles.tagOption, tag.isSelected && styles.tagOptionSelected]}
+                      style={[
+                        styles.tagOption,
+                        tag.selectionState === 'include' && styles.tagOptionIncluded,
+                        tag.selectionState === 'exclude' && styles.tagOptionExcluded
+                      ]}
                       onPress={() => handleTagToggle(tag.id)}
                       testID={`tag-option-${tag.id}`}
                       className={`border-2 rounded-lg px-4 py-3 m-1 ${
-                        tag.isSelected
+                        tag.selectionState === 'include'
                           ? 'border-purple-400 bg-purple-400/30'
+                          : tag.selectionState === 'exclude'
+                          ? 'border-red-400 bg-red-400/30'
                           : 'border-gray-500 bg-transparent'
                       }`}
                     >
                       <View style={styles.tagContent}>
                         <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />
                         <Text
-                          style={[styles.tagLabel, tag.isSelected && styles.tagLabelSelected]}
+                          style={[
+                            styles.tagLabel,
+                            tag.selectionState === 'include' && styles.tagLabelIncluded,
+                            tag.selectionState === 'exclude' && styles.tagLabelExcluded
+                          ]}
                           className={`text-sm font-medium ${
-                            tag.isSelected ? 'text-purple-200' : 'text-gray-300'
+                            tag.selectionState === 'include'
+                              ? 'text-purple-200'
+                              : tag.selectionState === 'exclude'
+                              ? 'text-red-200'
+                              : 'text-gray-300'
                           }`}
                         >
-                          {tag.name}
+                          {tag.selectionState === 'exclude' ? '✗ ' : ''}{tag.name}
                         </Text>
                       </View>
                     </TouchableOpacity>
@@ -500,14 +540,14 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
             ) : filteredSongs.length === 0 ? (
               <View style={styles.emptyStateContainer}>
                 <Text style={styles.emptyStateText}>
-                  {selectableTags.some(tag => tag.isSelected)
-                    ? 'No songs found with selected tags'
+                  {selectableTags.some(tag => tag.selectionState === 'include')
+                    ? 'No songs found with included tags'
                     : 'Select tags and content types to see songs'}
                 </Text>
                 <Text style={styles.emptyStateSubtext}>
-                  {selectableTags.some(tag => tag.isSelected)
+                  {selectableTags.some(tag => tag.selectionState === 'include')
                     ? 'Try selecting different tags or content types'
-                    : 'Choose which tags and content types to include in your playlist'}
+                    : 'Choose which tags to include/exclude and content types for your playlist'}
                 </Text>
               </View>
             ) : (
@@ -723,9 +763,13 @@ const styles = StyleSheet.create({
     margin: theme.spacing.xs,
     backgroundColor: 'transparent',
   },
-  tagOptionSelected: {
+  tagOptionIncluded: {
     borderColor: theme.colors.accent.purple,
     backgroundColor: 'rgba(138, 43, 226, 0.3)',
+  },
+  tagOptionExcluded: {
+    borderColor: '#ff4444',
+    backgroundColor: 'rgba(255, 68, 68, 0.3)',
   },
   tagContent: {
     flexDirection: 'row',
@@ -742,8 +786,11 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.secondary,
   },
-  tagLabelSelected: {
+  tagLabelIncluded: {
     color: theme.colors.accent.purple,
+  },
+  tagLabelExcluded: {
+    color: '#ff6666',
   },
   loadMoreButton: {
     alignSelf: 'center',

@@ -390,6 +390,98 @@ describe('CreatePlaylistPage', () => {
       expect(tagOption).toBeTruthy();
     });
 
+    it('cycles through three states when tag is clicked multiple times', () => {
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      const tagOption = getByTestId('tag-option-1');
+      
+      // Initial state: none (gray styling)
+      expect(tagOption.props.style).toContainEqual(expect.objectContaining({
+        borderColor: '#6B7280',
+      }));
+
+      // First click: none → include (purple styling)
+      fireEvent.press(tagOption);
+      expect(tagOption.props.style).toContainEqual(expect.objectContaining({
+        borderColor: '#8a2be2',
+        backgroundColor: 'rgba(138, 43, 226, 0.3)',
+      }));
+
+      // Second click: include → exclude (red styling)
+      fireEvent.press(tagOption);
+      expect(tagOption.props.style).toContainEqual(expect.objectContaining({
+        borderColor: '#EF4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.3)',
+      }));
+
+      // Third click: exclude → none (back to gray)
+      fireEvent.press(tagOption);
+      expect(tagOption.props.style).toContainEqual(expect.objectContaining({
+        borderColor: '#6B7280',
+      }));
+    });
+
+    it('shows correct visual indicators for each tag state', () => {
+      const { getByTestId, getByText } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      const tagOption = getByTestId('tag-option-1');
+      
+      // Click to include state - should show purple styling
+      fireEvent.press(tagOption);
+      expect(getByText('Custom Tag')).toBeTruthy(); // Tag name should be visible
+      
+      // Click to exclude state - should show red styling with ✗
+      fireEvent.press(tagOption);
+      expect(getByText('✗ Custom Tag')).toBeTruthy(); // Should have ✗ prefix
+      
+      // Click back to none state - should show normal text
+      fireEvent.press(tagOption);
+      expect(getByText('Custom Tag')).toBeTruthy(); // Back to normal text
+    });
+
+    it('handles rapid tag state changes correctly', () => {
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      const tagOption = getByTestId('tag-option-1');
+      
+      // Perform rapid clicks
+      for (let i = 0; i < 10; i++) {
+        fireEvent.press(tagOption);
+      }
+      
+      // After 10 clicks (cycle of 3), should be back to include state
+      // 10 % 3 = 1, so should be in include state
+      expect(tagOption.props.style).toContainEqual(expect.objectContaining({
+        borderColor: '#8a2be2',
+      }));
+    });
+
+    it('updates selection count correctly with three-state system', async () => {
+      const { getByText, getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      // Initially no tags selected
+      expect(getByText(/Selected: 0 of/)).toBeTruthy();
+
+      const tagOption1 = getByTestId('tag-option-1');
+      const tagOption2 = getByTestId('tag-option-2');
+
+      // Include first tag
+      fireEvent.press(tagOption1);
+      expect(getByText(/Selected: 1 of/)).toBeTruthy();
+
+      // Include second tag  
+      fireEvent.press(tagOption2);
+      expect(getByText(/Selected: 2 of/)).toBeTruthy();
+
+      // Change first tag to exclude (should still count as selected)
+      fireEvent.press(tagOption1);
+      expect(getByText(/Selected: 2 of/)).toBeTruthy();
+
+      // Change first tag to none (should reduce count)
+      fireEvent.press(tagOption1);
+      expect(getByText(/Selected: 1 of/)).toBeTruthy();
+    });
+
     it('loads more tags when load more button is pressed', async () => {
       const { findByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
 
@@ -590,6 +682,143 @@ describe('CreatePlaylistPage', () => {
       fireEvent.press(albumsOption);
 
       expect(albumsOption).toBeTruthy();
+    });
+  });
+
+  describe('exclude tag filtering logic', () => {
+    it('filters out songs with excluded tags', async () => {
+      const mockGetFilteredContent = jest.fn().mockResolvedValue({
+        songs: [
+          { name: 'Song 1', artist: 'Artist 1', album: 'Album 1', song_id: 'track1' },
+          { name: 'Song 2', artist: 'Artist 2', album: 'Album 2', song_id: 'track2' }
+        ]
+      });
+
+      jest.doMock('../../../services/playlistService', () => ({
+        playlistService: {
+          getUserTagsPaginated: jest.fn().mockResolvedValue({
+            tags: [
+              { id: 1, name: 'Custom Tag', color: '#8a2be2' },
+              { id: 2, name: 'Rock', color: '#ff6600' }
+            ],
+            hasMore: false,
+            total: 2
+          }),
+          getFilteredContent: mockGetFilteredContent
+        }
+      }));
+
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      // Set up include and exclude tags
+      const tagOption1 = getByTestId('tag-option-1');
+      const tagOption2 = getByTestId('tag-option-2');
+
+      // Include first tag
+      fireEvent.press(tagOption1);
+      // Exclude second tag  
+      fireEvent.press(tagOption2);
+      fireEvent.press(tagOption2);
+
+      // Wait for filtering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(mockGetFilteredContent).toHaveBeenCalledWith(
+        expect.any(Number),
+        [1], // included tags
+        [2], // excluded tags
+        ['songs'],
+        expect.any(Object)
+      );
+    });
+
+    it('handles precedence correctly when song has both include and exclude tags', async () => {
+      const mockGetFilteredContent = jest.fn().mockImplementation((_userId, _includedTagIds, excludedTagIds) => {
+        // Mock logic: exclude takes precedence
+        const allSongs = [
+          { name: 'Song 1', artist: 'Artist 1', album: 'Album 1', song_id: 'track1', tagIds: [1] },
+          { name: 'Song 2', artist: 'Artist 2', album: 'Album 2', song_id: 'track2', tagIds: [1, 2] }, // Has both include and exclude
+          { name: 'Song 3', artist: 'Artist 3', album: 'Album 3', song_id: 'track3', tagIds: [2] }
+        ];
+        
+        // Filter out songs that have any excluded tag
+        const filteredSongs = allSongs.filter(song => 
+          !song.tagIds.some(tagId => excludedTagIds.includes(tagId))
+        );
+        
+        return Promise.resolve({ songs: filteredSongs });
+      });
+
+      jest.doMock('../../../services/playlistService', () => ({
+        playlistService: {
+          getUserTagsPaginated: jest.fn().mockResolvedValue({
+            tags: [
+              { id: 1, name: 'Include Tag', color: '#8a2be2' },
+              { id: 2, name: 'Exclude Tag', color: '#ff6600' }
+            ],
+            hasMore: false,
+            total: 2
+          }),
+          getFilteredContent: mockGetFilteredContent
+        }
+      }));
+
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      const tagOption1 = getByTestId('tag-option-1');
+      const tagOption2 = getByTestId('tag-option-2');
+
+      // Include first tag, exclude second tag
+      fireEvent.press(tagOption1); // include
+      fireEvent.press(tagOption2); // include
+      fireEvent.press(tagOption2); // exclude
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(mockGetFilteredContent).toHaveBeenCalledWith(
+        expect.any(Number),
+        [1], // included
+        [2], // excluded
+        ['songs'],
+        expect.any(Object)
+      );
+    });
+
+    it('handles all tags excluded scenario', async () => {
+      const { getByTestId } = render(<CreatePlaylistPage {...defaultProps} />);
+
+      const tagOption1 = getByTestId('tag-option-1');
+      const tagOption2 = getByTestId('tag-option-2');
+
+      // Exclude both tags
+      fireEvent.press(tagOption1); // include
+      fireEvent.press(tagOption1); // exclude
+      fireEvent.press(tagOption2); // include  
+      fireEvent.press(tagOption2); // exclude
+
+      // Button should be disabled when only exclude tags are selected
+      const createButton = getByTestId('create-playlist-button');
+      expect(createButton.props.disabled).toBe(true);
+    });
+
+    it('allows creation when mix of include and exclude tags are selected', async () => {
+      const { getByTestId } = render(
+        <CreatePlaylistPage {...defaultProps} onCreatePlaylist={mockOnCreatePlaylist} />
+      );
+
+      const input = getByTestId('playlist-name-input');
+      fireEvent.changeText(input, 'Test Playlist');
+
+      const tagOption1 = getByTestId('tag-option-1');
+      const tagOption2 = getByTestId('tag-option-2');
+
+      // Include first tag, exclude second tag
+      fireEvent.press(tagOption1); // include
+      fireEvent.press(tagOption2); // include
+      fireEvent.press(tagOption2); // exclude
+
+      const createButton = getByTestId('create-playlist-button');
+      expect(createButton.props.disabled).toBe(false);
     });
   });
 

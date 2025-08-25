@@ -264,5 +264,5 @@ export interface TagSelectionState {
   id: number;
   name: string;
   color: string;
-  isSelected: boolean;
+  selectionState: 'none' | 'include' | 'exclude';
 }
