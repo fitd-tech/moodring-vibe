@@ -1,5 +1,4 @@
-import React from 'react';
-import { render } from '@testing-library/react-native';
+// Unit tests for tag exclusion logic - no React components used
 import { taggingService } from '../../../services/taggingService';
 import { Track } from '../../../types';
 
