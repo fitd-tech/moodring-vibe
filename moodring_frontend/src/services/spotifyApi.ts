@@ -662,7 +662,7 @@ export class SpotifyApiService {
   async searchContent(
     token: string,
     query: string,
-    types: ('track' | 'album' | 'playlist' | 'artist')[],
+    types: ('track' | 'album' | 'playlist')[],
     limit: number = 10,
     offset: number = 0
   ): Promise<{ results: SearchResult[]; hasMore: boolean; totalResults: number }> {
@@ -753,24 +753,6 @@ export class SpotifyApiService {
           hasMore = hasMore || data.playlists.next !== null;
         }
 
-        // Process artists
-        if (data.artists && types.includes('artist')) {
-          const artistResults = data.artists.items
-            .filter(artist => artist !== null && artist !== undefined)
-            .map(artist => ({
-              type: 'artist' as const,
-              id: artist.id,
-              name: artist.name,
-              image_url: this.getImageUrl(artist.images || []),
-              followers: artist.followers?.total || 0,
-              genres: artist.genres || [],
-              popularity: artist.popularity || 0,
-              artist_id: artist.id,
-            }));
-          results.push(...artistResults);
-          totalResults += data.artists.total;
-          hasMore = hasMore || data.artists.next !== null;
-        }
 
         // Limit the combined results to the requested limit
         const limitedResults = results.slice(0, limit);

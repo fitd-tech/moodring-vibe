@@ -20,14 +20,14 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   textClassName,
 }) => {
   // TailwindCSS classes
-  const getContainerClasses = () => {
+  const _getContainerClasses = () => {
     const baseClasses = compact
       ? 'flex-row justify-center items-center py-2 px-3'
       : 'flex-1 justify-center items-center bg-black p-5 pt-15';
     return `${baseClasses} ${className || ''}`.trim();
   };
 
-  const getTextClasses = () => {
+  const _getTextClasses = () => {
     const baseClasses = compact
       ? 'text-white text-sm ml-2 font-medium'
       : 'text-white text-base mt-3 font-bold';
@@ -45,12 +45,10 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <View
-      className={className !== undefined ? getContainerClasses() : undefined}
       style={containerStyle}
     >
       <ActivityIndicator size={size} color={color} testID="activity-indicator" />
       <Text
-        className={textClassName !== undefined ? getTextClasses() : undefined}
         style={textStyle}
       >
         {text}

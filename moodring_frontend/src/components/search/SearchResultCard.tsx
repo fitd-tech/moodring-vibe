@@ -46,7 +46,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
       // For non-track items, create a unique ID based on type and name
       const generatedSongId = taggingService.generateSongId(
         result.name,
-        result.type === 'artist' ? result.name : 
         result.type === 'album' ? result.artist : 
         result.type === 'playlist' ? result.owner : 
         'Unknown'
@@ -87,8 +86,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         return 'disc';
       case 'playlist':
         return 'list';
-      case 'artist':
-        return 'person';
       default:
         return 'musical-notes';
     }
@@ -102,8 +99,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         return `${result.track_count} tracks`;
       case 'playlist':
         return `${result.track_count} tracks by ${result.owner}`;
-      case 'artist':
-        return `${result.followers.toLocaleString()} followers`;
       default:
         return '';
     }
@@ -117,8 +112,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         return `Released: ${result.release_date}`;
       case 'playlist':
         return result.description || 'Playlist';
-      case 'artist':
-        return result.genres.length > 0 ? result.genres.slice(0, 2).join(', ') : 'Artist';
       default:
         return '';
     }
@@ -132,8 +125,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         return result.album_id;
       case 'playlist':
         return result.playlist_id;
-      case 'artist':
-        return result.artist_id;
       default:
         return undefined;
     }
@@ -147,8 +138,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
         return theme.colors.gradients.album || theme.colors.gradients.track;
       case 'playlist':
         return theme.colors.gradients.playlist || theme.colors.gradients.track;
-      case 'artist':
-        return theme.colors.gradients.artist || theme.colors.gradients.track;
       default:
         return theme.colors.gradients.track;
     }
@@ -172,14 +161,12 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
           <View style={styles.imageContainer}>
             {(result.type === 'track' && result.album_image_url) ||
              (result.type === 'album' && result.image_url) ||
-             (result.type === 'playlist' && result.image_url) ||
-             (result.type === 'artist' && result.image_url) ? (
+             (result.type === 'playlist' && result.image_url) ? (
               <Image 
                 source={{ 
                   uri: result.type === 'track' ? result.album_image_url :
                        result.type === 'album' ? result.image_url :
-                       result.type === 'playlist' ? result.image_url :
-                       result.type === 'artist' ? result.image_url : undefined
+                       result.type === 'playlist' ? result.image_url : undefined
                 }} 
                 style={styles.image} 
               />
@@ -202,9 +189,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
               {result.type === 'track' || result.type === 'album' ? 
                 result.artist : 
                 result.type === 'playlist' ? 
-                  result.owner :
-                  result.type === 'artist' ?
-                    'Artist' : 'Unknown'}
+                  result.owner : 'Unknown'}
             </Text>
             <Text style={styles.resultSubtitle} numberOfLines={1}>
               {getResultSubtitle()}

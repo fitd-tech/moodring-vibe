@@ -32,7 +32,7 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   // Default TailwindCSS classes for each variant
-  const getButtonClasses = () => {
+  const _getButtonClasses = () => {
     const baseClasses = 'py-4 px-8 items-center border-2 rounded-lg';
     const variantClasses = {
       primary: 'bg-purple-600 border-purple-600 shadow-lg',
@@ -44,7 +44,7 @@ export const Button: React.FC<ButtonProps> = ({
     return `${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className || ''}`.trim();
   };
 
-  const getTextClasses = () => {
+  const _getTextClasses = () => {
     const baseTextClasses = 'text-lg font-semibold text-white';
     return `${baseTextClasses} ${textClassName || ''}`.trim();
   };
@@ -59,14 +59,12 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <TouchableOpacity
-      className={className ? getButtonClasses() : undefined}
       style={buttonStyle}
       onPress={handlePress}
       disabled={disabled}
       testID={testID}
     >
       <Text
-        className={textClassName !== undefined ? getTextClasses() : undefined}
         style={buttonTextStyle}
       >
         {title}

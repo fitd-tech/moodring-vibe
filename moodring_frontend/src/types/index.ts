@@ -268,20 +268,6 @@ export interface TagSelectionState {
 }
 
 // Search-related types and interfaces
-export interface SpotifyArtist {
-  id: string;
-  name: string;
-  images: Array<{
-    url: string;
-    height: number;
-    width: number;
-  }>;
-  followers: {
-    total: number;
-  };
-  genres: string[];
-  popularity: number;
-}
 
 export interface SearchResultTrack {
   type: 'track';
@@ -316,18 +302,8 @@ export interface SearchResultPlaylist {
   owner: string;
 }
 
-export interface SearchResultArtist {
-  type: 'artist';
-  id: string;
-  name: string;
-  image_url?: string;
-  followers: number;
-  genres: string[];
-  popularity: number;
-  artist_id: string;
-}
 
-export type SearchResult = SearchResultTrack | SearchResultAlbum | SearchResultPlaylist | SearchResultArtist;
+export type SearchResult = SearchResultTrack | SearchResultAlbum | SearchResultPlaylist;
 
 export interface SpotifySearchResponse {
   tracks?: {
@@ -346,13 +322,6 @@ export interface SpotifySearchResponse {
   };
   playlists?: {
     items: SpotifyPlaylist[];
-    total: number;
-    limit: number;
-    offset: number;
-    next: string | null;
-  };
-  artists?: {
-    items: SpotifyArtist[];
     total: number;
     limit: number;
     offset: number;

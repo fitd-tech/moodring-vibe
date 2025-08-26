@@ -5,14 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface UseSearchOptions {
   debounceMs?: number;
-  searchTypes?: ('track' | 'album' | 'playlist' | 'artist')[];
+  searchTypes?: ('track' | 'album' | 'playlist')[];
   limit?: number;
 }
 
 export const useSearch = (options: UseSearchOptions = {}) => {
   const {
     debounceMs = 500,
-    searchTypes = ['track', 'album', 'playlist', 'artist'],
+    searchTypes = ['track', 'album', 'playlist'],
     limit = 10,
   } = options;
 

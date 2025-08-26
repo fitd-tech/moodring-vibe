@@ -16,40 +16,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   error,
   onLogin,
   isLoginDisabled,
-  className,
+  className: _className,
 }) => {
   // Use TailwindCSS classes if provided, otherwise fallback to StyleSheet
   return (
     <View
-      className={className ? `flex-1 bg-black p-5 pt-15 ${className}` : undefined}
-      style={className ? undefined : styles.container}
+      style={styles.container}
     >
       <View
-        className={className ? 'flex-1 justify-center items-center' : undefined}
-        style={className ? undefined : styles.loginContainer}
+        style={styles.loginContainer}
       >
         {/* App Title with retro styling */}
         <View
-          className={
-            className
-              ? 'mb-2 px-5 py-2 bg-purple-900/20 rounded-lg border-2 border-purple-500/50 shadow-lg'
-              : undefined
-          }
-          style={className ? undefined : styles.appTitleContainer}
+          style={styles.appTitleContainer}
         >
           <Text
-            className={
-              className ? 'text-5xl font-black text-white text-center tracking-widest' : undefined
-            }
-            style={className ? styles.appTitleShadow : styles.appTitle}
+            style={styles.appTitle}
           >
             MOODRING
           </Text>
         </View>
 
         <Text
-          className={className ? 'text-lg text-white text-center mb-10 opacity-80' : undefined}
-          style={className ? undefined : styles.tagline}
+          style={styles.tagline}
         >
           Organize your music with powerful tags
         </Text>
@@ -58,14 +47,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {error && (
           <GradientCard
             colors={theme.colors.gradients.error}
-            className={className ? 'mb-6 w-full' : undefined}
-            style={className ? undefined : styles.errorContainer}
+            style={styles.errorContainer}
           >
             <Text
-              className={
-                className ? 'text-white text-center text-sm font-medium opacity-90' : undefined
-              }
-              style={className ? undefined : styles.errorText}
+              style={styles.errorText}
             >
               {error}
             </Text>
@@ -75,40 +60,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* Features section */}
         <GradientCard
           colors={theme.colors.gradients.features}
-          className={className ? 'mb-10 w-full' : undefined}
-          style={className ? undefined : styles.featuresContainer}
+          style={styles.featuresContainer}
         >
           <Text
-            className={
-              className
-                ? 'text-base font-semibold text-white mb-4 tracking-wide opacity-90'
-                : undefined
-            }
-            style={className ? undefined : styles.featuresTitle}
+            style={styles.featuresTitle}
           >
             What you can do:
           </Text>
           <Text
-            className={className ? 'text-base text-white mb-2 opacity-80' : undefined}
-            style={className ? undefined : styles.featureItem}
+            style={styles.featureItem}
           >
             • Tag your songs and playlists
           </Text>
           <Text
-            className={className ? 'text-base text-white mb-2 opacity-80' : undefined}
-            style={className ? undefined : styles.featureItem}
+            style={styles.featureItem}
           >
             • Create hierarchical organization
           </Text>
           <Text
-            className={className ? 'text-base text-white mb-2 opacity-80' : undefined}
-            style={className ? undefined : styles.featureItem}
+            style={styles.featureItem}
           >
             • Generate smart playlists
           </Text>
           <Text
-            className={className ? 'text-base text-white opacity-80' : undefined}
-            style={className ? undefined : styles.featureItem}
+            style={styles.featureItem}
           >
             • Discover music patterns
           </Text>
@@ -116,12 +91,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
         {/* Authentication section */}
         <View
-          className={className ? 'items-center w-full' : undefined}
-          style={className ? undefined : styles.authSection}
+          style={styles.authSection}
         >
           <Text
-            className={className ? 'text-base text-white text-center mb-8 opacity-90' : undefined}
-            style={className ? undefined : styles.authText}
+            style={styles.authText}
           >
             Connect your Spotify account to get started
           </Text>
@@ -131,13 +104,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             onPress={onLogin}
             disabled={isLoginDisabled}
             variant="primary"
-            className={className ? 'mb-6 w-full' : undefined}
-            style={className ? undefined : styles.loginButton}
+            style={styles.loginButton}
           />
 
           <Text
-            className={className ? 'text-sm text-white text-center opacity-60' : undefined}
-            style={className ? styles.disclaimerTextInline : styles.disclaimerText}
+            style={styles.disclaimerText}
           >
             We'll only access your music library and playlists.{'\n'}
             Your data stays private and secure.

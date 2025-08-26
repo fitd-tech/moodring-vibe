@@ -113,7 +113,7 @@ describe('useSearch', () => {
     expect(mockSpotifyApi.searchContent).toHaveBeenCalledWith(
       'valid-token',
       'test query',
-      ['track', 'album', 'playlist', 'artist'],
+      ['track', 'album', 'playlist'],
       10,
       0
     );
@@ -200,7 +200,7 @@ describe('useSearch', () => {
     expect(mockSpotifyApi.searchContent).toHaveBeenCalledWith(
       'valid-token',
       'test',
-      ['track', 'album', 'playlist', 'artist'],
+      ['track', 'album', 'playlist'],
       10,
       10
     );

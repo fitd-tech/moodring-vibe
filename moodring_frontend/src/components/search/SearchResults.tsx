@@ -32,7 +32,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       track: 0,
       album: 0,
       playlist: 0,
-      artist: 0,
     };
 
     results.forEach(result => {
@@ -49,7 +48,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
     if (counts.track > 0) parts.push(`${counts.track} track${counts.track > 1 ? 's' : ''}`);
     if (counts.album > 0) parts.push(`${counts.album} album${counts.album > 1 ? 's' : ''}`);
     if (counts.playlist > 0) parts.push(`${counts.playlist} playlist${counts.playlist > 1 ? 's' : ''}`);
-    if (counts.artist > 0) parts.push(`${counts.artist} artist${counts.artist > 1 ? 's' : ''}`);
 
     if (parts.length === 0) return '';
     if (parts.length === 1) return parts[0];

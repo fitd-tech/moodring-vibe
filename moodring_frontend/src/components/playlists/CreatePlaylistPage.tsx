@@ -59,7 +59,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
   onBrowseTags,
   onSettings,
   onLogout,
-  className,
+  className: _className,
 }) => {
   const insets = useSafeAreaInsets();
   const { user, authToken } = useAuth();
@@ -360,7 +360,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     loading.creating;
 
   return (
-    <View style={styles.wrapper} className={className}>
+    <View style={styles.wrapper}>
       <ScrollView
         style={[styles.container, { paddingTop: insets.top + theme.spacing.md }]}
         testID="create-playlist-scroll-view"
@@ -411,13 +411,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                       ]}
                       onPress={() => handleTagToggle(tag.id)}
                       testID={`tag-option-${tag.id}`}
-                      className={`border-2 rounded-lg px-4 py-3 m-1 ${
-                        tag.selectionState === 'include'
-                          ? 'border-purple-400 bg-purple-400/30'
-                          : tag.selectionState === 'exclude'
-                          ? 'border-red-400 bg-red-400/30'
-                          : 'border-gray-500 bg-transparent'
-                      }`}
                     >
                       <View style={styles.tagContent}>
                         <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />
@@ -427,13 +420,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                             tag.selectionState === 'include' && styles.tagLabelIncluded,
                             tag.selectionState === 'exclude' && styles.tagLabelExcluded
                           ]}
-                          className={`text-sm font-medium ${
-                            tag.selectionState === 'include'
-                              ? 'text-purple-200'
-                              : tag.selectionState === 'exclude'
-                              ? 'text-red-200'
-                              : 'text-gray-300'
-                          }`}
                         >
                           {tag.selectionState === 'exclude' ? '✗ ' : ''}{tag.name}
                         </Text>
@@ -450,7 +436,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     variant="outline"
                     style={styles.loadMoreButton}
                     testID="load-more-tags-button"
-                    className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
                     textClassName="text-purple-300 text-md font-semibold"
                   />
                 )}
@@ -475,17 +460,9 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                   style={[styles.entityTypeOption, entity.enabled && styles.entityTypeOptionActive]}
                   onPress={() => handleEntityTypeToggle(entity.type)}
                   testID={`entity-type-${entity.type}`}
-                  className={`border-2 rounded-lg p-4 mb-3 ${
-                    entity.enabled
-                      ? 'border-purple-500 bg-purple-500/20'
-                      : 'border-gray-600 bg-transparent'
-                  }`}
                 >
                   <Text
                     style={[styles.entityTypeLabel, entity.enabled && styles.entityTypeLabelActive]}
-                    className={`text-lg font-semibold ${
-                      entity.enabled ? 'text-purple-300' : 'text-gray-300'
-                    }`}
                   >
                     {entity.label}
                   </Text>
@@ -505,7 +482,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               onChangeText={setPlaylistName}
               maxLength={100}
               testID="playlist-name-input"
-              className="bg-transparent text-white placeholder-gray-400 border-2 border-gray-600 rounded-lg p-4 text-lg"
             />
           </GradientCard>
 
@@ -523,11 +499,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               disabled={isCreateDisabled}
               variant="primary"
               testID="create-playlist-button"
-              className={`py-4 px-8 ${
-                isCreateDisabled
-                  ? 'bg-gray-600 opacity-50'
-                  : 'bg-purple-600 shadow-lg shadow-purple-500/50'
-              } border-2 border-purple-600 rounded-lg`}
               textClassName="text-white text-lg font-bold tracking-wider"
             />
 
@@ -538,7 +509,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                 variant="outline"
                 style={styles.backButton}
                 testID="back-button"
-                className="bg-transparent border-2 border-gray-600 rounded-lg py-4 px-8 mt-4"
                 textClassName="text-gray-300 text-lg font-semibold"
               />
             )}
@@ -610,7 +580,6 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
                     variant="outline"
                     style={styles.loadMoreButton}
                     testID="load-more-songs-button"
-                    className="bg-transparent border-2 border-purple-500 rounded-lg py-3 px-6 mt-4"
                     textClassName="text-purple-300 text-md font-semibold"
                   />
                 )}

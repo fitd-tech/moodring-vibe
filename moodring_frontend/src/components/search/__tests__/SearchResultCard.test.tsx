@@ -81,16 +81,6 @@ describe('SearchResultCard', () => {
     owner: 'Test Owner',
   };
 
-  const artistResult: SearchResult = {
-    type: 'artist',
-    id: '4',
-    name: 'Test Artist',
-    image_url: 'test-artist.jpg',
-    followers: 100000,
-    genres: ['rock', 'pop'],
-    popularity: 75,
-    artist_id: '4',
-  };
 
   const mockToggleExpansion = jest.fn();
 
@@ -164,21 +154,6 @@ describe('SearchResultCard', () => {
     expect(getByText('A test playlist')).toBeTruthy();
   });
 
-  it('should render artist result correctly', () => {
-    const { getByText, getAllByText } = render(
-      <SearchResultCard
-        result={artistResult}
-        index={0}
-        isExpanded={false}
-        onToggleExpansion={mockToggleExpansion}
-      />
-    );
-
-    expect(getByText('Test Artist')).toBeTruthy();
-    expect(getAllByText('Artist')).toHaveLength(2); // Should appear twice
-    expect(getByText('100,000 followers')).toBeTruthy();
-    expect(getByText('rock, pop')).toBeTruthy();
-  });
 
   it('should call onToggleExpansion when card is pressed', () => {
     const { getByTestId } = render(
@@ -366,7 +341,7 @@ describe('SearchResultCard', () => {
   });
 
   it('should handle different result types with appropriate icons', () => {
-    const results = [trackResult, albumResult, playlistResult, artistResult];
+    const results = [trackResult, albumResult, playlistResult];
     
     results.forEach((result, index) => {
       const { unmount } = render(
@@ -381,6 +356,6 @@ describe('SearchResultCard', () => {
     });
 
     // All should render without errors
-    expect(mockTaggingService.generateSongId).toHaveBeenCalledTimes(4);
+    expect(mockTaggingService.generateSongId).toHaveBeenCalledTimes(3);
   });
 });
