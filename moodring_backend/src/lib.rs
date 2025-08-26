@@ -130,7 +130,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
         let mut conn = pool
             .get()
             .map_err(|e| {
-                eprintln!("[Auth] Failed to get database connection for user {}: {}", user_id, e);
+                eprintln!("[Auth] Failed to get database connection for user {user_id}: {e}");
                 format!("Failed to get connection: {e}")
             })?;
 
@@ -139,7 +139,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
             .filter(id.eq(user_id))
             .first::<User>(&mut conn)
             .map_err(|e| {
-                eprintln!("[Auth] Failed to find user {} for token refresh: {}", user_id, e);
+                eprintln!("[Auth] Failed to find user {user_id} for token refresh: {e}");
                 format!("Failed to find user: {e}")
             })?;
 
@@ -147,7 +147,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
             .spotify_refresh_token
             .as_ref()
             .ok_or_else(|| {
-                eprintln!("[Auth] No refresh token available for user {}", user_id);
+                eprintln!("[Auth] No refresh token available for user {user_id}");
                 "No refresh token available".to_string()
             })?;
 
@@ -156,7 +156,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
             env::var("SPOTIFY_CLIENT_SECRET").map_err(|_| "SPOTIFY_CLIENT_SECRET not set")?;
 
         // Refresh the token
-        println!("[Auth] Refreshing Spotify token for user {}", user_id);
+        println!("[Auth] Refreshing Spotify token for user {user_id}");
         let token_response = match tokio::task::block_in_place(|| {
             let rt = tokio::runtime::Handle::current();
             rt.block_on(async {
@@ -184,7 +184,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
                 {
                     Ok(resp) => resp,
                     Err(e) => {
-                        eprintln!("[Auth] Failed to send refresh request for user {}: {}", user_id, e);
+                        eprintln!("[Auth] Failed to send refresh request for user {user_id}: {e}");
                         return Err(format!("Failed to send refresh request: {e}"));
                     }
                 };
@@ -192,7 +192,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
                 let status_code = response.status();
                 if !status_code.is_success() {
                     let error_text = response.text().await.unwrap_or("Unknown error".to_string());
-                    eprintln!("[Auth] Spotify refresh API error for user {}: {} - {}", user_id, status_code, error_text);
+                    eprintln!("[Auth] Spotify refresh API error for user {user_id}: {status_code} - {error_text}");
                     return Err(format!(
                         "Spotify refresh API error {status_code}: {error_text}"
                     ));
@@ -201,11 +201,11 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
                 let token_result = response.json::<SpotifyTokenResponse>().await;
                 match token_result {
                     Ok(tokens) => {
-                        println!("[Auth] Successfully refreshed token for user {}", user_id);
+                        println!("[Auth] Successfully refreshed token for user {user_id}");
                         Ok(tokens)
                     }
                     Err(json_err) => {
-                        eprintln!("[Auth] Failed to parse Spotify refresh response for user {}: {}", user_id, json_err);
+                        eprintln!("[Auth] Failed to parse Spotify refresh response for user {user_id}: {json_err}");
                         Err(format!(
                             "Failed to parse Spotify refresh response: {json_err}"
                         ))
@@ -215,7 +215,7 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
         }) {
             Ok(tokens) => tokens,
             Err(e) => {
-                eprintln!("[Auth] Token refresh failed for user {}: {}", user_id, e);
+                eprintln!("[Auth] Token refresh failed for user {user_id}: {e}");
                 return Err(format!("Token refresh failed: {e}"));
             }
         };
@@ -233,11 +233,11 @@ pub async fn refresh_spotify_token(pool: &DbPool, user_id: i32) -> Result<AuthRe
             ))
             .get_result::<User>(&mut conn)
             .map_err(|e| {
-                eprintln!("[Auth] Failed to update user {} with new token: {}", user_id, e);
+                eprintln!("[Auth] Failed to update user {user_id} with new token: {e}");
                 format!("Failed to update user with new token: {e}")
             })?;
 
-        println!("[Auth] Successfully updated user {} with new token, expires at: {:?}", user_id, expires_at);
+        println!("[Auth] Successfully updated user {user_id} with new token, expires at: {expires_at:?}");
 
         let jwt_token = format!("user_token_{}", updated_user.id);
         Ok(AuthResponse {

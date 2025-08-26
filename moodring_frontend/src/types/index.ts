@@ -266,3 +266,106 @@ export interface TagSelectionState {
   color: string;
   selectionState: 'none' | 'include' | 'exclude';
 }
+
+// Search-related types and interfaces
+export interface SpotifyArtist {
+  id: string;
+  name: string;
+  images: Array<{
+    url: string;
+    height: number;
+    width: number;
+  }>;
+  followers: {
+    total: number;
+  };
+  genres: string[];
+  popularity: number;
+}
+
+export interface SearchResultTrack {
+  type: 'track';
+  id: string;
+  name: string;
+  artist: string;
+  album: string;
+  album_image_url?: string;
+  song_id: string;
+  popularity: number;
+}
+
+export interface SearchResultAlbum {
+  type: 'album';
+  id: string;
+  name: string;
+  artist: string;
+  image_url?: string;
+  release_date: string;
+  track_count: number;
+  album_id: string;
+}
+
+export interface SearchResultPlaylist {
+  type: 'playlist';
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  track_count: number;
+  playlist_id: string;
+  owner: string;
+}
+
+export interface SearchResultArtist {
+  type: 'artist';
+  id: string;
+  name: string;
+  image_url?: string;
+  followers: number;
+  genres: string[];
+  popularity: number;
+  artist_id: string;
+}
+
+export type SearchResult = SearchResultTrack | SearchResultAlbum | SearchResultPlaylist | SearchResultArtist;
+
+export interface SpotifySearchResponse {
+  tracks?: {
+    items: SpotifyTrack[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+  albums?: {
+    items: SpotifyAlbum[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+  playlists?: {
+    items: SpotifyPlaylist[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+  artists?: {
+    items: SpotifyArtist[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+}
+
+export interface SearchState {
+  query: string;
+  results: SearchResult[];
+  isLoading: boolean;
+  error: string | null;
+  hasMore: boolean;
+  offset: number;
+  totalResults: number;
+}

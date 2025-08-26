@@ -47,6 +47,21 @@ jest.mock('expo-linear-gradient', () => ({
   LinearGradient: 'LinearGradient',
 }));
 
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+  MaterialIcons: 'MaterialIcons',
+  FontAwesome: 'FontAwesome',
+  AntDesign: 'AntDesign',
+  Entypo: 'Entypo',
+  EvilIcons: 'EvilIcons',
+  Feather: 'Feather',
+  Foundation: 'Foundation',
+  MaterialCommunityIcons: 'MaterialCommunityIcons',
+  Octicons: 'Octicons',
+  SimpleLineIcons: 'SimpleLineIcons',
+  Zocial: 'Zocial',
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }) => children,
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),

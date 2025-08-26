@@ -6,12 +6,14 @@ import {
   SpotifyPlaylistsResponse,
   SpotifyAlbumsResponse,
   SpotifyTrack,
+  SpotifySearchResponse,
   CurrentlyPlaying,
   RecentTrack,
   TopTrack,
   SavedTrack,
   SavedPlaylist,
   SavedAlbum,
+  SearchResult,
 } from '../types';
 
 export class SpotifyApiService {
@@ -653,6 +655,132 @@ export class SpotifyApiService {
         console.error('[SpotifyApi] Error fetching tracks by IDs:', error);
       }
       return [];
+    }
+  }
+
+  // Search Spotify content (tracks, albums, playlists, artists)
+  async searchContent(
+    token: string,
+    query: string,
+    types: ('track' | 'album' | 'playlist' | 'artist')[],
+    limit: number = 10,
+    offset: number = 0
+  ): Promise<{ results: SearchResult[]; hasMore: boolean; totalResults: number }> {
+    try {
+      if (!query.trim()) {
+        return { results: [], hasMore: false, totalResults: 0 };
+      }
+
+      const encodedQuery = encodeURIComponent(query.trim());
+      const typesParam = types.join(',');
+      const url = `https://api.spotify.com/v1/search?q=${encodedQuery}&type=${typesParam}&limit=${limit}&offset=${offset}`;
+
+      if (__DEV__) {
+        console.log(`[SpotifyApi] Searching: "${query}" for types: ${typesParam}`);
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as SpotifySearchResponse;
+        const results: SearchResult[] = [];
+        let totalResults = 0;
+        let hasMore = false;
+
+        // Process tracks
+        if (data.tracks && types.includes('track')) {
+          const trackResults = data.tracks.items.map(track => ({
+            type: 'track' as const,
+            id: track.id,
+            name: track.name,
+            artist: track.artists[0]?.name || 'Unknown Artist',
+            album: track.album.name,
+            album_image_url: this.getImageUrl(track.album.images),
+            song_id: track.id,
+            popularity: track.popularity,
+          }));
+          results.push(...trackResults);
+          totalResults += data.tracks.total;
+          hasMore = hasMore || data.tracks.next !== null;
+        }
+
+        // Process albums
+        if (data.albums && types.includes('album')) {
+          const albumResults = data.albums.items.map(album => ({
+            type: 'album' as const,
+            id: album.id,
+            name: album.name,
+            artist: album.artists[0]?.name || 'Unknown Artist',
+            image_url: this.getImageUrl(album.images),
+            release_date: album.release_date,
+            track_count: album.total_tracks,
+            album_id: album.id,
+          }));
+          results.push(...albumResults);
+          totalResults += data.albums.total;
+          hasMore = hasMore || data.albums.next !== null;
+        }
+
+        // Process playlists
+        if (data.playlists && types.includes('playlist')) {
+          const playlistResults = data.playlists.items.map(playlist => ({
+            type: 'playlist' as const,
+            id: playlist.id,
+            name: playlist.name,
+            description: playlist.description || undefined,
+            image_url: this.getImageUrl(playlist.images),
+            track_count: playlist.tracks.total,
+            playlist_id: playlist.id,
+            owner: playlist.owner.display_name || playlist.owner.id,
+          }));
+          results.push(...playlistResults);
+          totalResults += data.playlists.total;
+          hasMore = hasMore || data.playlists.next !== null;
+        }
+
+        // Process artists
+        if (data.artists && types.includes('artist')) {
+          const artistResults = data.artists.items.map(artist => ({
+            type: 'artist' as const,
+            id: artist.id,
+            name: artist.name,
+            image_url: this.getImageUrl(artist.images),
+            followers: artist.followers.total,
+            genres: artist.genres,
+            popularity: artist.popularity,
+            artist_id: artist.id,
+          }));
+          results.push(...artistResults);
+          totalResults += data.artists.total;
+          hasMore = hasMore || data.artists.next !== null;
+        }
+
+        if (__DEV__) {
+          console.log(`[SpotifyApi] Search results: ${results.length} items, hasMore: ${hasMore}`);
+        }
+
+        return { results, hasMore, totalResults };
+      } else if (response.status === 401) {
+        throw new Error('TOKEN_EXPIRED');
+      } else {
+        if (__DEV__) {
+          console.warn(`[SpotifyApi] Search failed with status: ${response.status}`);
+        }
+        return { results: [], hasMore: false, totalResults: 0 };
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        throw error;
+      }
+      if (__DEV__) {
+        console.error('[SpotifyApi] Search error:', error);
+      }
+      return { results: [], hasMore: false, totalResults: 0 };
     }
   }
 }

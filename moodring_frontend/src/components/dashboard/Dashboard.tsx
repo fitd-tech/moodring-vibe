@@ -20,6 +20,7 @@ import { SavedTracksList } from '../tracks/SavedTracksList';
 import { SavedPlaylistsList } from '../playlists/SavedPlaylistsList';
 import { SavedAlbumsList } from '../albums/SavedAlbumsList';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { SearchSection } from '../search/SearchSection';
 import { theme } from '../../styles/theme';
 
 interface DashboardProps {
@@ -118,6 +119,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           )}
 
           <NowPlaying currentlyPlaying={currentlyPlaying} />
+
+          <SearchSection testID="dashboard-search-section" />
 
           <ExpansionProvider>
             {recentTracks.length > 0 && (
