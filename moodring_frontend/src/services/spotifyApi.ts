@@ -671,12 +671,16 @@ export class SpotifyApiService {
         return { results: [], hasMore: false, totalResults: 0 };
       }
 
+      // Instead of requesting limit per type, request a smaller per-type limit so combined results don't exceed target
+      // This ensures we get at most the requested limit across all types
+      const perTypeLimit = Math.max(1, Math.ceil(limit / types.length));
+      
       const encodedQuery = encodeURIComponent(query.trim());
       const typesParam = types.join(',');
-      const url = `https://api.spotify.com/v1/search?q=${encodedQuery}&type=${typesParam}&limit=${limit}&offset=${offset}`;
+      const url = `https://api.spotify.com/v1/search?q=${encodedQuery}&type=${typesParam}&limit=${perTypeLimit}&offset=${offset}`;
 
       if (__DEV__) {
-        console.log(`[SpotifyApi] Searching: "${query}" for types: ${typesParam}`);
+        console.log(`[SpotifyApi] Searching: "${query}" for types: ${typesParam}, combined limit: ${limit}, per-type limit: ${perTypeLimit}, offset: ${offset}`);
       }
 
       const response = await fetch(url, {
@@ -768,11 +772,14 @@ export class SpotifyApiService {
           hasMore = hasMore || data.artists.next !== null;
         }
 
+        // Limit the combined results to the requested limit
+        const limitedResults = results.slice(0, limit);
+
         if (__DEV__) {
-          console.log(`[SpotifyApi] Search results: ${results.length} items, hasMore: ${hasMore}`);
+          console.log(`[SpotifyApi] Search results: ${limitedResults.length}/${results.length} items (requested: ${limit}), hasMore: ${hasMore}`);
         }
 
-        return { results, hasMore, totalResults };
+        return { results: limitedResults, hasMore, totalResults };
       } else if (response.status === 401) {
         throw new Error('TOKEN_EXPIRED');
       } else {
