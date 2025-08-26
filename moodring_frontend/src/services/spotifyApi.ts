@@ -694,16 +694,18 @@ export class SpotifyApiService {
 
         // Process tracks
         if (data.tracks && types.includes('track')) {
-          const trackResults = data.tracks.items.map(track => ({
-            type: 'track' as const,
-            id: track.id,
-            name: track.name,
-            artist: track.artists[0]?.name || 'Unknown Artist',
-            album: track.album.name,
-            album_image_url: this.getImageUrl(track.album.images),
-            song_id: track.id,
-            popularity: track.popularity,
-          }));
+          const trackResults = data.tracks.items
+            .filter(track => track !== null && track !== undefined)
+            .map(track => ({
+              type: 'track' as const,
+              id: track.id,
+              name: track.name,
+              artist: track.artists[0]?.name || 'Unknown Artist',
+              album: track.album?.name || 'Unknown Album',
+              album_image_url: this.getImageUrl(track.album?.images || []),
+              song_id: track.id,
+              popularity: track.popularity || 0,
+            }));
           results.push(...trackResults);
           totalResults += data.tracks.total;
           hasMore = hasMore || data.tracks.next !== null;
@@ -711,16 +713,18 @@ export class SpotifyApiService {
 
         // Process albums
         if (data.albums && types.includes('album')) {
-          const albumResults = data.albums.items.map(album => ({
-            type: 'album' as const,
-            id: album.id,
-            name: album.name,
-            artist: album.artists[0]?.name || 'Unknown Artist',
-            image_url: this.getImageUrl(album.images),
-            release_date: album.release_date,
-            track_count: album.total_tracks,
-            album_id: album.id,
-          }));
+          const albumResults = data.albums.items
+            .filter(album => album !== null && album !== undefined)
+            .map(album => ({
+              type: 'album' as const,
+              id: album.id,
+              name: album.name,
+              artist: album.artists[0]?.name || 'Unknown Artist',
+              image_url: this.getImageUrl(album.images || []),
+              release_date: album.release_date || '',
+              track_count: album.total_tracks || 0,
+              album_id: album.id,
+            }));
           results.push(...albumResults);
           totalResults += data.albums.total;
           hasMore = hasMore || data.albums.next !== null;
@@ -728,16 +732,18 @@ export class SpotifyApiService {
 
         // Process playlists
         if (data.playlists && types.includes('playlist')) {
-          const playlistResults = data.playlists.items.map(playlist => ({
-            type: 'playlist' as const,
-            id: playlist.id,
-            name: playlist.name,
-            description: playlist.description || undefined,
-            image_url: this.getImageUrl(playlist.images),
-            track_count: playlist.tracks.total,
-            playlist_id: playlist.id,
-            owner: playlist.owner.display_name || playlist.owner.id,
-          }));
+          const playlistResults = data.playlists.items
+            .filter(playlist => playlist !== null && playlist !== undefined)
+            .map(playlist => ({
+              type: 'playlist' as const,
+              id: playlist.id,
+              name: playlist.name,
+              description: playlist.description || undefined,
+              image_url: this.getImageUrl(playlist.images || []),
+              track_count: playlist.tracks?.total || 0,
+              playlist_id: playlist.id,
+              owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown Owner',
+            }));
           results.push(...playlistResults);
           totalResults += data.playlists.total;
           hasMore = hasMore || data.playlists.next !== null;
@@ -745,16 +751,18 @@ export class SpotifyApiService {
 
         // Process artists
         if (data.artists && types.includes('artist')) {
-          const artistResults = data.artists.items.map(artist => ({
-            type: 'artist' as const,
-            id: artist.id,
-            name: artist.name,
-            image_url: this.getImageUrl(artist.images),
-            followers: artist.followers.total,
-            genres: artist.genres,
-            popularity: artist.popularity,
-            artist_id: artist.id,
-          }));
+          const artistResults = data.artists.items
+            .filter(artist => artist !== null && artist !== undefined)
+            .map(artist => ({
+              type: 'artist' as const,
+              id: artist.id,
+              name: artist.name,
+              image_url: this.getImageUrl(artist.images || []),
+              followers: artist.followers?.total || 0,
+              genres: artist.genres || [],
+              popularity: artist.popularity || 0,
+              artist_id: artist.id,
+            }));
           results.push(...artistResults);
           totalResults += data.artists.total;
           hasMore = hasMore || data.artists.next !== null;
