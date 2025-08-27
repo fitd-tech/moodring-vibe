@@ -6,12 +6,13 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 interface UseTaggingProps {
   tags: Tag[];
-  songId: string;
-  spotifyTrackId?: string;
+  entityId: string;
+  entityType?: 'track' | 'album' | 'playlist';
+  spotifyId: string;
   onTagsChanged: () => void;
 }
 
-export const useTagging = ({ tags, songId, spotifyTrackId, onTagsChanged }: UseTaggingProps) => {
+export const useTagging = ({ tags, entityId, entityType = 'track', spotifyId, onTagsChanged }: UseTaggingProps) => {
   const { user } = useAuth();
   const [newTagName, setNewTagName] = useState('');
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -40,10 +41,10 @@ export const useTagging = ({ tags, songId, spotifyTrackId, onTagsChanged }: UseT
 
     setIsLoading(true);
     try {
-      await taggingService.removeTagFromSong(songId, user.id, tagId);
+      await taggingService.removeTagFromEntity(entityType, entityId, user.id, tagId);
       onTagsChanged();
     } catch {
-      Alert.alert('Error', 'Failed to remove tag from song');
+      Alert.alert('Error', `Failed to remove tag from ${entityType}`);
     } finally {
       setIsLoading(false);
     }
@@ -62,15 +63,15 @@ export const useTagging = ({ tags, songId, spotifyTrackId, onTagsChanged }: UseT
 
       const newTag = await taggingService.createTag(user.id, tagData);
 
-      // Add tag to song
-      await taggingService.addTagToSong(songId, user.id, newTag.id, spotifyTrackId);
+      // Add tag to entity
+      await taggingService.addTagToEntity(entityType, entityId, user.id, newTag.id, spotifyId);
 
       setNewTagName('');
       setShowAvailableTags(false);
       await loadAvailableTags(); // Refresh available tags
       onTagsChanged();
     } catch {
-      Alert.alert('Error', 'Failed to create and add tag');
+      Alert.alert('Error', `Failed to create and add tag to ${entityType}`);
     } finally {
       setIsLoading(false);
     }
@@ -79,20 +80,20 @@ export const useTagging = ({ tags, songId, spotifyTrackId, onTagsChanged }: UseT
   const handleAddExistingTag = async (tag: Tag) => {
     if (!user) return;
 
-    // Check if tag is already added to this song
+    // Check if tag is already added to this entity
     const isAlreadyAdded = tags.some(t => t.id === tag.id);
     if (isAlreadyAdded) {
-      Alert.alert('Tag Already Added', 'This tag is already applied to this song.');
+      Alert.alert('Tag Already Added', `This tag is already applied to this ${entityType}.`);
       return;
     }
 
     setIsLoading(true);
     try {
-      await taggingService.addTagToSong(songId, user.id, tag.id, spotifyTrackId);
+      await taggingService.addTagToEntity(entityType, entityId, user.id, tag.id, spotifyId);
       setShowAvailableTags(false);
       onTagsChanged();
     } catch {
-      Alert.alert('Error', 'Failed to add tag to song');
+      Alert.alert('Error', `Failed to add tag to ${entityType}`);
     } finally {
       setIsLoading(false);
     }

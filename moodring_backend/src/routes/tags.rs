@@ -1,4 +1,4 @@
-use crate::{schema, DbPool, NewSongTag, NewTag, SongTag, Tag};
+use crate::{entity_types, schema, DbPool, EntityTag, NewEntityTag, NewSongTag, NewTag, SongTag, Tag};
 use diesel::prelude::*;
 use rocket::serde::json::Json;
 use rocket::tokio;
@@ -106,35 +106,45 @@ pub async fn delete_tag(
     }
 }
 
-// Song tagging endpoints
-#[get("/songs/<song_id>/tags?<user_id>")]
-pub async fn get_song_tags(
+// Entity tagging endpoints
+#[get("/entities/<entity_type>/<entity_id>/tags?<user_id>")]
+pub async fn get_entity_tags(
     pool: &State<DbPool>,
-    song_id: &str,
+    entity_type: &str,
+    entity_id: &str,
     user_id: i32,
 ) -> Result<Json<Vec<Tag>>, rocket::response::status::BadRequest<String>> {
-    use schema::song_tags::dsl;
+    use schema::entity_tags::dsl;
     use schema::tags;
+
+    // Validate entity type
+    if !entity_types::is_valid(entity_type) {
+        return Err(rocket::response::status::BadRequest(
+            format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
+        ));
+    }
 
     let pool = pool.inner().clone();
     let query_user_id = user_id;
-    let song_id = song_id.to_string();
+    let entity_type = entity_type.to_string();
+    let entity_id = entity_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
 
-        dsl::song_tags
+        dsl::entity_tags
             .inner_join(tags::table)
             .filter(
-                dsl::song_id
-                    .eq(&song_id)
+                dsl::entity_type
+                    .eq(&entity_type)
+                    .and(dsl::entity_id.eq(&entity_id))
                     .and(dsl::user_id.eq(query_user_id)),
             )
             .select(tags::all_columns)
             .load::<Tag>(&mut conn)
-            .map_err(|e| format!("Failed to load song tags: {e}"))
+            .map_err(|e| format!("Failed to load entity tags: {e}"))
     })
     .await
     {
@@ -146,42 +156,47 @@ pub async fn get_song_tags(
     }
 }
 
-#[post("/songs/<song_id>/tags", data = "<new_song_tag>")]
-pub async fn add_tag_to_song(
+#[post("/entities/<entity_type>/<entity_id>/tags", data = "<new_entity_tag>")]
+pub async fn add_tag_to_entity(
     pool: &State<DbPool>,
-    song_id: &str,
-    new_song_tag: Json<NewSongTag>,
-) -> Result<Json<SongTag>, rocket::response::status::BadRequest<String>> {
-    use schema::song_tags::dsl;
+    entity_type: &str,
+    entity_id: &str,
+    new_entity_tag: Json<NewEntityTag>,
+) -> Result<Json<EntityTag>, rocket::response::status::BadRequest<String>> {
+    use schema::entity_tags::dsl;
+
+    // Validate entity type
+    if !entity_types::is_valid(entity_type) {
+        return Err(rocket::response::status::BadRequest(
+            format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
+        ));
+    }
 
     let pool = pool.inner().clone();
-    let mut new_song_tag_data = new_song_tag.into_inner();
+    let mut new_entity_tag_data = new_entity_tag.into_inner();
 
-    // Debug logging to trace spotify_track_id field
-    println!("DEBUG: Received new_song_tag data: {new_song_tag_data:?}");
-    println!(
-        "DEBUG: spotify_track_id field: {:?}",
-        new_song_tag_data.spotify_track_id
-    );
+    // Validate the entity tag data
+    if let Err(validation_error) = new_entity_tag_data.validate() {
+        return Err(rocket::response::status::BadRequest(validation_error));
+    }
 
-    // Use the song_id from the URL path, not from the POST body
-    new_song_tag_data.song_id = song_id.to_string();
-
-    println!("DEBUG: After setting song_id, data: {new_song_tag_data:?}");
+    // Use the entity_type and entity_id from the URL path
+    new_entity_tag_data.entity_type = entity_type.to_string();
+    new_entity_tag_data.entity_id = entity_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
 
-        diesel::insert_into(dsl::song_tags)
-            .values(&new_song_tag_data)
-            .get_result::<SongTag>(&mut conn)
-            .map_err(|e| format!("Failed to add tag to song: {e}"))
+        diesel::insert_into(dsl::entity_tags)
+            .values(&new_entity_tag_data)
+            .get_result::<EntityTag>(&mut conn)
+            .map_err(|e| format!("Failed to add tag to entity: {e}"))
     })
     .await
     {
-        Ok(Ok(song_tag)) => Ok(Json(song_tag)),
+        Ok(Ok(entity_tag)) => Ok(Json(entity_tag)),
         Ok(Err(e)) => Err(rocket::response::status::BadRequest(e)),
         Err(e) => Err(rocket::response::status::BadRequest(format!(
             "Task join error: {e}"
@@ -189,19 +204,28 @@ pub async fn add_tag_to_song(
     }
 }
 
-#[delete("/songs/<song_id>/tags/<tag_id>?<user_id>")]
-pub async fn remove_tag_from_song(
+#[delete("/entities/<entity_type>/<entity_id>/tags/<tag_id>?<user_id>")]
+pub async fn remove_tag_from_entity(
     pool: &State<DbPool>,
-    song_id: &str,
+    entity_type: &str,
+    entity_id: &str,
     tag_id: i32,
     user_id: i32,
 ) -> Result<rocket::response::status::NoContent, rocket::response::status::BadRequest<String>> {
-    use schema::song_tags::dsl;
+    use schema::entity_tags::dsl;
+
+    // Validate entity type
+    if !entity_types::is_valid(entity_type) {
+        return Err(rocket::response::status::BadRequest(
+            format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
+        ));
+    }
 
     let pool = pool.inner().clone();
     let query_user_id = user_id;
     let query_tag_id = tag_id;
-    let song_id = song_id.to_string();
+    let entity_type = entity_type.to_string();
+    let entity_id = entity_id.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
@@ -209,15 +233,16 @@ pub async fn remove_tag_from_song(
             .map_err(|e| format!("Failed to get connection: {e}"))?;
 
         diesel::delete(
-            dsl::song_tags.filter(
-                dsl::song_id
-                    .eq(&song_id)
+            dsl::entity_tags.filter(
+                dsl::entity_type
+                    .eq(&entity_type)
+                    .and(dsl::entity_id.eq(&entity_id))
                     .and(dsl::tag_id.eq(query_tag_id))
                     .and(dsl::user_id.eq(query_user_id)),
             ),
         )
         .execute(&mut conn)
-        .map_err(|e| format!("Failed to remove tag from song: {e}"))
+        .map_err(|e| format!("Failed to remove tag from entity: {e}"))
     })
     .await
     {
@@ -226,7 +251,7 @@ pub async fn remove_tag_from_song(
                 Ok(rocket::response::status::NoContent)
             } else {
                 Err(rocket::response::status::BadRequest(
-                    "Song tag not found or not owned by user".to_string(),
+                    "Entity tag not found or not owned by user".to_string(),
                 ))
             }
         }
@@ -237,42 +262,217 @@ pub async fn remove_tag_from_song(
     }
 }
 
-// Get songs that have a specific tag
-#[get("/users/<user_id>/tags/<tag_id>/songs")]
-pub async fn get_songs_with_tag(
+// Get entities that have a specific tag
+#[get("/users/<user_id>/tags/<tag_id>/entities/<entity_type>")]
+pub async fn get_entities_with_tag(
     pool: &State<DbPool>,
     user_id: i32,
     tag_id: i32,
+    entity_type: &str,
 ) -> Result<Json<Vec<String>>, rocket::response::status::BadRequest<String>> {
-    use schema::song_tags::dsl;
+    use schema::entity_tags::dsl;
+
+    // Validate entity type
+    if !entity_types::is_valid(entity_type) {
+        return Err(rocket::response::status::BadRequest(
+            format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
+        ));
+    }
 
     let pool = pool.inner().clone();
     let query_user_id = user_id;
     let query_tag_id = tag_id;
+    let entity_type = entity_type.to_string();
 
     match tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| format!("Failed to get connection: {e}"))?;
 
-        dsl::song_tags
+        dsl::entity_tags
             .filter(
                 dsl::user_id
                     .eq(query_user_id)
-                    .and(dsl::tag_id.eq(query_tag_id)),
+                    .and(dsl::tag_id.eq(query_tag_id))
+                    .and(dsl::entity_type.eq(&entity_type)),
             )
-            .select(dsl::song_id)
+            .select(dsl::entity_id)
             .load::<String>(&mut conn)
-            .map_err(|e| format!("Failed to load songs with tag: {e}"))
+            .map_err(|e| format!("Failed to load entities with tag: {e}"))
     })
     .await
     {
-        Ok(Ok(songs)) => Ok(Json(songs)),
+        Ok(Ok(entities)) => Ok(Json(entities)),
         Ok(Err(e)) => Err(rocket::response::status::BadRequest(e)),
         Err(e) => Err(rocket::response::status::BadRequest(format!(
             "Task join error: {e}"
         ))),
     }
+}
+
+// Get Spotify IDs for entities of a specific type that have a specific tag  
+#[get("/users/<user_id>/tags/<tag_id>/spotify-ids/<entity_type>")]
+pub async fn get_spotify_ids_with_tag(
+    pool: &State<DbPool>,
+    user_id: i32,
+    tag_id: i32,
+    entity_type: &str,
+) -> Result<Json<Vec<String>>, rocket::response::status::BadRequest<String>> {
+    use schema::entity_tags::dsl;
+
+    // Validate entity type
+    if !entity_types::is_valid(entity_type) {
+        return Err(rocket::response::status::BadRequest(
+            format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
+        ));
+    }
+
+    let pool = pool.inner().clone();
+    let query_user_id = user_id;
+    let query_tag_id = tag_id;
+    let entity_type = entity_type.to_string();
+
+    match tokio::task::spawn_blocking(move || {
+        let mut conn = pool
+            .get()
+            .map_err(|e| format!("Failed to get connection: {e}"))?;
+
+        dsl::entity_tags
+            .filter(
+                dsl::user_id
+                    .eq(query_user_id)
+                    .and(dsl::tag_id.eq(query_tag_id))
+                    .and(dsl::entity_type.eq(&entity_type)),
+            )
+            .select(dsl::spotify_id)
+            .load::<String>(&mut conn)
+            .map_err(|e| format!("Failed to load Spotify IDs with tag: {e}"))
+    })
+    .await
+    {
+        Ok(Ok(spotify_ids)) => Ok(Json(spotify_ids)),
+        Ok(Err(e)) => Err(rocket::response::status::BadRequest(e)),
+        Err(e) => Err(rocket::response::status::BadRequest(format!(
+            "Task join error: {e}"
+        ))),
+    }
+}
+
+// Backward compatibility endpoints that redirect to entity endpoints
+#[get("/songs/<song_id>/tags?<user_id>")]
+pub async fn get_song_tags_compat(
+    pool: &State<DbPool>,
+    song_id: &str,
+    user_id: i32,
+) -> Result<Json<Vec<Tag>>, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    get_entity_tags(pool, entity_types::TRACK, song_id, user_id).await
+}
+
+// Legacy get_song_tags function that still uses old naming for tests
+#[allow(dead_code)]
+pub async fn get_song_tags(
+    pool: &State<DbPool>,
+    song_id: &str,
+    user_id: i32,
+) -> Result<Json<Vec<Tag>>, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    get_entity_tags(pool, entity_types::TRACK, song_id, user_id).await
+}
+
+// Legacy add_tag_to_song function for tests
+#[allow(dead_code)]
+pub async fn add_tag_to_song(
+    pool: &State<DbPool>,
+    song_id: &str,
+    new_song_tag: Json<NewSongTag>,
+) -> Result<Json<SongTag>, rocket::response::status::BadRequest<String>> {
+    // Convert NewSongTag to NewEntityTag
+    let new_entity_tag = NewEntityTag {
+        user_id: new_song_tag.user_id,
+        entity_type: entity_types::TRACK.to_string(),
+        entity_id: song_id.to_string(),
+        spotify_id: new_song_tag.spotify_track_id.clone().unwrap_or_else(|| {
+            // Extract Spotify ID from song_id if it's in Spotify format
+            if song_id.starts_with("spotify:track:") {
+                song_id.replace("spotify:track:", "")
+            } else {
+                song_id.to_string()
+            }
+        }),
+        tag_id: new_song_tag.tag_id,
+    };
+
+    // Call entity endpoint
+    match add_tag_to_entity(pool, entity_types::TRACK, song_id, Json(new_entity_tag)).await {
+        Ok(Json(entity_tag)) => {
+            // Convert EntityTag back to SongTag for backward compatibility
+            let song_tag = SongTag {
+                id: entity_tag.id,
+                user_id: entity_tag.user_id,
+                song_id: entity_tag.entity_id,
+                tag_id: entity_tag.tag_id,
+                created_at: entity_tag.created_at,
+                spotify_track_id: Some(entity_tag.spotify_id),
+            };
+            Ok(Json(song_tag))
+        }
+        Err(e) => Err(e),
+    }
+}
+
+// Legacy remove_tag_from_song function for tests
+#[allow(dead_code)]
+pub async fn remove_tag_from_song(
+    pool: &State<DbPool>,
+    song_id: &str,
+    tag_id: i32,
+    user_id: i32,
+) -> Result<rocket::response::status::NoContent, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    remove_tag_from_entity(pool, entity_types::TRACK, song_id, tag_id, user_id).await
+}
+
+// Legacy get_songs_with_tag function for tests
+#[allow(dead_code)]
+pub async fn get_songs_with_tag(
+    pool: &State<DbPool>,
+    user_id: i32,
+    tag_id: i32,
+) -> Result<Json<Vec<String>>, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    get_entities_with_tag(pool, user_id, tag_id, entity_types::TRACK).await
+}
+
+#[post("/songs/<song_id>/tags", data = "<new_entity_tag>")]
+pub async fn add_tag_to_song_compat(
+    pool: &State<DbPool>,
+    song_id: &str,
+    new_entity_tag: Json<NewEntityTag>,
+) -> Result<Json<EntityTag>, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    add_tag_to_entity(pool, entity_types::TRACK, song_id, new_entity_tag).await
+}
+
+#[delete("/songs/<song_id>/tags/<tag_id>?<user_id>")]
+pub async fn remove_tag_from_song_compat(
+    pool: &State<DbPool>,
+    song_id: &str,
+    tag_id: i32,
+    user_id: i32,
+) -> Result<rocket::response::status::NoContent, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    remove_tag_from_entity(pool, entity_types::TRACK, song_id, tag_id, user_id).await
+}
+
+#[get("/users/<user_id>/tags/<tag_id>/spotify-tracks")]
+pub async fn get_spotify_track_ids_with_tag_compat(
+    pool: &State<DbPool>,
+    user_id: i32,
+    tag_id: i32,
+) -> Result<Json<Vec<String>>, rocket::response::status::BadRequest<String>> {
+    // Redirect to entity endpoint for tracks
+    get_spotify_ids_with_tag(pool, user_id, tag_id, entity_types::TRACK).await
 }
 
 #[cfg(test)]
@@ -588,12 +788,12 @@ mod tests {
 
         // Test schema table references
         let tags_table = schema::tags::table;
-        let song_tags_table = schema::song_tags::table;
+        let entity_tags_table = schema::entity_tags::table;
         let users_table = schema::users::table;
 
         // Validate table references are available
         let _tags_debug = format!("{tags_table:?}");
-        let _song_tags_debug = format!("{song_tags_table:?}");
+        let _entity_tags_debug = format!("{entity_tags_table:?}");
         let _users_debug = format!("{users_table:?}");
 
         // Test column references
@@ -601,17 +801,17 @@ mod tests {
         let tags_name = schema::tags::dsl::name;
         let tags_id = schema::tags::dsl::id;
 
-        let song_tags_user_id = schema::song_tags::dsl::user_id;
-        let song_tags_song_id = schema::song_tags::dsl::song_id;
-        let song_tags_tag_id = schema::song_tags::dsl::tag_id;
+        let entity_tags_user_id = schema::entity_tags::dsl::user_id;
+        let entity_tags_entity_id = schema::entity_tags::dsl::entity_id;
+        let entity_tags_tag_id = schema::entity_tags::dsl::tag_id;
 
         // Validate column references
         let _tags_user_id_debug = format!("{tags_user_id:?}");
         let _tags_name_debug = format!("{tags_name:?}");
         let _tags_id_debug = format!("{tags_id:?}");
-        let _song_tags_user_id_debug = format!("{song_tags_user_id:?}");
-        let _song_tags_song_id_debug = format!("{song_tags_song_id:?}");
-        let _song_tags_tag_id_debug = format!("{song_tags_tag_id:?}");
+        let _entity_tags_user_id_debug = format!("{entity_tags_user_id:?}");
+        let _entity_tags_entity_id_debug = format!("{entity_tags_entity_id:?}");
+        let _entity_tags_tag_id_debug = format!("{entity_tags_tag_id:?}");
     }
 
     #[test]
@@ -925,7 +1125,7 @@ mod tests {
         let _user_id_column = schema::tags::dsl::user_id;
         let _tag_id_column = schema::tags::dsl::id;
         let _name_column = schema::tags::dsl::name;
-        let _song_id_column = schema::song_tags::dsl::song_id;
+        let _entity_id_column = schema::entity_tags::dsl::entity_id;
 
         // Test ordering patterns
         let order_column = schema::tags::dsl::name;
@@ -938,17 +1138,17 @@ mod tests {
         use crate::schema;
 
         // Test table references for joins
-        let song_tags_table = schema::song_tags::table;
+        let entity_tags_table = schema::entity_tags::table;
         let tags_table = schema::tags::table;
 
-        let _song_tags_debug = format!("{song_tags_table:?}");
+        let _entity_tags_debug = format!("{entity_tags_table:?}");
         let _tags_debug = format!("{tags_table:?}");
 
         // Test join column patterns
-        let song_tags_tag_id = schema::song_tags::dsl::tag_id;
+        let entity_tags_tag_id = schema::entity_tags::dsl::tag_id;
         let tags_id = schema::tags::dsl::id;
 
-        let _join_column_1 = format!("{song_tags_tag_id:?}");
+        let _join_column_1 = format!("{entity_tags_tag_id:?}");
         let _join_column_2 = format!("{tags_id:?}");
 
         // Test select patterns for joins

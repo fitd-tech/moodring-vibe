@@ -9,17 +9,28 @@ import { TagSuggestions } from './TagSuggestions';
 
 interface TaggingInterfaceProps {
   tags: Tag[];
-  songId: string;
+  entityId: string;
+  entityType?: 'track' | 'album' | 'playlist';
+  spotifyId?: string;
+  // Backward compatibility
+  songId?: string;
   spotifyTrackId?: string;
   onTagsChanged: () => void;
 }
 
 export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
   tags,
-  songId,
-  spotifyTrackId,
+  entityId,
+  entityType = 'track',
+  spotifyId,
+  songId, // Backward compatibility
+  spotifyTrackId, // Backward compatibility
   onTagsChanged,
 }) => {
+  // Handle backward compatibility
+  const actualEntityId = entityId || songId || '';
+  const actualSpotifyId = spotifyId || spotifyTrackId || actualEntityId;
+  
   const {
     newTagName,
     setNewTagName,
@@ -30,7 +41,13 @@ export const TaggingInterface: React.FC<TaggingInterfaceProps> = ({
     handleCreateAndAddTag,
     handleAddExistingTag,
     getUnusedTags,
-  } = useTagging({ tags, songId, spotifyTrackId, onTagsChanged });
+  } = useTagging({ 
+    tags, 
+    entityId: actualEntityId, 
+    entityType, 
+    spotifyId: actualSpotifyId, 
+    onTagsChanged 
+  });
 
   return (
     <View style={styles.container}>

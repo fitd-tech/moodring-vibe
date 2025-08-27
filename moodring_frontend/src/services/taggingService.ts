@@ -1,4 +1,4 @@
-import { Tag, NewTag, SongTag, NewSongTag } from '../types';
+import { Tag, NewTag, SongTag, NewSongTag, EntityTag, NewEntityTag } from '../types';
 
 export class TaggingService {
   private getBackendUrl(): string {
@@ -50,10 +50,50 @@ export class TaggingService {
     });
   }
 
-  // Song tagging methods
-  async getSongTags(songId: string, userId: number): Promise<Tag[]> {
-    const url = `${this.getBackendUrl()}/songs/${encodeURIComponent(songId)}/tags?user_id=${userId}`;
+  // Entity tagging methods (new)
+  async getEntityTags(entityType: 'track' | 'album' | 'playlist', entityId: string, userId: number): Promise<Tag[]> {
+    const url = `${this.getBackendUrl()}/entities/${entityType}/${encodeURIComponent(entityId)}/tags?user_id=${userId}`;
     return this.makeApiCall<Tag[]>(url);
+  }
+
+  async addTagToEntity(
+    entityType: 'track' | 'album' | 'playlist',
+    entityId: string,
+    userId: number,
+    tagId: number,
+    spotifyId: string
+  ): Promise<EntityTag> {
+    const url = `${this.getBackendUrl()}/entities/${entityType}/${encodeURIComponent(entityId)}/tags`;
+    const entityTagData: NewEntityTag = {
+      user_id: userId,
+      entity_type: entityType,
+      entity_id: entityId,
+      tag_id: tagId,
+      spotify_id: spotifyId,
+    };
+
+    return this.makeApiCall<EntityTag>(url, {
+      method: 'POST',
+      body: JSON.stringify(entityTagData),
+    });
+  }
+
+  async removeTagFromEntity(entityType: 'track' | 'album' | 'playlist', entityId: string, userId: number, tagId: number): Promise<void> {
+    const url = `${this.getBackendUrl()}/entities/${entityType}/${encodeURIComponent(entityId)}/tags/${tagId}?user_id=${userId}`;
+    await this.makeApiCall<void>(url, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSpotifyIdsWithTag(userId: number, tagId: number, entityType: 'track' | 'album' | 'playlist'): Promise<string[]> {
+    const url = `${this.getBackendUrl()}/users/${userId}/tags/${tagId}/spotify-ids/${entityType}`;
+    return this.makeApiCall<string[]>(url);
+  }
+
+  // Song tagging methods (backward compatibility)
+  async getSongTags(songId: string, userId: number): Promise<Tag[]> {
+    // Redirect to entity tags for tracks
+    return this.getEntityTags('track', songId, userId);
   }
 
   async addTagToSong(
@@ -62,25 +102,24 @@ export class TaggingService {
     tagId: number,
     spotifyTrackId?: string
   ): Promise<SongTag> {
-    const url = `${this.getBackendUrl()}/songs/${encodeURIComponent(songId)}/tags`;
-    const songTagData: NewSongTag = {
-      user_id: userId,
-      tag_id: tagId,
-      song_id: songId,
-      spotify_track_id: spotifyTrackId,
+    // Backward compatibility - redirect to entity tagging
+    const spotifyId = spotifyTrackId || songId;
+    const entityTag = await this.addTagToEntity('track', songId, userId, tagId, spotifyId);
+    
+    // Convert EntityTag back to SongTag format for backward compatibility
+    return {
+      id: entityTag.id,
+      user_id: entityTag.user_id,
+      song_id: entityTag.entity_id,
+      tag_id: entityTag.tag_id,
+      created_at: entityTag.created_at,
+      spotify_track_id: entityTag.spotify_id,
     };
-
-    return this.makeApiCall<SongTag>(url, {
-      method: 'POST',
-      body: JSON.stringify(songTagData),
-    });
   }
 
   async removeTagFromSong(songId: string, userId: number, tagId: number): Promise<void> {
-    const url = `${this.getBackendUrl()}/songs/${encodeURIComponent(songId)}/tags/${tagId}?user_id=${userId}`;
-    await this.makeApiCall<void>(url, {
-      method: 'DELETE',
-    });
+    // Backward compatibility - redirect to entity tagging
+    return this.removeTagFromEntity('track', songId, userId, tagId);
   }
 
   // Get songs that have a specific tag
@@ -89,46 +128,53 @@ export class TaggingService {
     return this.makeApiCall<string[]>(url);
   }
 
-  // Get Spotify track IDs for songs that have specific tags
-  async getSpotifyTrackIdsWithTags(userId: number, tagIds: number[]): Promise<string[]> {
+  // Get Spotify IDs for entities of a specific type that have specific tags
+  async getSpotifyIdsWithTags(userId: number, tagIds: number[], entityType: 'track' | 'album' | 'playlist'): Promise<string[]> {
     try {
       if (tagIds.length === 0) {
         return [];
       }
 
-      // Get all song tag entries for the specified tags
-      const allSpotifyTrackIds: string[] = [];
+      // Get all entity IDs for the specified tags
+      const allSpotifyIds: string[] = [];
 
       for (const tagId of tagIds) {
-        const url = `${this.getBackendUrl()}/users/${userId}/tags/${tagId}/spotify-tracks`;
         try {
-          const spotifyTrackIds = await this.makeApiCall<string[]>(url);
-          allSpotifyTrackIds.push(...spotifyTrackIds);
-        } catch {
-          // If endpoint doesn't exist yet, fallback to getting normalized IDs
-          // and skip this tag (TODO: TEMP - Remove when backend supports spotify-tracks endpoint)
+          const spotifyIds = await this.getSpotifyIdsWithTag(userId, tagId, entityType);
+          allSpotifyIds.push(...spotifyIds);
+        } catch (error) {
           if (__DEV__) {
             console.warn(
-              `[TaggingService] spotify-tracks endpoint not implemented for tag ${tagId}, skipping`
+              `[TaggingService] Failed to get ${entityType} IDs for tag ${tagId}:`, error
             );
           }
         }
       }
 
       // Remove duplicates
-      return [...new Set(allSpotifyTrackIds.filter(id => id && id.length > 0))];
+      return [...new Set(allSpotifyIds.filter(id => id && id.length > 0))];
     } catch (error) {
       if (__DEV__) {
-        console.error('[TaggingService] Error getting Spotify track IDs with tags:', error);
+        console.error(`[TaggingService] Error getting Spotify ${entityType} IDs with tags:`, error);
       }
       return [];
     }
   }
 
-  // Utility method to generate a song ID from track information
+  // Get Spotify track IDs for songs that have specific tags (backward compatibility)
+  async getSpotifyTrackIdsWithTags(userId: number, tagIds: number[]): Promise<string[]> {
+    return this.getSpotifyIdsWithTags(userId, tagIds, 'track');
+  }
+
+  // Utility method to generate a song ID from track information (backward compatibility)
   generateSongId(trackName: string, artist: string): string {
-    // Create a consistent identifier from track name and artist
-    return `${trackName.toLowerCase().trim()}__${artist.toLowerCase().trim()}`.replace(
+    return this.generateEntityId(trackName, artist);
+  }
+
+  // Utility method to generate an entity ID from entity information
+  generateEntityId(entityName: string, contextInfo: string): string {
+    // Create a consistent identifier from entity name and context (artist, owner, etc.)
+    return `${entityName.toLowerCase().trim()}__${contextInfo.toLowerCase().trim()}`.replace(
       /[^a-z0-9_]/g,
       '_'
     );

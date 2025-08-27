@@ -11,19 +11,26 @@ use std::env;
 mod routes;
 
 use routes::{
-    add_tag_to_song,
+    // New entity-based routes
+    add_tag_to_entity,
+    get_entity_tags,
+    get_entities_with_tag,
+    get_spotify_ids_with_tag,
+    remove_tag_from_entity,
+    // Backward compatibility routes
+    add_tag_to_song_compat,
+    get_song_tags_compat,
+    get_spotify_track_ids_with_tag_compat,
+    remove_tag_from_song_compat,
+    // Tag management routes
     create_tag,
     delete_tag,
-    get_song_tags,
-    get_songs_with_tag,
-    // Tag routes
     get_user_tags,
-    health_check,
     // Health routes
+    health_check,
     index,
-    refresh_token,
-    remove_tag_from_song,
     // Auth routes
+    refresh_token,
     spotify_auth,
 };
 
@@ -50,10 +57,17 @@ async fn main() -> Result<(), Box<rocket::Error>> {
                 get_user_tags,
                 create_tag,
                 delete_tag,
-                get_song_tags,
-                get_songs_with_tag,
-                add_tag_to_song,
-                remove_tag_from_song
+                // New entity-based routes
+                get_entity_tags,
+                add_tag_to_entity,
+                remove_tag_from_entity,
+                get_entities_with_tag,
+                get_spotify_ids_with_tag,
+                // Backward compatibility routes
+                get_song_tags_compat,
+                add_tag_to_song_compat,
+                remove_tag_from_song_compat,
+                get_spotify_track_ids_with_tag_compat
             ],
         )
         .launch()
@@ -108,11 +122,11 @@ mod tests {
     #[test]
     fn test_schema_tables_exist() {
         // Test that our database schema includes the required tables
-        use crate::schema::{song_tags, tags, users};
+        use crate::schema::{entity_tags, tags, users};
 
         // This test verifies that our schema module compiles and includes
-        // the tables needed for the get_songs_with_tag functionality
-        let _song_tags_table = song_tags::table;
+        // the tables needed for the get_entities_with_tag functionality
+        let _entity_tags_table = entity_tags::table;
         let _tags_table = tags::table;
         let _users_table = users::table;
 

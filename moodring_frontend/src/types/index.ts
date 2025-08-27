@@ -223,6 +223,25 @@ export interface NewSongTag {
   spotify_track_id?: string;
 }
 
+// New entity tagging types
+export interface EntityTag {
+  id: number;
+  user_id: number;
+  entity_type: 'track' | 'album' | 'playlist';
+  entity_id: string;
+  spotify_id: string;
+  tag_id: number;
+  created_at: string;
+}
+
+export interface NewEntityTag {
+  user_id: number;
+  entity_type: 'track' | 'album' | 'playlist';
+  entity_id: string;
+  spotify_id: string;
+  tag_id: number;
+}
+
 export interface AnimatedValues {
   height: import('react-native').Animated.Value;
   opacity: import('react-native').Animated.Value;

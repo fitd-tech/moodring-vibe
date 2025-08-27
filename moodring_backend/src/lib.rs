@@ -31,7 +31,73 @@ pub struct NewTag {
 
 #[derive(Queryable, Serialize, Deserialize, Clone, PartialEq, Debug)]
 #[serde(crate = "rocket::serde")]
-#[diesel(table_name = schema::song_tags)]
+#[diesel(table_name = schema::entity_tags)]
+pub struct EntityTag {
+    pub id: i32,
+    pub user_id: i32,
+    pub entity_type: String,
+    pub entity_id: String,
+    pub spotify_id: String,
+    pub tag_id: i32,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Deserialize, Clone, Debug)]
+#[serde(crate = "rocket::serde")]
+#[diesel(table_name = schema::entity_tags)]
+pub struct NewEntityTag {
+    pub user_id: i32,
+    pub entity_type: String,
+    pub entity_id: String,
+    pub spotify_id: String,
+    pub tag_id: i32,
+}
+
+// Entity type constants
+pub mod entity_types {
+    pub const TRACK: &str = "track";
+    pub const ALBUM: &str = "album";  
+    pub const PLAYLIST: &str = "playlist";
+    
+    pub fn is_valid(entity_type: &str) -> bool {
+        matches!(entity_type, TRACK | ALBUM | PLAYLIST)
+    }
+    
+    pub fn all() -> Vec<&'static str> {
+        vec![TRACK, ALBUM, PLAYLIST]
+    }
+}
+
+impl NewEntityTag {
+    pub fn validate(&self) -> Result<(), String> {
+        if !entity_types::is_valid(&self.entity_type) {
+            return Err(format!("Invalid entity_type: {}. Must be one of: track, album, playlist", self.entity_type));
+        }
+        
+        if self.entity_id.is_empty() {
+            return Err("entity_id cannot be empty".to_string());
+        }
+        
+        if self.spotify_id.is_empty() {
+            return Err("spotify_id cannot be empty".to_string());
+        }
+        
+        if self.user_id <= 0 {
+            return Err("user_id must be positive".to_string());
+        }
+        
+        if self.tag_id <= 0 {
+            return Err("tag_id must be positive".to_string());
+        }
+        
+        Ok(())
+    }
+}
+
+// Legacy song tag models for backward compatibility (will be removed after migration)
+// These models don't have a table - they are used for API compatibility only
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[serde(crate = "rocket::serde")]
 pub struct SongTag {
     pub id: i32,
     pub user_id: i32,
@@ -41,9 +107,8 @@ pub struct SongTag {
     pub spotify_track_id: Option<String>,
 }
 
-#[derive(Insertable, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
-#[diesel(table_name = schema::song_tags)]
 pub struct NewSongTag {
     pub user_id: i32,
     pub song_id: String,

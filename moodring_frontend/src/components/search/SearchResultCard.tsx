@@ -38,19 +38,16 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
   const [songId, setSongId] = useState<string>('');
 
   useEffect(() => {
-    // Generate song ID based on result type
+    // Generate entity ID based on result type
     if (result.type === 'track') {
-      const generatedSongId = taggingService.generateSongId(result.name, result.artist);
-      setSongId(generatedSongId);
-    } else {
-      // For non-track items, create a unique ID based on type and name
-      const generatedSongId = taggingService.generateSongId(
-        result.name,
-        result.type === 'album' ? result.artist : 
-        result.type === 'playlist' ? result.owner : 
-        'Unknown'
-      );
-      setSongId(generatedSongId);
+      const generatedEntityId = taggingService.generateEntityId(result.name, result.artist);
+      setSongId(generatedEntityId);
+    } else if (result.type === 'album') {
+      const generatedEntityId = taggingService.generateEntityId(result.name, result.artist);
+      setSongId(generatedEntityId);
+    } else if (result.type === 'playlist') {
+      const generatedEntityId = taggingService.generateEntityId(result.name, result.owner);
+      setSongId(generatedEntityId);
     }
   }, [result]);
 
@@ -65,7 +62,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
 
     setIsLoadingTags(true);
     try {
-      const itemTags = await taggingService.getSongTags(songId, user.id);
+      const itemTags = await taggingService.getEntityTags(result.type, songId, user.id);
       setTags(itemTags);
     } catch {
       setTags([]);
@@ -234,8 +231,9 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
             ) : (
               <TaggingInterface
                 tags={tags}
-                songId={songId}
-                spotifyTrackId={getSpotifyTrackId()}
+                entityId={songId}
+                entityType={result.type}
+                spotifyId={getSpotifyTrackId() || ''}
                 onTagsChanged={loadItemTags}
               />
             )}
