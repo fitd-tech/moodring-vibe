@@ -15,11 +15,11 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {
-    "expo": "^54.0.0-preview.7",
-    "expo-auth-session": "~7.0.3",
+    "expo": "^54.0.0-preview.9",
+    "expo-auth-session": "~7.0.4",
     "expo-crypto": "~15.0.3",
     "expo-linear-gradient": "~15.0.3",
-    "expo-linking": "~8.0.3",
+    "expo-linking": "~8.0.4",
     "expo-secure-store": "~15.0.3",
     "expo-status-bar": "~3.0.4",
     "expo-web-browser": "~15.0.3",
