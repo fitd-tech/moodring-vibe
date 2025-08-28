@@ -107,11 +107,12 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ currentlyPlaying }) => {
           >
             <TaggingInterface
               tags={mockTags}
-              songId={
+              entityId={
                 currentlyPlaying?.song_id ||
                 `${currentlyPlaying?.name || 'unknown'}__${currentlyPlaying?.artist || 'unknown'}`
               }
-              spotifyTrackId={currentlyPlaying?.song_id}
+              entityType="track"
+              spotifyId={currentlyPlaying?.song_id || ''}
               onTagsChanged={() => {}}
             />
             <TouchableOpacity style={styles.collapseButton} onPress={toggleExpansion}>

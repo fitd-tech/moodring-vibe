@@ -56,7 +56,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
 
     setIsLoadingTags(true);
     try {
-      const playlistTags = await taggingService.getSongTags(playlistTagId, user.id);
+      const playlistTags = await taggingService.getEntityTags('playlist', playlistTagId, user.id);
       setTags(playlistTags);
     } catch {
       setTags([]);
@@ -133,7 +133,9 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
             ) : (
               <TaggingInterface
                 tags={tags}
-                songId={playlistTagId}
+                entityId={playlistTagId}
+                entityType="playlist"
+                spotifyId={playlist.playlist_id}
                 onTagsChanged={loadPlaylistTags}
               />
             )}

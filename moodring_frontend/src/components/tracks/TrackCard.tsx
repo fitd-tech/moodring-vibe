@@ -54,7 +54,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
     setIsLoadingTags(true);
     try {
-      const songTags = await taggingService.getSongTags(songId, user.id);
+      const songTags = await taggingService.getEntityTags('track', songId, user.id);
       setTags(songTags);
     } catch {
       setTags([]);
@@ -126,8 +126,9 @@ export const TrackCard: React.FC<TrackCardProps> = ({
             ) : (
               <TaggingInterface
                 tags={tags}
-                songId={songId}
-                spotifyTrackId={track.song_id}
+                entityId={songId}
+                entityType="track"
+                spotifyId={track.song_id}
                 onTagsChanged={loadSongTags}
               />
             )}

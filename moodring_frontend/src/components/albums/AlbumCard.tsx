@@ -53,7 +53,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = ({
 
     setIsLoadingTags(true);
     try {
-      const albumTags = await taggingService.getSongTags(albumTagId, user.id);
+      const albumTags = await taggingService.getEntityTags('album', albumTagId, user.id);
       setTags(albumTags);
     } catch {
       setTags([]);
@@ -123,7 +123,13 @@ export const AlbumCard: React.FC<AlbumCardProps> = ({
                 <Text style={styles.loadingText}>Loading tags...</Text>
               </View>
             ) : (
-              <TaggingInterface tags={tags} songId={albumTagId} onTagsChanged={loadAlbumTags} />
+              <TaggingInterface 
+                tags={tags} 
+                entityId={albumTagId} 
+                entityType="album"
+                spotifyId={album.album_id}
+                onTagsChanged={loadAlbumTags} 
+              />
             )}
           </Animated.View>
         )}

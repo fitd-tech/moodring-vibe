@@ -152,7 +152,7 @@ export class TaggingService {
       }
 
       // Remove duplicates
-      return [...new Set(allSpotifyIds.filter(id => id && id.length > 0))];
+      return Array.from(new Set(allSpotifyIds.filter(id => id && id.length > 0)));
     } catch (error) {
       if (__DEV__) {
         console.error(`[TaggingService] Error getting Spotify ${entityType} IDs with tags:`, error);

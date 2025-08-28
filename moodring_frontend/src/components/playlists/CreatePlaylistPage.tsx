@@ -83,6 +83,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     songs: false,
     creating: false,
   });
+  const [isFilteringDebounced, setIsFilteringDebounced] = useState(false);
   const [errors, setErrors] = useState<ErrorStates>({
     tags: null,
     songs: null,
@@ -94,10 +95,28 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
     loadInitialTags();
   }, [user]);
 
-  // Update filtered songs when tags or entity types change
+  // Debounced update filtered songs when tags or entity types change
   useEffect(() => {
-    updateFilteredSongs();
-  }, [selectableTags, entityTypes]);
+    // Don't trigger filtering if tags are still loading initially
+    if (loading.tags && selectableTags.length === 0) {
+      return;
+    }
+
+    // Set debounced filtering state to show immediate feedback
+    setIsFilteringDebounced(true);
+    
+    // Clear any existing timeout
+    const timeoutId = setTimeout(() => {
+      setIsFilteringDebounced(false);
+      updateFilteredSongs();
+    }, 500); // 500ms debounce delay
+
+    // Cleanup function to cancel the timeout if dependencies change again
+    return () => {
+      clearTimeout(timeoutId);
+      setIsFilteringDebounced(false);
+    };
+  }, [selectableTags, entityTypes, loading.tags]);
 
   const loadInitialTags = async () => {
     if (!user) return;
@@ -194,6 +213,8 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
       setAllFilteredSongs([]);
       setHasMoreSongs(false);
       setCurrentSongOffset(0);
+      setLoading(prev => ({ ...prev, songs: false }));
+      setErrors(prev => ({ ...prev, songs: null }));
       return;
     }
 
@@ -378,6 +399,7 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               Choose tags to include or exclude from your playlist. Include:{' '}
               {selectableTags.filter(tag => tag.selectionState === 'include').length}, Exclude:{' '}
               {selectableTags.filter(tag => tag.selectionState === 'exclude').length}, Total: {selectableTags.length}
+              {isFilteringDebounced && ' • Updating preview...'}
             </Text>
 
             {errors.tags && (
@@ -527,10 +549,12 @@ export const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({
               </View>
             )}
 
-            {loading.songs ? (
+            {loading.songs || isFilteringDebounced ? (
               <View style={styles.loadingContainer}>
                 <LoadingSpinner size="small" />
-                <Text style={styles.loadingText}>Loading songs...</Text>
+                <Text style={styles.loadingText}>
+                  {isFilteringDebounced ? 'Updating song filter...' : 'Loading songs...'}
+                </Text>
               </View>
             ) : filteredSongs.length === 0 ? (
               <View style={styles.emptyStateContainer}>

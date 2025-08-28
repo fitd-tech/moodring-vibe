@@ -216,86 +216,6 @@ export class PlaylistService {
     }
   }
 
-  // Helper method to fetch ALL available tracks from all sources
-  private async getAllAvailableTracks(spotifyToken: string): Promise<Track[]> {
-    try {
-      if (__DEV__) {
-        console.log('[PlaylistService] Fetching all available tracks from all sources...');
-      }
-
-      const [savedTracks, recentTracks, topTracks] = await Promise.all([
-        this.getAllSavedTracks(spotifyToken).catch(error => {
-          if (__DEV__) {
-            console.warn('[PlaylistService] Failed to fetch saved tracks:', error);
-          }
-          return [];
-        }),
-        spotifyApi.getRecentTracks(spotifyToken, 50).catch(error => {
-          if (__DEV__) {
-            console.warn('[PlaylistService] Failed to fetch recent tracks:', error);
-          }
-          return [];
-        }),
-        spotifyApi.getTopTracks(spotifyToken, 'medium_term', 50).catch(error => {
-          if (__DEV__) {
-            console.warn('[PlaylistService] Failed to fetch top tracks:', error);
-          }
-          return [];
-        }),
-      ]);
-
-      // Combine all tracks and remove duplicates based on name + artist
-      const allTracks: Track[] = [];
-      const seenTracks = new Set<string>();
-
-      // Helper to add unique tracks
-      const addUniqueTrack = (track: Track) => {
-        const trackKey = `${track.name.toLowerCase()}__${track.artist.toLowerCase()}`;
-        if (!seenTracks.has(trackKey)) {
-          seenTracks.add(trackKey);
-          allTracks.push(track);
-        }
-      };
-
-      // Add saved tracks first (highest priority)
-      savedTracks.forEach(addUniqueTrack);
-
-      // Add recent tracks (convert played_at format if needed)
-      recentTracks.forEach(track => {
-        addUniqueTrack({
-          name: track.name,
-          artist: track.artist,
-          album: track.album,
-          album_image_url: track.album_image_url,
-          played_at: track.played_at,
-        });
-      });
-
-      // Add top tracks (convert format if needed)
-      topTracks.forEach(track => {
-        addUniqueTrack({
-          name: track.name,
-          artist: track.artist,
-          album: track.album,
-          album_image_url: track.album_image_url,
-          played_at: new Date().toISOString(), // TopTracks don't have played_at, use current time
-        });
-      });
-
-      if (__DEV__) {
-        console.log(
-          `[PlaylistService] Combined tracks from all sources: ${savedTracks.length} saved + ${recentTracks.length} recent + ${topTracks.length} top = ${allTracks.length} total unique tracks`
-        );
-      }
-
-      return allTracks;
-    } catch (error) {
-      if (__DEV__) {
-        console.error('[PlaylistService] Error fetching all available tracks:', error);
-      }
-      throw error;
-    }
-  }
 
   // Get songs with specific tags for filtering
   async getSongsWithTags(userId: number, tagIds: number[], spotifyToken: string): Promise<Track[]> {
@@ -309,7 +229,7 @@ export class PlaylistService {
       }
 
       // First, try to get Spotify track IDs for the tagged songs
-      const spotifyTrackIds = await taggingService.getSpotifyTrackIdsWithTags(userId, tagIds);
+      const spotifyTrackIds = await taggingService.getSpotifyIdsWithTags(userId, tagIds, 'track');
 
       if (spotifyTrackIds.length > 0) {
         if (__DEV__) {
@@ -348,11 +268,11 @@ export class PlaylistService {
 
       // Get all song IDs that have any of the specified tags (normalized IDs)
       const songIdSets = await Promise.all(
-        tagIds.map(tagId => taggingService.getSongsWithTag(userId, tagId))
+        tagIds.map(tagId => taggingService.getSpotifyIdsWithTag(userId, tagId, 'track'))
       );
 
-      // Combine all song IDs and remove duplicates
-      const allSongIds = [...new Set(songIdSets.flat())];
+      // Combine and deduplicate track Spotify IDs
+      const allSongIds = Array.from(new Set(songIdSets.flat()));
 
       if (allSongIds.length === 0) {
         return [];
@@ -360,53 +280,26 @@ export class PlaylistService {
 
       if (__DEV__) {
         console.log(
-          `[PlaylistService] Looking for ${allSongIds.length} tagged song IDs (normalized):`,
-          allSongIds
+          `[PlaylistService] Found ${allSongIds.length} Spotify track IDs with tags`
         );
       }
 
-      // Fetch ALL available tracks from all sources (saved, recent, top)
-      const allAvailableTracks = await this.getAllAvailableTracks(spotifyToken);
+      // Fetch tracks directly from Spotify API using track IDs
+      const tracksFromSpotify = await spotifyApi.getTracksByIds(spotifyToken, allSongIds);
+
+      // Convert to Track format for consistency with the rest of the system
+      const filteredTracks: Track[] = tracksFromSpotify.map(track => ({
+        name: track.name,
+        artist: track.artist,
+        album: track.album,
+        album_image_url: track.album_image_url,
+        played_at: track.added_at,
+      }));
 
       if (__DEV__) {
         console.log(
-          `[PlaylistService] Searching through ${allAvailableTracks.length} total available tracks from all sources`
+          `[PlaylistService] Successfully fetched ${filteredTracks.length} tracks from Spotify API`
         );
-      }
-
-      // Filter tracks that match our tagged song IDs
-      const filteredTracks = allAvailableTracks.filter(track => {
-        const generatedId = taggingService.generateSongId(track.name, track.artist);
-        const isMatch = allSongIds.includes(generatedId);
-
-        if (__DEV__ && isMatch) {
-          console.log(
-            `[PlaylistService] ✅ Found matching track: "${track.name}" by "${track.artist}" (ID: ${generatedId})`
-          );
-        }
-
-        return isMatch;
-      });
-
-      if (__DEV__) {
-        console.log(
-          `[PlaylistService] Found ${filteredTracks.length} matching tracks for ${allSongIds.length} tagged song IDs`
-        );
-        console.log(
-          `[PlaylistService] Searched through ${allAvailableTracks.length} total available tracks from all sources`
-        );
-
-        // Log any tagged song IDs that weren't found for debugging
-        if (filteredTracks.length < allSongIds.length) {
-          const foundIds = filteredTracks.map(track =>
-            taggingService.generateSongId(track.name, track.artist)
-          );
-          const missingIds = allSongIds.filter(id => !foundIds.includes(id));
-          console.log(
-            `[PlaylistService] ⚠️ Tagged song IDs not found in Spotify data:`,
-            missingIds
-          );
-        }
       }
 
       return filteredTracks;
@@ -431,21 +324,21 @@ export class PlaylistService {
 
       // Get all album IDs that have any of the specified tags
       const albumIdSets = await Promise.all(
-        tagIds.map(tagId => taggingService.getSongsWithTag(userId, tagId))
+        tagIds.map(tagId => taggingService.getSpotifyIdsWithTag(userId, tagId, 'album'))
       );
 
-      // Get album IDs (filter for entries that start with 'album_')
-      const allAlbumIds = [...new Set(albumIdSets.flat().filter(id => id.startsWith('album_')))];
+      // Combine and deduplicate album Spotify IDs
+      const allAlbumIds = Array.from(new Set(albumIdSets.flat()));
 
       if (allAlbumIds.length === 0) {
         return [];
       }
 
       if (__DEV__) {
-        console.log(`[PlaylistService] Looking for ${allAlbumIds.length} tagged album IDs`);
+        console.log(`[PlaylistService] Found ${allAlbumIds.length} Spotify album IDs with tags`);
       }
 
-      // Fetch ALL saved albums from Spotify (not just first 20)
+      // Fetch ALL saved albums from Spotify (fallback approach)
       const allSavedAlbums = await this.getAllSavedAlbums(spotifyToken);
 
       if (__DEV__) {
@@ -454,9 +347,9 @@ export class PlaylistService {
         );
       }
 
+      // Filter albums that match our Spotify IDs
       const filteredAlbums = allSavedAlbums.filter(album => {
-        const generatedId = taggingService.generateAlbumId(album.name, album.album_id);
-        return allAlbumIds.includes(generatedId);
+        return allAlbumIds.includes(album.album_id);
       });
 
       if (__DEV__) {
@@ -487,13 +380,11 @@ export class PlaylistService {
 
       // Get all playlist IDs that have any of the specified tags
       const playlistIdSets = await Promise.all(
-        tagIds.map(tagId => taggingService.getSongsWithTag(userId, tagId))
+        tagIds.map(tagId => taggingService.getSpotifyIdsWithTag(userId, tagId, 'playlist'))
       );
 
-      // Get playlist IDs (filter for entries that start with 'playlist_')
-      const allPlaylistIds = [
-        ...new Set(playlistIdSets.flat().filter(id => id.startsWith('playlist_'))),
-      ];
+      // Get all playlist IDs that have any of the specified tags
+      const allPlaylistIds = Array.from(new Set(playlistIdSets.flat()));
 
       if (allPlaylistIds.length === 0) {
         return [];
@@ -512,9 +403,9 @@ export class PlaylistService {
         );
       }
 
+      // Filter playlists that match our Spotify IDs
       const filteredPlaylists = allSavedPlaylists.filter(playlist => {
-        const generatedId = taggingService.generatePlaylistId(playlist.name, playlist.playlist_id);
-        return allPlaylistIds.includes(generatedId);
+        return allPlaylistIds.includes(playlist.playlist_id);
       });
 
       if (__DEV__) {
