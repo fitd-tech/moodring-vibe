@@ -597,10 +597,32 @@ export class SpotifyApiService {
         return [];
       }
 
+      // Filter out invalid Spotify track IDs before making API calls
+      // Valid Spotify track IDs are exactly 22 characters of base62 (alphanumeric + specific chars)
+      const validTrackIds = trackIds.filter(id => {
+        // Filter out obvious non-track IDs
+        if (id.startsWith('album_') || id.startsWith('playlist_') || id.includes('__')) {
+          if (__DEV__) {
+            console.warn(`[SpotifyApi] Filtering out invalid track ID: ${id}`);
+          }
+          return false;
+        }
+        // Spotify track IDs are typically 22 characters, base62-encoded
+        return id.length === 22 && /^[A-Za-z0-9]+$/.test(id);
+      });
+
+      if (__DEV__) {
+        console.log(`[SpotifyApi] Filtered ${trackIds.length - validTrackIds.length} invalid track IDs`);
+      }
+
+      if (validTrackIds.length === 0) {
+        return [];
+      }
+
       // Spotify API allows up to 50 tracks per request
       const batches: string[][] = [];
-      for (let i = 0; i < trackIds.length; i += 50) {
-        batches.push(trackIds.slice(i, i + 50));
+      for (let i = 0; i < validTrackIds.length; i += 50) {
+        batches.push(validTrackIds.slice(i, i + 50));
       }
 
       const allTracks: SavedTrack[] = [];
@@ -643,7 +665,7 @@ export class SpotifyApiService {
       }
 
       if (__DEV__) {
-        console.log(`[SpotifyApi] Fetched ${allTracks.length}/${trackIds.length} tracks by IDs`);
+        console.log(`[SpotifyApi] Fetched ${allTracks.length}/${validTrackIds.length} valid tracks (${trackIds.length} total IDs provided)`);
       }
 
       return allTracks;

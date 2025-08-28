@@ -4,6 +4,50 @@ use rocket::serde::json::Json;
 use rocket::tokio;
 use rocket::State;
 
+/// Validates that entity_id format matches the claimed entity_type
+/// to prevent data corruption like playlist IDs being stored as tracks
+fn validate_entity_id_format(entity_type: &str, entity_id: &str) -> Result<(), String> {
+    match entity_type {
+        entity_types::TRACK => {
+            // Track IDs should not start with playlist_ or album_
+            if entity_id.starts_with("playlist_") {
+                return Err(format!(
+                    "Invalid track entity_id '{}': Track IDs cannot start with 'playlist_'. This appears to be a playlist ID.",
+                    entity_id
+                ));
+            }
+            if entity_id.starts_with("album_") {
+                return Err(format!(
+                    "Invalid track entity_id '{}': Track IDs cannot start with 'album_'. This appears to be an album ID.",
+                    entity_id
+                ));
+            }
+        },
+        entity_types::ALBUM => {
+            // Album IDs should not start with playlist_ or be track-like
+            if entity_id.starts_with("playlist_") {
+                return Err(format!(
+                    "Invalid album entity_id '{}': Album IDs cannot start with 'playlist_'. This appears to be a playlist ID.",
+                    entity_id
+                ));
+            }
+        },
+        entity_types::PLAYLIST => {
+            // Playlist IDs should not look like track IDs (Spotify track IDs are typically alphanumeric)
+            if entity_id.len() == 22 && entity_id.chars().all(|c| c.is_alphanumeric()) {
+                return Err(format!(
+                    "Invalid playlist entity_id '{}': This appears to be a Spotify track ID, not a playlist ID.",
+                    entity_id
+                ));
+            }
+        },
+        _ => {
+            return Err(format!("Unknown entity_type: {}", entity_type));
+        }
+    }
+    Ok(())
+}
+
 // Tag management endpoints
 #[get("/users/<user_id>/tags")]
 pub async fn get_user_tags(
@@ -170,6 +214,11 @@ pub async fn add_tag_to_entity(
         return Err(rocket::response::status::BadRequest(
             format!("Invalid entity_type: {}. Must be one of: track, album, playlist", entity_type)
         ));
+    }
+
+    // Validate entity_id matches entity_type to prevent data corruption
+    if let Err(validation_error) = validate_entity_id_format(entity_type, entity_id) {
+        return Err(rocket::response::status::BadRequest(validation_error));
     }
 
     let pool = pool.inner().clone();
